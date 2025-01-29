@@ -1,15 +1,6 @@
 <template>
   <div class="relative h-[300px] sm:h-[400px] md:h-[500px] mb-10">
     <div class="absolute inset-0 flex flex-col md:flex-row">
-      <div class="w-full md:w-1/2 h-1/2 md:h-full">
-        <!-- <NuxtImg
-          :src="Car"
-          alt="Hero"
-          class="w-full h-full object-cover"
-          format="jpg"
-        /> -->
-        <img :src="Car" class="w-full h-full object-cover" />
-      </div>
       <div
         class="w-full md:w-1/2 h-2/3 md:h-full bg-green-600 flex items-center justify-center pb-5 pt-2"
       >
@@ -29,6 +20,15 @@
             www.reallygreatsite.com
           </div>
         </div>
+      </div>
+      <div class="w-full md:w-1/2 h-1/2 md:h-full">
+        <!-- <NuxtImg
+          :src="Car"
+          alt="Hero"
+          class="w-full h-full object-cover"
+          format="jpg"
+        /> -->
+        <img :src="Car" class="w-full h-full object-cover" />
       </div>
     </div>
   </div>

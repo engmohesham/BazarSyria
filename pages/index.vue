@@ -2,7 +2,7 @@
   <div class="container mx-auto">
     <!-- <Header /> -->
     <Hero />
-    <CarFilter />
+    <ProductFilter />
     <AppPromo />
     <!-- <Footer /> -->
   </div>

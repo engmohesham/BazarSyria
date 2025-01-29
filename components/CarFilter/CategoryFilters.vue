@@ -4,12 +4,24 @@
       <div class="overflow-x-auto" dir="rtl">
         <div class="flex space-x-reverse space-x-1 py-2 min-w-max">
           <button
-            v-for="category in categories"
-            :key="category.id"
-            @click="$emit('categoryChange', category)"
+            @click="$emit('category-change', { _id: 'all', name: 'كل التصنيفات' })"
             :class="[
               'px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors',
-              category.id === activeCategory
+              'all' === activeCategory
+                ? 'bg-green-600 text-white'
+                : 'text-gray-700 hover:bg-gray-100'
+            ]"
+          >
+            كل التصنيفات
+          </button>
+
+          <button
+            v-for="category in categoriesData"
+            :key="category._id"
+            @click="$emit('category-change', category)"
+            :class="[
+              'px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors',
+              category._id === activeCategory
                 ? 'bg-green-600 text-white'
                 : 'text-gray-700 hover:bg-gray-100'
             ]"
@@ -22,29 +34,21 @@
   </div>
 </template>
 
-<script setup lang="ts">
-interface Category {
-  id: string
-  name: string
-  href: string
-  isActive: boolean
-}
+<script setup>
+const { data: categories } = await useFetch(
+  'https://bazar-syria.vercel.app/category/all'
+);
 
-const categories: Category[] = [
-  { id: 'cars', name: 'عربيات و قطع غيار', href: '#', isActive: true },
-  { id: 'real-estate', name: 'العقارات', href: '#', isActive: false },
-  { id: 'mobile', name: 'موبايلات', href: '#', isActive: false },
-  { id: 'jobs', name: 'وظائف', href: '#', isActive: false },
-  { id: 'dev', name: 'تصميم و برمجة', href: '#', isActive: false },
-  { id: 'electronics', name: 'أجهزة إلكترونية', href: '#', isActive: false },
-  { id: 'more', name: 'المزيد من الخدمات', href: '#', isActive: false },
-]
+const categoriesData = categories._value.categories;
 
-defineProps<{
-  activeCategory: string
-}>()
+const props = defineProps({
+  activeCategory: {
+    type: String,
+    required: true
+  }
+});
 
-defineEmits<{
-  (e: 'categoryChange', category: Category): void
-}>()
+// console.log(props.activeCategory);
+
+defineEmits(['category-change']);
 </script>

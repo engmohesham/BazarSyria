@@ -1,60 +1,19 @@
 <template>
-  <div class="relative">
+  <div class="relative lg:w-[90%] mx-auto">
     <div class="flex items-center justify-between py-2.5">
-      <!-- Mobile Menu Button -->
-      <button
-        ref="buttonRef"
-        class="lg:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
-        @click="toggleMobileMenu"
-      >
-        <Icon
-          :name="isMobileMenuOpen ? 'ph:x' : 'ph:list'"
-          class="w-6 h-6 text-gray-600"
-        />
-      </button>
-
-      <!-- Desktop Actions -->
-      <div class="hidden lg:flex items-center space-x-6">
-        <button
-          class="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-        >
-          <span class="text-sm font-medium">+ أضف إعلانك</span>
-        </button>
-        <div class="flex items-center space-x-5">
-          <div class="flex items-center cursor-pointer group">
-            <img
-              src="https://via.placeholder.com/32"
-              alt="User"
-              class="w-8 h-8 rounded-full border-2 border-gray-100 group-hover:border-green-500 transition-colors"
-            />
-            <Icon
-              name="ph:caret-down"
-              class="w-4 h-4 text-gray-400 ml-1 group-hover:text-green-500 transition-colors"
-            />
-          </div>
-          <div class="flex items-center space-x-4">
-            <button
-              class="p-1.5 rounded-full hover:bg-gray-100 transition-colors relative"
-            >
-              <Icon name="ph:bell" class="w-5 h-5 text-gray-500" />
-              <span
-                class="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"
-              ></span>
-            </button>
-            <button
-              class="p-1.5 rounded-full hover:bg-gray-100 transition-colors relative"
-            >
-              <Icon name="ph:chat-circle" class="w-5 h-5 text-gray-500" />
-              <span
-                class="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"
-              ></span>
-            </button>
-          </div>
-        </div>
+      <!-- Logo -->
+      <div class="flex items-center">
+        <NuxtLink to="/" class="block">
+          <img
+            :src="logo"
+            alt="بازار سوريا"
+            class="h-16 lg:h-14 w-auto transition-all duration-200"
+          />
+        </NuxtLink>
       </div>
 
       <!-- Search Bar -->
-      <div class="flex-1 max-w-3xl mx-4 lg:mx-8">
+      <div class="hidden lg:block flex-1 w-full max-w-3xl mx-4 lg:mx-8">
         <div class="relative flex items-center">
           <button
             class="absolute left-0 top-1/2 -translate-y-1/2 w-12 h-full flex items-center justify-center bg-green-600 rounded-l-lg hover:bg-green-700 transition-colors"
@@ -70,16 +29,57 @@
         </div>
       </div>
 
-      <!-- Logo -->
-      <div class="flex items-center">
-        <NuxtLink to="/" class="block">
-          <img
-            :src="logo"
-            alt="يلا سوريا"
-            class="h-8 sm:h-10 md:h-12 lg:h-14 w-auto transition-all duration-200"
-          />
-        </NuxtLink>
+      <!-- Desktop Actions -->
+      <div class="hidden lg:flex items-center gap-4">
+        <button
+          class="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+        >
+          <span class="text-sm font-medium">+ أضف إعلانك</span>
+        </button>
+        <div class="flex items-center gap-4">
+          <div class="flex items-center cursor-pointer group">
+            <img
+              src="https://via.placeholder.com/32"
+              alt="User"
+              class="w-8 h-8 rounded-full border-2 border-gray-100 group-hover:border-green-500 transition-colors"
+            />
+            <Icon
+              name="ph:caret-down"
+              class="w-4 h-4 text-gray-400 group-hover:text-green-500 transition-colors"
+            />
+          </div>
+          <div class="flex items-center gap-4">
+            <button
+              class="flex p-1.5 rounded-full hover:bg-gray-100 transition-colors relative"
+            >
+              <Icon name="ph:bell" class="w-5 h-5 text-gray-500" />
+              <span
+                class="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"
+              ></span>
+            </button>
+            <button
+              class="flex p-1.5 rounded-full hover:bg-gray-100 transition-colors relative"
+            >
+              <Icon name="ph:chat-circle" class="w-5 h-5 text-gray-500" />
+              <span
+                class="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"
+              ></span>
+            </button>
+          </div>
+        </div>
       </div>
+
+      <!-- Mobile Menu Button -->
+      <button
+        ref="buttonRef"
+        class="lg:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
+        @click="toggleMobileMenu"
+      >
+        <Icon
+          :name="isMobileMenuOpen ? 'ph:x' : 'ph:list'"
+          class="w-6 h-6 text-gray-600"
+        />
+      </button>
     </div>
 
     <!-- Mobile Menu -->
@@ -99,16 +99,16 @@
         <div
           class="absolute top-[61px] left-0 right-0 bg-white border-t border-gray-100 shadow-lg z-50 max-h-[calc(100vh-61px)] overflow-y-auto p-6"
         >
-          <div
-            class="text-gray-600 border p-2 flex justify-center
-            items-center rounded-full w-fit h-fit cursor-pointer
-            hover:bg-red-600 hover:text-white hover:scale-105
-            ease-linear duration-150"
-            v-on:click="toggleMobileMenu"
-          >
-            <Icon name="ph:x" size="25" />
+          <div class="flex items-center justify-between gap-4">
+            <h1 class="text-xl font-bold">القائمة</h1>
+            <div
+              class="mr-auto text-gray-600 border p-2 flex justify-center items-center rounded-full w-fit h-fit cursor-pointer hover:bg-red-600 hover:text-white hover:scale-105 ease-linear duration-150"
+              v-on:click="toggleMobileMenu"
+            >
+              <Icon name="ph:x" size="25" />
+            </div>
           </div>
-          <div class="p-4 space-y-4">
+          <div class="space-y-4 py-4">
             <!-- Mobile Search -->
             <div class="relative flex items-center">
               <button

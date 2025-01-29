@@ -1,6 +1,6 @@
 <template>
   <div class="bg-[#0C9547] text-white py-12">
-    <div class="container mx-auto px-4">
+    <div class="container md:w-[90%] mx-auto px-4">
       <div class="flex flex-col md:flex-row items-center justify-between gap-8" dir="rtl">
         <div class="md:w-1/2 space-y-4">
           <div class="flex items-center gap-2">
