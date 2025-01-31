@@ -31,11 +31,12 @@
 
       <!-- Desktop Actions -->
       <div class="hidden lg:flex items-center gap-4">
-        <button
+        <NuxtLink
+          to="/create-ad"
           class="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
         >
           <span class="text-sm font-medium">+ أضف إعلانك</span>
-        </button>
+        </NuxtLink>
         <div class="flex items-center gap-4">
           <!-- Login/Profile Section -->
           <template v-if="!isLoggedIn">
@@ -239,12 +240,13 @@
               />
             </div>
 
-            <button
+            <NuxtLink
+              to="/create-ad"
               class="w-full flex items-center justify-between px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
             >
-              <Icon name="ph:caret-right" class="w-5 h-5" />
+              <Icon name="ph:plus" class="w-5 h-5" />
               <span class="text-sm font-medium">+ أضف إعلانك</span>
-            </button>
+            </NuxtLink>
           </div>
 
           <!-- User Section -->
