@@ -39,7 +39,9 @@ const { data: categories } = await useFetch(
   'https://bazar-syria.vercel.app/category/all'
 );
 
-const categoriesData = categories._value.categories;
+// console.log(categories);
+
+const categoriesData = categories?._value?.categories;
 
 const props = defineProps({
   activeCategory: {
