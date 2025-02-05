@@ -1,14 +1,15 @@
 export default defineNuxtRouteMiddleware((to, from) => {
-  const token = process.client 
-    ? localStorage.getItem('session-token')
-    : useCookie('session-token').value
+  const token = process.client ? localStorage.getItem('session-token') : null
   
-  // Check if token exists and is valid
-  const isAuthenticated = () => {
-    return !!token
-  }
-
-  if (isAuthenticated() === false) {
-    return navigateTo("/login");
+  if (!token) {
+    // If no token, redirect to home and show login modal
+    if (to.path !== '/') {
+      return navigateTo('/', {
+        query: { 
+          showLogin: 'true',
+          redirect: to.fullPath // Store the intended destination
+        }
+      })
+    }
   }
 });

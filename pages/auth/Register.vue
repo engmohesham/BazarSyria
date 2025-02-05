@@ -1,5 +1,6 @@
 <script setup>
 const router = useRouter();
+const { register } = useAuth();
 const isOpen = ref(false);
 const selectedType = ref("شخصي"); // Default to personal account
 const fullName = ref("");
@@ -34,21 +35,15 @@ const handleRegister = async () => {
   error.value = "";
 
   try {
-    const { data, error: apiError } = await useFetch(
-      "https://taste-back.cowdly.com/api/users/register/",
-      {
-        method: "POST",
-        body: {
-          fullName: fullName.value,
-          phone: phone.value,
-          email: email.value,
-          password: password.value,
-          type: selectedType.value,
-        },
-      }
-    );
+    const { error: registerError } = await register({
+      fullName: fullName.value,
+      phone: phone.value,
+      email: email.value,
+      password: password.value,
+      type: selectedType.value,
+    });
 
-    if (apiError.value) {
+    if (registerError) {
       error.value = "فشل التسجيل. يرجى المحاولة مرة أخرى.";
       return;
     }

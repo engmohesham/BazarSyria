@@ -38,4 +38,9 @@ export default defineNuxtConfig({
       // ... other head elements ...
     },
   },
+  runtimeConfig: {
+    public: {
+      apiBase: 'https://bazar-syria.vercel.app'
+    }
+  }
 });

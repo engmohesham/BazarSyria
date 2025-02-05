@@ -326,6 +326,13 @@
 </template>
 
 <script setup>
+import { onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAds } from '../composables/useAds'
+
+const router = useRouter()
+const { createAd } = useAds()
+
 const formData = ref({
   category: '',
   subCategory: '',
@@ -395,22 +402,12 @@ const removeImage = (index) => {
 
 const handleSubmit = async () => {
   try {
-    const response = await fetch('https://bazar-syria.vercel.app/ads/create', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}` // Add token if required
-      },
-      body: JSON.stringify(formData.value)
-    })
-
-    if (!response.ok) {
+    const { error: createError } = await createAd(formData.value)
+    
+    if (createError) {
       throw new Error('Failed to create advertisement')
     }
 
-    const result = await response.json()
-    console.log('Advertisement created:', result)
-    
     // Redirect to home page or ad details page
     navigateTo('/')
   } catch (error) {
@@ -418,6 +415,18 @@ const handleSubmit = async () => {
     // Handle error (show error message to user)
   }
 }
+
+definePageMeta({
+  middleware: "auth"
+})
+
+// Redirect to home if not authenticated
+onMounted(() => {
+  const token = localStorage.getItem('session-token')
+  if (!token) {
+    router.push('/')
+  }
+})
 </script>
 
 <style scoped>

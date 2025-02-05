@@ -88,7 +88,7 @@
               >
                 <!-- User Info -->
                 <div class="px-4 py-2 border-b border-gray-100">
-                  <div class="flex items-center gap-3 mb-2">
+                  <div class="flex items-center gap-3 mb-2 cursor-pointer" @click="navigateToProfile">
                     <img
                       src="https://via.placeholder.com/32"
                       alt="User"
@@ -104,7 +104,7 @@
                 <!-- Menu Items -->
                 <div class="py-1" dir="ltr">
                   <NuxtLink
-                    to="/profile/wallet"
+                    to="/user/profile/wallet"
                     class="flex items-center justify-end gap-3 px-4 py-2 text-gray-700 hover:bg-gray-50"
                   >
                     <span>المحفظة</span>
@@ -112,7 +112,7 @@
                   </NuxtLink>
 
                   <NuxtLink
-                    to="/profile/ads"
+                    to="/my-ads"
                     class="flex items-center justify-end gap-3 px-4 py-2 text-gray-700 hover:bg-gray-50"
                   >
                     <span>اعلاناتي</span>
@@ -120,7 +120,7 @@
                   </NuxtLink>
 
                   <NuxtLink
-                    to="/profile/following"
+                    to="/user/profile/following"
                     class="flex items-center justify-end gap-3 px-4 py-2 text-gray-700 hover:bg-gray-50"
                   >
                     <span>المتابعين</span>
@@ -128,7 +128,7 @@
                   </NuxtLink>
 
                   <NuxtLink
-                    to="/profile/favorites"
+                    to="/user/profile/favorites"
                     class="flex items-center justify-end gap-3 px-4 py-2 text-gray-700 hover:bg-gray-50"
                   >
                     <span>المفضلة</span>
@@ -136,7 +136,7 @@
                   </NuxtLink>
 
                   <NuxtLink
-                    to="/profile/invoices"
+                    to="/user/profile/invoices"
                     class="flex items-center justify-end gap-3 px-4 py-2 text-gray-700 hover:bg-gray-50"
                   >
                     <span>الفواتير</span>
@@ -144,7 +144,7 @@
                   </NuxtLink>
 
                   <NuxtLink
-                    to="/profile/settings"
+                    to="/user/profile/settings"
                     class="flex items-center justify-end gap-3 px-4 py-2 text-gray-700 hover:bg-gray-50"
                   >
                     <span>الاعدادات</span>
@@ -252,7 +252,10 @@
           <!-- User Section -->
           <template v-if="isLoggedIn">
             <!-- User Info -->
-            <div class="flex items-center gap-3 px-4 mb-6 border-b border-gray-100 pb-4">
+            <div 
+              class="flex items-center gap-3 px-4 mb-6 border-b border-gray-100 pb-4 cursor-pointer" 
+              @click="navigateToProfile"
+            >
               <div class="text-right flex-1">
                 <p class="font-medium text-lg">محمد العامري</p>
                 <p class="text-sm text-gray-500">أهلاً بك</p>
@@ -457,14 +460,18 @@ onUnmounted(() => {
 
 // Add this to your setup:
 const menuItems = [
-  { to: '/profile/wallet', icon: 'ph:wallet', text: 'المحفظة' },
-  { to: '/profile/ads', icon: 'ph:megaphone', text: 'اعلاناتي' },
-  { to: '/profile/following', icon: 'ph:users', text: 'المتابعين' },
-  { to: '/profile/favorites', icon: 'ph:heart', text: 'المفضلة' },
-  { to: '/profile/invoices', icon: 'ph:receipt', text: 'الفواتير' },
-  { to: '/profile/settings', icon: 'ph:gear', text: 'الاعدادات' },
-  { to: '/contact', icon: 'ph:phone', text: 'اتصل بنا' }
+  { to: '/user/profile/wallet', icon: 'ph:wallet', text: 'المحفظة' },
+  { to: '/user/profile/following', icon: 'ph:users', text: 'المتابَعين' },
+  { to: '/user/profile/favorites', icon: 'ph:heart', text: 'المفضلة' },
+  { to: '/user/profile/invoices', icon: 'ph:receipt', text: 'الفواتير' },
+  { to: '/user/profile/settings', icon: 'ph:gear', text: 'الاعدادات' },
+  { to: '/contact', icon: 'ph:phone', text: 'اتصل بنا' },
+  { to: '/my-ads', icon: 'ph:megaphone', text: 'إعلاناتي' }
 ]
+
+const navigateToProfile = () => {
+  router.push('/account')
+}
 </script>
 
 <style scoped>

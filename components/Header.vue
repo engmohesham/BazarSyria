@@ -12,15 +12,13 @@
 </template>
 
 <script setup>
+import { inject } from 'vue'
 import TopHeader from './TopHeader.vue'
 import Navigation from './Navigation.vue'
 
-defineProps({
-  isLoggedIn: {
-    type: Boolean,
-    default: false
-  }
-})
+const isLoggedIn = inject('isLoggedIn')
+const openLogin = inject('openLogin')
+const openRegister = inject('openRegister')
 
 defineEmits(['open-login', 'open-register'])
 </script> 

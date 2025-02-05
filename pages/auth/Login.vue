@@ -1,5 +1,6 @@
 <script setup>
 const router = useRouter()
+const { login } = useAuth()
 const isOpen = ref(false)
 const email = ref('')
 const password = ref('')
@@ -25,25 +26,19 @@ const handleLogin = async () => {
   error.value = ''
 
   try {
-    const { data, error: apiError } = await useFetch('https://taste-back.cowdly.com/api/users/login/', {
-      method: 'POST',
-      body: {
-        email: email.value,
-        password: password.value,
-      },
+    const { data, error: loginError } = await login({
+      email: email.value,
+      password: password.value
     })
-
-    if (apiError.value) {
+    
+    if (loginError) {
       error.value = 'فشل تسجيل الدخول. يرجى التحقق من بياناتك.'
       return
     }
 
-    const token = data.value?.token
-    if (token && process.client) {
-      localStorage.setItem('session-token', token)
-      emit('login-success')
-      closeModal()
-    }
+    emit('login-success')
+    closeModal()
+    await router.push('/account')
   } catch (e) {
     error.value = 'حدث خطأ أثناء تسجيل الدخول'
   } finally {
@@ -66,6 +61,13 @@ const handleRegisterClick = () => {
     emit('register-success')
   }, 100)
 }
+
+// Add check for existing session
+onMounted(() => {
+  if (process.client && localStorage.getItem('session-token')) {
+    router.push('/account')
+  }
+})
 
 defineExpose({ openModal, closeModal })
 

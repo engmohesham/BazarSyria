@@ -96,19 +96,37 @@ import ContactButtons from "@/components/SingleProduct/ContactButtons.vue";
 import car1 from "~/assets/cars/car.jpg";
 import car2 from "~/assets/cars/car2.jpg";
 import car3 from "~/assets/cars/car3.jpg";
+import { useRoute } from "vue-router";
+import { useProducts } from "@/composables/useProducts";
 
 const route = useRoute();
-const { data: product } = await useFetch(
-  `https://bazar-syria.vercel.app/products/${route.params.id}`
-);
-// const productData = product._value.product;
+const { getProduct } = useProducts();
+
+// Replace useFetch with the composable
+const { data: product, error } = await getProduct(route.params.id);
+
+// Update the product data handling
+const productData = computed(() => {
+  if (!product.value) return null;
+  return {
+    name: product.value.name,
+    price: product.value.price,
+    location: product.value.location,
+    timeAgo: product.value.timeAgo,
+    description: product.value.description,
+    image: product.value.image,
+    gallery: product.value.gallery,
+    categoryId: product.value.categoryId,
+    subCategoryId: product.value.subCategoryId
+  };
+});
 
 // Example specifications - adjust based on your API data
 const specifications = computed(() => [
   {
     icon: "ph:car",
     label: "الموديل",
-    value: productData.description || "",
+    value: productData.value?.description || "",
   },
   {
     icon: "ph:gauge",
@@ -136,15 +154,4 @@ const specifications = computed(() => [
     value: "مستعمل",
   },
 ]);
-
-const productData = {
-  name: "Test Product",
-  price: "15,000,000 ل.س",
-  location: "دمشق",
-  timeAgo: "3 أيام",
-  description: "وصف تجريبي للمنتج",
-  // Update these paths according to your assets directory structure
-  image: car1,
-  gallery: [car1, car2, car3],
-};
 </script>
