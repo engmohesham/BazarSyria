@@ -6,7 +6,7 @@ export const API_ENDPOINTS = {
   REGISTER: '/auth/register',
   
   // User
-  PROFILE: '/users/profile',
+  PROFILE: '/auth/profile',
   FOLLOWERS: '/users/followers',
   FOLLOWING: '/users/following',
   FOLLOW: '/users/follow',

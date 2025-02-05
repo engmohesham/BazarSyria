@@ -473,7 +473,7 @@ const navigateToProfile = () => {
   router.push('/account')
 }
 </script>
-
+navigateToProfile
 <style scoped>
 .dropdown-container {
   position: relative;
