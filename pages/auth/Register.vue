@@ -1,6 +1,6 @@
 <script setup>
 const router = useRouter();
-const { register } = useAuth();
+const { register } = useServices();
 const isOpen = ref(false);
 const selectedType = ref("شخصي"); // Default to personal account
 const fullName = ref("");

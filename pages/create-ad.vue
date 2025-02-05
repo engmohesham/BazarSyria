@@ -5,9 +5,9 @@
         <!-- Header with Back Button -->
         <div class="flex items-center justify-between mb-6">
           <h1 class="text-2xl">نشر اعلانك 📢</h1>
-          <NuxtLink to="/" class="text-gray-600">
+          <button @click="router.back()" class="text-gray-600">
             <Icon name="ph:arrow-right" class="w-6 h-6" />
-          </NuxtLink>
+          </button>
         </div>
 
         <!-- Help Card -->
@@ -328,10 +328,10 @@
 <script setup>
 import { onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { useAds } from '../composables/useAds'
+import { useServices } from '../composables/useServices'
 
 const router = useRouter()
-const { createAd } = useAds()
+const { createAd } = useServices()
 
 const formData = ref({
   category: '',
@@ -408,11 +408,9 @@ const handleSubmit = async () => {
       throw new Error('Failed to create advertisement')
     }
 
-    // Redirect to home page or ad details page
     navigateTo('/')
   } catch (error) {
     console.error('Error creating advertisement:', error)
-    // Handle error (show error message to user)
   }
 }
 

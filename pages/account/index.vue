@@ -1,6 +1,6 @@
 <script setup>
 const router = useRouter()
-const { logout } = useAuth()
+const { logout } = useServices()
 
 definePageMeta({
   middleware: "auth",
@@ -29,7 +29,7 @@ const handleLogout = async () => {
       <!-- روابط سريعة -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <NuxtLink 
-          to="/profile"
+          to="/account/profile"
           class="flex items-center gap-4 p-6 bg-white rounded-lg shadow hover:shadow-md transition-shadow"
         >
           <Icon name="ph:user-circle" class="w-8 h-8 text-green-600" />
@@ -51,7 +51,7 @@ const handleLogout = async () => {
         </NuxtLink>
 
         <NuxtLink 
-          to="/my-ads"
+          to="/account/profile/my-ads"
           class="flex items-center gap-4 p-6 bg-white rounded-lg shadow hover:shadow-md transition-shadow"
         >
           <Icon name="ph:list" class="w-8 h-8 text-green-600" />

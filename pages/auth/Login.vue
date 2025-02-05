@@ -1,6 +1,6 @@
-<script setup>
+and<script setup>
 const router = useRouter()
-const { login } = useAuth()
+const { login } = useServices()
 const isOpen = ref(false)
 const email = ref('')
 const password = ref('')

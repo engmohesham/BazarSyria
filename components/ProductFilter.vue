@@ -149,23 +149,34 @@ import ProductCard from "./ProductCard.vue";
 
 const activeCategory = ref("all");
 const priceRange = ref({ min: "", max: "" });
+const products = ref(null);
+const error = ref(null);
 
-// Fetch products from API
-const { data: products, error } = await useFetch(
-  "https://bazar-syria.vercel.app/products/all"
-);
-
-console.log(products);
+// Fetch products from API with error handling
+try {
+  const { data, error: fetchError } = await useFetch(
+    "https://bazar-syria.vercel.app/products/all"
+  );
+  
+  if (fetchError.value) {
+    throw new Error(fetchError.value);
+  }
+  
+  products.value = data.value;
+} catch (err) {
+  console.error("Failed to fetch products:", err);
+  error.value = "Failed to load products. Please try again later.";
+}
 
 // تحديث currentData لعرض جميع المنتجات أو تصفيتها حسب الفئة
 const currentData = computed(() => {
-  if (!products._value?.products) return [];
+  if (!products.value?.products) return [];
   
   if (activeCategory.value === 'all') {
-    return products._value.products;
+    return products.value.products;
   }
   
-  return products._value.products.filter(
+  return products.value.products.filter(
     (product) => product.categoryId === activeCategory.value
   );
 });

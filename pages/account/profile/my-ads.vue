@@ -3,7 +3,7 @@ const activeTab = ref('active') // active, inactive, pending
 const ads = ref([])
 const loading = ref(true)
 
-const { fetchUserAds, deleteAd, toggleAdStatus } = useAds()
+const { fetchUserAds, deleteAd, toggleAdStatus } = useServices()
 
 // Fetch ads from API
 const fetchAds = async () => {

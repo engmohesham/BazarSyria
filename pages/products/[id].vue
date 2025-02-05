@@ -96,14 +96,12 @@ import ContactButtons from "@/components/SingleProduct/ContactButtons.vue";
 import car1 from "~/assets/cars/car.jpg";
 import car2 from "~/assets/cars/car2.jpg";
 import car3 from "~/assets/cars/car3.jpg";
-import { useRoute } from "vue-router";
-import { useProducts } from "@/composables/useProducts";
+import { useRoute } from 'vue-router'
+const { getProduct } = useServices()
 
 const route = useRoute();
-const { getProduct } = useProducts();
-
 // Replace useFetch with the composable
-const { data: product, error } = await getProduct(route.params.id);
+const { data: product, error } = await getProduct(route.params.id)
 
 // Update the product data handling
 const productData = computed(() => {

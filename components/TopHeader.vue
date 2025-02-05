@@ -104,7 +104,7 @@
                 <!-- Menu Items -->
                 <div class="py-1" dir="ltr">
                   <NuxtLink
-                    to="/user/profile/wallet"
+                    to="/account/profile/wallet"
                     class="flex items-center justify-end gap-3 px-4 py-2 text-gray-700 hover:bg-gray-50"
                   >
                     <span>المحفظة</span>
@@ -112,7 +112,7 @@
                   </NuxtLink>
 
                   <NuxtLink
-                    to="/my-ads"
+                    to="/profile/my-ads"
                     class="flex items-center justify-end gap-3 px-4 py-2 text-gray-700 hover:bg-gray-50"
                   >
                     <span>اعلاناتي</span>
@@ -120,7 +120,7 @@
                   </NuxtLink>
 
                   <NuxtLink
-                    to="/user/profile/following"
+                    to="/account/profile/following"
                     class="flex items-center justify-end gap-3 px-4 py-2 text-gray-700 hover:bg-gray-50"
                   >
                     <span>المتابعين</span>
@@ -128,7 +128,7 @@
                   </NuxtLink>
 
                   <NuxtLink
-                    to="/user/profile/favorites"
+                    to="/account/profile/favorites"
                     class="flex items-center justify-end gap-3 px-4 py-2 text-gray-700 hover:bg-gray-50"
                   >
                     <span>المفضلة</span>
@@ -136,7 +136,7 @@
                   </NuxtLink>
 
                   <NuxtLink
-                    to="/user/profile/invoices"
+                    to="/account/profile/invoices"
                     class="flex items-center justify-end gap-3 px-4 py-2 text-gray-700 hover:bg-gray-50"
                   >
                     <span>الفواتير</span>
@@ -144,7 +144,7 @@
                   </NuxtLink>
 
                   <NuxtLink
-                    to="/user/profile/settings"
+                    to="/account/profile/settings"
                     class="flex items-center justify-end gap-3 px-4 py-2 text-gray-700 hover:bg-gray-50"
                   >
                     <span>الاعدادات</span>
@@ -208,7 +208,7 @@
       <div
         v-if="isMobileMenuOpen"
         ref="menuRef"
-        class="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
+        class="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-50"
       >
         <div
           class="absolute top-[20px] left-0 mx-5 pb-10 right-0 bg-white border-t border-gray-100 shadow-lg z-50 max-h-[calc(100vh-61px)] overflow-y-auto p-6"
@@ -401,6 +401,7 @@ onUnmounted(() => {
 // Mobile menu handlers
 const toggleMobileMenu = () => {
   isMobileMenuOpen.value = !isMobileMenuOpen.value
+  console.log(isMobileMenuOpen.value)
 }
 
 const handleClickOutside = (event) => {
@@ -460,17 +461,18 @@ onUnmounted(() => {
 
 // Add this to your setup:
 const menuItems = [
-  { to: '/user/profile/wallet', icon: 'ph:wallet', text: 'المحفظة' },
-  { to: '/user/profile/following', icon: 'ph:users', text: 'المتابَعين' },
-  { to: '/user/profile/favorites', icon: 'ph:heart', text: 'المفضلة' },
-  { to: '/user/profile/invoices', icon: 'ph:receipt', text: 'الفواتير' },
-  { to: '/user/profile/settings', icon: 'ph:gear', text: 'الاعدادات' },
+  { to: '/account/profile/wallet', icon: 'ph:wallet', text: 'المحفظة' },
+  { to: '/account/profile/following', icon: 'ph:users', text: 'المتابَعين' },
+  { to: '/account/profile/favorites', icon: 'ph:heart', text: 'المفضلة' },
+  { to: '/account/profile/invoices', icon: 'ph:receipt', text: 'الفواتير' },
+  { to: '/account/profile/settings', icon: 'ph:gear', text: 'الاعدادات' },
   { to: '/contact', icon: 'ph:phone', text: 'اتصل بنا' },
   { to: '/my-ads', icon: 'ph:megaphone', text: 'إعلاناتي' }
 ]
 
 const navigateToProfile = () => {
-  router.push('/account')
+  router.push('/account');
+  toggleMobileMenu();
 }
 </script>
 navigateToProfile
