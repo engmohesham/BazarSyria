@@ -3,12 +3,15 @@ const router = useRouter();
 const { register } = useServices();
 const isOpen = ref(false);
 const selectedType = ref("شخصي"); // Default to personal account
-const fullName = ref("");
+const name = ref("");
+const companyName = ref("");
 const phone = ref("");
 const email = ref("");
 const password = ref("");
 const error = ref("");
 const loading = ref(false);
+
+
 
 const openModal = () => {
   isOpen.value = true;
@@ -20,7 +23,8 @@ const closeModal = () => {
 };
 
 const resetForm = () => {
-  fullName.value = "";
+  name.value = "";
+  companyName.value = "";
   phone.value = "";
   email.value = "";
   password.value = "";
@@ -35,13 +39,47 @@ const handleRegister = async () => {
   error.value = "";
 
   try {
-    const { error: registerError } = await register({
-      fullName: fullName.value,
-      phone: phone.value,
-      email: email.value,
-      password: password.value,
-      type: selectedType.value,
-    });
+    // Validate required fields
+    if (!name.value && !companyName.value) {
+      error.value = "الرجاء إدخال الاسم";
+      return;
+    }
+    if (!phone.value) {
+      error.value = "الرجاء إدخال رقم الهاتف";
+      return;
+    }
+    if (!email.value) {
+      error.value = "الرجاء إدخال البريد الإلكتروني";
+      return;
+    }
+    if (!password.value) {
+      error.value = "الرجاء إدخال كلمة المرور";
+      return;
+    }
+
+    const formData = new FormData();
+    
+    // Add user data to FormData
+    if (selectedType.value === 'شخصي') {
+      formData.append('name', name.value);
+      formData.append('role', 'user');
+    } else {
+      formData.append('name', companyName.value);
+      formData.append('role', 'company');
+    }
+
+    // Add common fields
+    formData.append('phone', phone.value);
+    formData.append('email', email.value);
+    formData.append('password', password.value);
+    formData.append('avatar', null);
+
+    // Log form data for debugging (remove in production)
+    for (let [key, value] of formData.entries()) {
+      console.log(`${key}: ${value}`);
+    }
+
+    const { error: registerError } = await register(formData);
 
     if (registerError) {
       error.value = "فشل التسجيل. يرجى المحاولة مرة أخرى.";
@@ -52,6 +90,7 @@ const handleRegister = async () => {
     closeModal();
   } catch (e) {
     error.value = "حدث خطأ أثناء التسجيل";
+    console.error('Registration error:', e);
   } finally {
     loading.value = false;
   }
@@ -63,6 +102,33 @@ const handleLoginClick = () => {
   setTimeout(() => {
     emit("register-success");
   }, 100);
+};
+
+const handleInput = (event) => {
+  const { value } = event.target;
+  
+  // Get the input's placeholder to identify which field is being updated
+  const placeholder = event.target.placeholder;
+  
+  switch (placeholder) {
+    case 'ادخل اسمك بالكامل':
+    case 'ادخل اسم المؤسسة':
+      if (selectedType.value === 'شخصي') {
+        name.value = value;
+      } else {
+        companyName.value = value;
+      }
+      break;
+    case 'ادخل رقم التلفون':
+      phone.value = value;
+      break;
+    case 'البريد الالكتروني':
+      email.value = value;
+      break;
+    case 'كلمة المرور':
+      password.value = value;
+      break;
+  }
 };
 
 defineExpose({ openModal, closeModal });
@@ -122,23 +188,24 @@ import logo from "~/assets/logo.png";
 
         <!-- Registration form -->
         <form @submit.prevent="handleRegister" class="space-y-4">
-          <!-- Full Name -->
+          <!-- Full Name / Company Name -->
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">
-              الاسم كامل
+              {{ selectedType === 'شخصي' ? 'الاسم كامل' : 'اسم المؤسسة' }}
             </label>
             <div class="relative">
               <input
-                v-model="fullName"
+                :value="selectedType === 'شخصي' ? name : companyName"
                 type="text"
                 required
                 :disabled="loading"
-                placeholder="ادخل اسمك بالكامل"
+                :placeholder="selectedType === 'شخصي' ? 'ادخل اسمك بالكامل' : 'ادخل اسم المؤسسة'"
                 class="w-full border rounded-lg py-3 px-4 pr-10"
                 dir="rtl"
+                @input="handleInput"
               />
               <Icon
-                name="ph:user"
+                :name="selectedType === 'شخصي' ? 'ph:user' : 'ph:buildings'"
                 class="absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 w-5 h-5"
               />
             </div>
@@ -151,13 +218,14 @@ import logo from "~/assets/logo.png";
             </label>
             <div class="relative">
               <input
-                v-model="phone"
+                :value="phone"
                 type="tel"
                 required
                 :disabled="loading"
                 placeholder="ادخل رقم التلفون"
                 class="w-full border rounded-lg py-3 px-4 pr-10"
                 dir="rtl"
+                @input="handleInput"
               />
               <Icon
                 name="ph:phone"
@@ -173,13 +241,14 @@ import logo from "~/assets/logo.png";
             </label>
             <div class="relative">
               <input
-                v-model="email"
+                :value="email"
                 type="email"
                 required
                 :disabled="loading"
                 placeholder="البريد الالكتروني"
                 class="w-full border rounded-lg py-3 px-4 pr-10"
                 dir="rtl"
+                @input="handleInput"
               />
               <Icon
                 name="ph:envelope"
@@ -195,13 +264,14 @@ import logo from "~/assets/logo.png";
             </label>
             <div class="relative">
               <input
-                v-model="password"
+                :value="password"
                 type="password"
                 required
                 :disabled="loading"
                 placeholder="كلمة المرور"
                 class="w-full border rounded-lg py-3 px-4 pr-10"
                 dir="rtl"
+                @input="handleInput"
               />
               <Icon
                 name="ph:lock"
@@ -221,7 +291,8 @@ import logo from "~/assets/logo.png";
       <div class="p-6 border-t">
         <!-- Submit Button -->
         <button
-          type="submit"
+          @click="handleRegister"
+          type="button"
           :disabled="loading"
           class="w-full bg-green-600 text-white rounded-lg py-3 px-4 hover:bg-green-700 disabled:opacity-50 font-medium mb-4"
         >

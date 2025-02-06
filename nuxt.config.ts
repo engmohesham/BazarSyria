@@ -42,5 +42,8 @@ export default defineNuxtConfig({
     public: {
       apiBase: 'https://bazar-syria.vercel.app'
     }
+  },
+  build: {
+    transpile: ['@vue-leaflet/vue-leaflet']
   }
 });

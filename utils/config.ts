@@ -1,9 +1,9 @@
-export const API_BASE_URL = 'https://bazar-syria.vercel.app'
+export const API_BASE_URL = 'https://pzsyria.com/api'
 
 export const API_ENDPOINTS = {
   // Auth
   LOGIN: '/auth/login',
-  REGISTER: '/auth/register',
+  REGISTER: '/user',
   
   // User
   PROFILE: '/auth/profile',
@@ -16,6 +16,22 @@ export const API_ENDPOINTS = {
   ADS: '/advertisement',
   USER_ADS: '/advertisement/all',
   TOGGLE_AD: '/advertisement/toggle',
+  
+  // Categories
+  CATEGORIES: '/category/all',
+  SUBCATEGORIES: '/category', // /{categoryId}/subcategories
+  
+  // Brands
+  BRANDS: '/brands',
+  
+  // Cities and Regions
+  CITIES: '/cities',
+  REGIONS: '/regions', // /{cityId}/regions
+  
+  // Additional Specifications
+  CONDITIONS: '/conditions',
+  FUEL_TYPES: '/fuel-types',
+  TRANSMISSIONS: '/transmissions',
 }
 
 // تحديث دالة getAuthHeaders لتكون متوافقة مع SSR
