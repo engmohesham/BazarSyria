@@ -1,4 +1,4 @@
-export const API_BASE_URL = 'http://147.93.120.237/api'
+export const API_BASE_URL = 'https://147.93.120.237/api'
 
 export const API_ENDPOINTS = {
   // Auth
