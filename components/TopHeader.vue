@@ -475,7 +475,7 @@ const navigateToProfile = () => {
   toggleMobileMenu();
 }
 </script>
-navigateToProfile
+
 <style scoped>
 .dropdown-container {
   position: relative;
