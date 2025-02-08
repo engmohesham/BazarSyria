@@ -60,6 +60,17 @@ const handleLogout = async () => {
             <p class="text-sm text-gray-500">إدارة إعلاناتك النشطة</p>
           </div>
         </NuxtLink>
+
+        <NuxtLink 
+          to="/account/settings"
+          class="flex items-center gap-4 p-6 bg-white rounded-lg shadow hover:shadow-md transition-shadow"
+        >
+          <Icon name="ph:gear" class="w-8 h-8 text-green-600" />
+          <div>
+            <h3 class="font-medium">الإعدادات العامة</h3>
+            <p class="text-sm text-gray-500">تعديل إعدادات الحساب</p>
+          </div>
+        </NuxtLink>
       </div>
     </div>
   </div>

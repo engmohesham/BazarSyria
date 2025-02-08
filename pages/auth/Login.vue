@@ -63,11 +63,11 @@ const handleRegisterClick = () => {
 }
 
 // Add check for existing session
-onMounted(() => {
-  if (process.client && localStorage.getItem('session-token')) {
-    router.push('/account')
-  }
-})
+// onMounted(() => {
+//   if (process.client && localStorage.getItem('session-token')) {
+//     router.push('/account')
+//   }
+// })
 
 defineExpose({ openModal, closeModal })
 

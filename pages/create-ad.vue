@@ -215,12 +215,12 @@ definePageMeta({
 })
 
 // Redirect to home if not authenticated
-onMounted(() => {
-  const token = localStorage.getItem('session-token')
-  if (!token) {
-    router.push('/')
-  }
-})
+// onMounted(() => {
+//   const token = localStorage.getItem('session-token')
+//   if (!token) {
+//     router.push('/')
+//   }
+// })
 </script>
 
 <style scoped>

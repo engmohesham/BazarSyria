@@ -74,6 +74,8 @@ export const useServices = () => {
         }
       );
 
+      console.log(data);
+
       if (error.value) throw error.value;
       return { data: data.value, error: null };
     } catch (err) {
@@ -377,6 +379,94 @@ export const useServices = () => {
     }
   };
 
+  // Chat Methods
+  const createChatRoom = async (participantId: string) => {
+    try {
+      const { data, error } = await useFetch(
+        `${API_BASE_URL}${API_ENDPOINTS.CHAT}`,
+        {
+          method: 'POST',
+          body: { participantId },
+          headers: getAuthHeaders(),
+        }
+      );
+
+      if (error.value) throw error.value;
+      return { data: data.value, error: null };
+    } catch (err) {
+      console.error('Error creating chat room:', err);
+      return { data: null, error: err };
+    }
+  };
+
+  const getUserChats = async () => {
+    try {
+      const { data, error } = await useFetch(
+        `${API_BASE_URL}${API_ENDPOINTS.CHAT}`,
+        {
+          headers: getAuthHeaders(),
+        }
+      );
+
+      if (error.value) throw error.value;
+      return { data: data.value, error: null };
+    } catch (err) {
+      console.error('Error fetching user chats:', err);
+      return { data: null, error: err };
+    }
+  };
+
+  const getChatMessages = async (chatId: string) => {
+    try {
+      const { data, error } = await useFetch(
+        `${API_BASE_URL}/chat/messages/${chatId}`,
+        {
+          headers: getAuthHeaders(),
+        }
+      );
+
+      console.log('Messages Response:', data.value);
+
+      if (error.value) throw error.value;
+      return { data: data.value, error: null };
+    } catch (err) {
+      console.error('Error fetching chat messages:', err);
+      return { data: null, error: err };
+    }
+  };
+
+  const sendMessage = async (chatId: string, content: string) => {
+    try {
+      const { data, error } = await useFetch(
+        `${API_BASE_URL}/chat/messages`,
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            chatId,
+            content,
+            sender: localStorage.getItem('userId')
+          }),
+          headers: {
+            ...getAuthHeaders(),
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      console.log('Send Message Response:', data.value);
+
+      if (error.value) {
+        console.error('Send Message Error:', error.value);
+        throw error.value;
+      }
+      
+      return { data: data.value, error: null };
+    } catch (err) {
+      console.error('Error sending message:', err);
+      return { data: null, error: err };
+    }
+  };
+
   return {
     // State
     isLoggedIn,
@@ -411,5 +501,11 @@ export const useServices = () => {
     getConditions,
     getFuelTypes,
     getTransmissions,
+
+    // Chat Methods
+    createChatRoom,
+    getUserChats,
+    getChatMessages,
+    sendMessage,
   };
 };

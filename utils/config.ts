@@ -1,4 +1,4 @@
-export const API_BASE_URL = 'https://pzsyria.com/api'
+export const API_BASE_URL = 'http://147.93.120.237/api'
 
 export const API_ENDPOINTS = {
   // Auth
@@ -32,6 +32,11 @@ export const API_ENDPOINTS = {
   CONDITIONS: '/conditions',
   FUEL_TYPES: '/fuel-types',
   TRANSMISSIONS: '/transmissions',
+  
+  // Chat
+  CHAT: '/chat',
+  CHAT_MESSAGES: '/chat/messages',
+
 }
 
 // تحديث دالة getAuthHeaders لتكون متوافقة مع SSR

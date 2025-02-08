@@ -1,6 +1,8 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
+
+
 export default defineNuxtConfig({
-  modules: ["@nuxtjs/tailwindcss", "@nuxt/icon", "@nuxt/image"],
+  modules: ["@nuxtjs/tailwindcss", "@nuxt/icon"],
   pages: true,
   compatibilityDate: "2025-01-27",
   css: ["~/assets/css/tailwind.css"],
@@ -40,10 +42,10 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     public: {
-      apiBase: 'https://bazar-syria.vercel.app'
-    }
+      apiBase: "https://bazar-syria.vercel.app",
+    },
   },
   build: {
-    transpile: ['@vue-leaflet/vue-leaflet']
+    transpile: ["@vue-leaflet/vue-leaflet"],
   }
 });
