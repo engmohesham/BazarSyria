@@ -232,7 +232,7 @@ onMounted(async () => {
   // Fetch user profile
   const { data, error } = await getProfile();
 
-  console.log("Profile Response:", data); // للتحقق من البيانات القادمة
+  // console.log("Profile Response:", data); // للتحقق من البيانات القادمة
 
   if (data && data.user._id) {
     // Save user ID to localStorage and ref
@@ -293,16 +293,34 @@ const formatTime = (date: string | Date) => {
   }
 };
 
-// تحديث دالة إرسال الرسالة لتستخدم Socket.IO
+// مراقبة التغييرات في الرسائل
+watch(messages, (newMessages) => {
+  if (selectedChat.value?._id) {
+    // حفظ الرسائل في التخزين المحلي
+    localStorage.setItem(
+      `chat_${selectedChat.value._id}`, 
+      JSON.stringify(newMessages)
+    );
+    
+    // التمرير لأسفل عند إضافة رسالة جديدة
+    if (newMessages.length > 0) {
+      scrollToBottom();
+    }
+  }
+}, { deep: true });
+
+// تحديث دالة إرسال الرسالة
 const sendNewMessage = async () => {
   if (!newMessage.value.trim() || !selectedChat.value) return;
 
-  const tempMessage: Message = {
+  const currentUserId = localStorage.getItem('userId');
+  const messageContent = newMessage.value;
+
+  const tempMessage = {
     _id: `temp-${Date.now()}`,
-    content: newMessage.value,
+    content: messageContent,
     sender: {
-      _id: userId.value || '',
-      email: localStorage.getItem('userEmail') || ''
+      _id: currentUserId
     },
     createdAt: new Date().toISOString(),
     chatId: selectedChat.value._id,
@@ -311,44 +329,142 @@ const sendNewMessage = async () => {
 
   try {
     messages.value = [...messages.value, tempMessage];
-    
-    const localMessages = JSON.parse(localStorage.getItem(`chat_${selectedChat.value._id}`) || '[]');
-    localMessages.push(tempMessage);
-    localStorage.setItem(`chat_${selectedChat.value._id}`, JSON.stringify(localMessages));
-
-    const messageContent = newMessage.value;
     newMessage.value = '';
     scrollToBottom();
 
-    const { data, error } = await sendMessage(
-      selectedChat.value._id,
-      messageContent
-    );
+    // إرسال الرسالة عبر Socket.IO
+    socket.value.emit("sendMessage", {
+      chatId: selectedChat.value._id,
+      message: messageContent,
+      senderId: currentUserId,
+    });
 
-    if (error) {
-      throw error;
-    }
-
-    if (data) {
-      messages.value = messages.value.filter(m => m._id !== tempMessage._id);
-      
-      const confirmedMessage: Message = {
-        ...data,
-        createdAt: isValidDate(data.createdAt) ? data.createdAt : new Date().toISOString()
-      };
-      
-      messages.value = [...messages.value, confirmedMessage].sort((a, b) => 
-        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-      );
-
-      const updatedLocalMessages = messages.value.filter(m => !m.pending);
-      localStorage.setItem(`chat_${selectedChat.value._id}`, JSON.stringify(updatedLocalMessages));
-    }
   } catch (err) {
     console.error('Error in sendNewMessage:', err);
     messages.value = messages.value.filter(m => m._id !== tempMessage._id);
   }
 };
+
+// تحديث دالة تهيئة Socket.IO
+const initializeSocket = () => {
+  socket.value = io("ws://147.93.120.237", {
+    transports: ["websocket"],
+    reconnection: true,
+    reconnectionAttempts: 5,
+    reconnectionDelay: 3000,
+    auth: {
+      token: localStorage.getItem("session-token"),
+    },
+  });
+
+  socket.value.on("connect", () => {
+    console.log("Connected to socket server");
+    isConnected.value = true;
+  });
+
+  // استقبال الرسائل الجديدة في الوقت الفعلي
+  socket.value.on("receiveMessage", (message) => {
+    console.log("Received new message:", message);
+    if (message.chatId === selectedChat.value?._id) {
+      // إزالة الرسالة المؤقتة إذا كانت موجودة
+      messages.value = messages.value.filter(m => !m.pending);
+      
+      // إضافة الرسالة الجديدة
+      messages.value = [...messages.value, {
+        ...message,
+        createdAt: isValidDate(message.createdAt) ? message.createdAt : new Date().toISOString()
+      }].sort((a, b) => 
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      );
+      scrollToBottom();
+    }
+  });
+
+  socket.value.on("error", (error) => {
+    console.error("Socket error:", error);
+  });
+
+  socket.value.on("disconnect", () => {
+    console.log("Disconnected from socket server");
+    isConnected.value = false;
+  });
+};
+
+// التمرير إلى آخر رسالة
+const scrollToBottom = () => {
+  setTimeout(() => {
+    const container = document.querySelector(".messages-container");
+    if (container) {
+      container.scrollTop = container.scrollHeight;
+    }
+  }, 100);
+};
+
+// تحديث دالة اختيار المحادثة
+const selectChat = async (chat) => {
+  selectedChat.value = chat;
+  messages.value = []; // مسح الرسائل السابقة
+  
+  if (socket.value?.connected) {
+    // الانضمام إلى غرفة المحادثة
+    socket.value.emit("joinChat", {
+      chatId: chat._id,
+      userId: localStorage.getItem('userId')
+    });
+    
+    // جلب الرسائل باستخدام API
+    const { data, error } = await getChatMessages(chat._id);
+    if (data && !error) {
+      const validMessages = data.map(msg => ({
+        ...msg,
+        createdAt: isValidDate(msg.createdAt) ? msg.createdAt : new Date().toISOString()
+      }));
+
+      messages.value = validMessages.sort((a, b) => 
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      );
+
+      scrollToBottom();
+    }
+  }
+};
+
+// تحديث مراقب المحادثة المحددة
+watch(selectedChat, async (newChat) => {
+  if (newChat && socket.value?.connected) {
+    messages.value = []; // مسح الرسائل السابقة
+    
+    socket.value.emit("joinChat", {
+      chatId: newChat._id,
+      userId: localStorage.getItem('userId')
+    });
+
+    // جلب الرسائل باستخدام API
+    const { data, error } = await getChatMessages(newChat._id);
+    if (data && !error) {
+      const validMessages = data.map(msg => ({
+        ...msg,
+        createdAt: isValidDate(msg.createdAt) ? msg.createdAt : new Date().toISOString()
+      }));
+
+      messages.value = validMessages.sort((a, b) => 
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      );
+
+      scrollToBottom();
+    }
+  }
+});
+
+onMounted(() => {
+  initializeSocket();
+});
+
+onUnmounted(() => {
+  if (socket.value) {
+    socket.value.disconnect();
+  }
+});
 
 // تحديث دالة تحديث الرسائل من السيرفر
 const refreshMessages = async () => {
@@ -379,96 +495,6 @@ const refreshMessages = async () => {
     console.error('Error in refreshMessages:', err);
   }
 };
-
-// تحديث دالة تهيئة Socket.IO
-const initializeSocket = () => {
-  socket.value = io("ws://147.93.120.237", {
-    transports: ["websocket"],
-    reconnection: true,
-    reconnectionAttempts: 5,
-    reconnectionDelay: 3000,
-    auth: {
-      token: localStorage.getItem("session-token"), // إضافة التوكن للتحقق
-    },
-  });
-
-  socket.value.on("connect", () => {
-    console.log("تم الاتصال بالسيرفر:", socket.value.id);
-    isConnected.value = true;
-
-    if (userId.value) {
-      socket.value.emit("join_room", userId.value);
-    }
-  });
-
-  socket.value.on("disconnect", () => {
-    console.log("تم قطع الاتصال");
-    isConnected.value = false;
-  });
-
-  socket.value.on("connect_error", (error) => {
-    console.error("خطأ في الاتصال:", error);
-    isConnected.value = false;
-  });
-
-  // استقبال الرسائل الجديدة
-  socket.value.on("new_message", (message) => {
-    if (message.chatId === selectedChat.value?._id) {
-      messages.value.push(message);
-      scrollToBottom();
-    }
-  });
-
-  // استقبال الرسائل السابقة عند اختيار محادثة
-  socket.value.on("chat_messages", (chatMessages) => {
-    messages.value = chatMessages;
-    scrollToBottom();
-  });
-};
-
-// التمرير إلى آخر رسالة
-const scrollToBottom = () => {
-  setTimeout(() => {
-    const container = document.querySelector(".messages-container");
-    if (container) {
-      container.scrollTop = container.scrollHeight;
-    }
-  }, 100);
-};
-
-// تحديث دالة اختيار المحادثة
-const selectChat = async (chat: any) => {
-  selectedChat.value = chat;
-  
-  try {
-    const localMessages = JSON.parse(localStorage.getItem(`chat_${chat._id}`) || '[]');
-    messages.value = localMessages;
-
-    await refreshMessages();
-  } catch (err) {
-    console.error('Error in selectChat:', err);
-  }
-};
-
-// إضافة مراقب للاتصال بالسيرفر
-watch(isConnected, async (newValue) => {
-  if (newValue && selectedChat.value) {
-    await refreshMessages();
-  }
-});
-
-// تحديث الرسائل دورياً
-onMounted(() => {
-  const refreshInterval = setInterval(async () => {
-    if (selectedChat.value && isConnected.value) {
-      await refreshMessages();
-    }
-  }, 10000); // تحديث كل 10 ثواني
-
-  onUnmounted(() => {
-    clearInterval(refreshInterval);
-  });
-});
 
 // دالة جلب المستخدمين المتاحين
 const fetchAvailableUsers = async () => {

@@ -74,7 +74,7 @@ export const useServices = () => {
         }
       );
 
-      console.log(data);
+      // console.log(data);
 
       if (error.value) throw error.value;
       return { data: data.value, error: null };
@@ -425,7 +425,7 @@ export const useServices = () => {
         }
       );
 
-      console.log('Messages Response:', data.value);
+      // console.log('Messages Response:', data.value);
 
       if (error.value) throw error.value;
       return { data: data.value, error: null };
@@ -453,7 +453,7 @@ export const useServices = () => {
         }
       );
 
-      console.log('Send Message Response:', data.value);
+      // console.log('Send Message Response:', data.value);
 
       if (error.value) {
         console.error('Send Message Error:', error.value);
