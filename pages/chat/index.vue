@@ -4,6 +4,9 @@
     <div class="w-80 border-r bg-white">
       <div class="p-4 border-b">
         <div class="flex items-center justify-between">
+          <button @click="goBack" class="text-gray-600">
+            <Icon name="heroicons:arrow-right" class="w-5 h-5" />
+          </button>
           <h2 class="font-semibold text-lg">المحادثات</h2>
           <button @click="showNewChatModal = true">
             <Icon name="heroicons:plus" class="w-5 h-5" />
@@ -14,15 +17,21 @@
         <div
           v-for="chat in chats"
           :key="chat._id"
-          class="p-4 border-b hover:bg-gray-50 cursor-pointer"
+          class="p-4 border-b hover:bg-gray-50 cursor-pointer relative"
           :class="{ 'bg-gray-50': selectedChat?._id === chat._id }"
           @click="selectChat(chat)"
         >
           <div class="flex items-center gap-3">
-            <img
-              :src="chat.avatar || '/default-avatar.png'"
-              class="w-12 h-12 rounded-full"
-            />
+            <div class="relative">
+              <img :src="chat.avatar || user" class="w-12 h-12 rounded-full" />
+              <!-- مؤشر الرسائل غير المقروءة -->
+              <div
+                v-if="chat.unreadCount > 0"
+                class="absolute -top-1 -right-1 bg-green-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
+              >
+                {{ chat.unreadCount }}
+              </div>
+            </div>
             <div class="flex-1">
               <div class="flex justify-between items-start">
                 <h3 class="font-medium">{{ chat.name }}</h3>
@@ -30,7 +39,10 @@
                   formatTime(chat.lastMessageTime)
                 }}</span>
               </div>
-              <p class="text-sm text-gray-500 truncate mt-1">
+              <p 
+                class="text-sm truncate mt-1"
+                :class="chat.unreadCount > 0 ? 'text-gray-900 font-medium' : 'text-gray-500'"
+              >
                 {{ chat.lastMessage }}
               </p>
             </div>
@@ -40,18 +52,20 @@
     </div>
 
     <!-- Main Chat Area -->
-    <div class="flex-1 flex flex-col">
+    <div class="flex-1 flex flex-col" v-if="selectedChat">
       <!-- Header -->
-      <div class="bg-white p-4 flex items-center justify-between border-b">
+      <div class="bg-white p-2.5 flex items-center justify-between border-b">
         <div class="flex items-center gap-4">
           <!-- زر الرجوع -->
-          <button @click="goBack" class="text-gray-600">
+          <button @click="closeChat" class="text-gray-600">
             <Icon name="heroicons:arrow-right" class="w-5 h-5" />
           </button>
           <div class="flex items-center gap-2">
             <img
-              :src="selectedChat?.avatar || '/default-avatar.png'"
-              class="w-10 h-10 rounded-full"
+              :src="selectedChat?.avatar || user"
+              :alt="selectedChat?.name || 'User'"
+              class="w-10 h-10 rounded-full object-cover"
+              @error="handleImageError"
             />
             <div class="text-right">
               <h3 class="font-semibold">{{ selectedChat?.name }}</h3>
@@ -68,48 +82,45 @@
       </div>
 
       <!-- Messages Area -->
-      <div class="flex-1 bg-gray-50 p-4 overflow-y-auto">
+      <div
+        id="messages-container"
+        class="flex-1 bg-gray-50 p-4 overflow-y-auto scroll-smooth"
+        ref="messagesContainer"
+      >
         <div v-for="message in messages" :key="message._id" class="mb-4">
           <!-- رسائل المستخدم الحالي (أنت) -->
           <div
-            v-if="message.sender.email !== 'pazarsyria@gmail.com'"
+            v-if="isCurrentUser(message)"
             class="flex items-start justify-end gap-2"
           >
-            <div class="flex flex-col items-end">
+            <div class="flex flex-col items-end max-w-[70%]">
               <div
-                class="bg-white text-gray-800 rounded-lg py-2 px-4 shadow-sm max-w-[80%]"
+                class="bg-green-600 text-white rounded-2xl py-2 px-4 shadow-sm"
               >
-                <p class="text-sm">{{ message.content }}</p>
+                <p class="text-sm whitespace-pre-wrap break-words">
+                  {{ message.content }}
+                </p>
               </div>
-              <div class="flex items-center gap-1 mt-1">
-                <span class="text-xs text-gray-500">{{
+              <div class="flex items-center gap-1 mt-1 px-1">
+                <span class="text-xs text-gray-500 ml-1">{{
                   formatTime(message.createdAt)
                 }}</span>
                 <Icon name="heroicons:check" class="w-3 h-3 text-gray-400" />
               </div>
             </div>
-            <img
-              :src="userAvatar || '/default-avatar.png'"
-              class="w-8 h-8 rounded-full"
-            />
           </div>
 
           <!-- رسائل المستخدم الآخر -->
-          <div
-            v-else
-            class="flex items-start gap-2"
-          >
-            <img
-              :src="selectedChat?.avatar || '/default-avatar.png'"
-              class="w-8 h-8 rounded-full"
-            />
-            <div class="flex flex-col items-start">
+          <div v-else class="flex items-start gap-2">
+            <div class="flex flex-col items-start max-w-[70%]">
               <div
-                class="bg-green-600 text-white rounded-lg py-2 px-4 shadow-sm max-w-[80%]"
+                class="bg-white text-gray-800 rounded-2xl py-2 px-4 shadow-sm"
               >
-                <p class="text-sm">{{ message.content }}</p>
+                <p class="text-sm whitespace-pre-wrap break-words">
+                  {{ message.content }}
+                </p>
               </div>
-              <span class="text-xs text-gray-500 mt-1">{{
+              <span class="text-xs text-gray-500 mt-1 px-1">{{
                 formatTime(message.createdAt)
               }}</span>
             </div>
@@ -137,7 +148,7 @@
           />
           <button
             @click="sendNewMessage"
-            class="bg-green-600 text-white rounded-full p-2"
+            class="bg-green-600 text-white rounded-full p-2 flex justify-center items-center cursor hover:bg-green-800 ease-linear duration-150"
             :disabled="!newMessage.trim()"
           >
             <Icon name="heroicons:paper-airplane" class="w-5 h-5" />
@@ -146,8 +157,22 @@
       </div>
     </div>
 
+    <!-- Placeholder when no chat is selected -->
+    <div v-else class="flex-1 flex items-center justify-center bg-gray-50">
+      <div class="text-center text-gray-500">
+        <Icon
+          name="heroicons:chat-bubble-left-right"
+          class="w-16 h-16 mx-auto mb-4"
+        />
+        <p class="text-lg">اختر محادثة للبدء</p>
+      </div>
+    </div>
+
     <!-- Modal إنشاء محادثة جديدة -->
-    <div v-if="showNewChatModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div
+      v-if="showNewChatModal"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+    >
       <div class="bg-white rounded-lg p-6 w-96">
         <div class="flex justify-between items-center mb-4">
           <h3 class="text-lg font-semibold">محادثة جديدة</h3>
@@ -156,25 +181,31 @@
           </button>
         </div>
         <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-700 mb-2">اختر المستخدمين</label>
-          <select 
-            v-model="selectedUsers" 
-            multiple 
+          <label class="block text-sm font-medium text-gray-700 mb-2"
+            >اختر المستخدمين</label
+          >
+          <select
+            v-model="selectedUsers"
+            multiple
             class="w-full p-2 border rounded-lg"
           >
-            <option v-for="user in availableUsers" :key="user._id" :value="user._id">
+            <option
+              v-for="user in availableUsers"
+              :key="user._id"
+              :value="user._id"
+            >
               {{ user.name || user.email }}
             </option>
           </select>
         </div>
         <div class="flex justify-end gap-2">
-          <button 
+          <button
             @click="showNewChatModal = false"
             class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
           >
             إلغاء
           </button>
-          <button 
+          <button
             @click="createNewChat"
             class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
             :disabled="!selectedUsers.length"
@@ -188,10 +219,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch, onUnmounted } from "vue";
+import {
+  ref,
+  onMounted,
+  watch,
+  onUnmounted,
+  onBeforeMount,
+  computed,
+  nextTick,
+} from "vue";
 import io from "socket.io-client";
 import { useServices } from "@/composables/useServices";
 import { useRouter } from "vue-router";
+import user from "@/assets/user.png";
 
 const {
   getProfile,
@@ -208,11 +248,52 @@ const chats = ref([]);
 const wallet = ref({ balance: 0 });
 const isConnected = ref(false);
 const userId = ref<string | null>(null);
-const userAvatar = ref(null);
+const USER_EMAIL = ref<string | null>(null);
 const showNewChatModal = ref(false);
 const selectedUsers = ref<string[]>([]);
 const availableUsers = ref<any[]>([]);
 const router = useRouter();
+
+// إضافة computed properties للمستخدم الحالي
+const currentUserId = computed(() => {
+  if (process.client) {
+    return localStorage.getItem("userId");
+  }
+  return null;
+});
+
+const currentUserEmail = computed(() => {
+  if (process.client) {
+    return localStorage.getItem("userEmail");
+  }
+  return null;
+});
+
+// دالة التحقق من المرسل مع طباعة البيانات للتأكد
+const isCurrentUser = (message) => {
+  console.log("Message Data:", {
+    messageId: message._id,
+    senderId: message.sender?._id,
+    senderEmail: message.sender?.email,
+    currentUserId: currentUserId.value,
+    currentUserEmail: currentUserEmail.value,
+  });
+
+  // التحقق من المرسل باستخدام senderId مباشرة
+  if (message.senderId) {
+    return message.senderId === currentUserId.value;
+  }
+
+  // التحقق من المرسل باستخدام sender object
+  if (message.sender) {
+    return (
+      message.sender._id === currentUserId.value ||
+      message.sender.email === currentUserEmail.value
+    );
+  }
+
+  return false;
+};
 
 // تعريف الأنواع
 interface Message {
@@ -238,6 +319,8 @@ onMounted(async () => {
     // Save user ID to localStorage and ref
     localStorage.setItem("userId", data.user._id);
     userId.value = data.user._id;
+    localStorage.setItem("userEmail", data.user.email);
+    USER_EMAIL.value = data.user.email;
 
     // Initialize socket connection after getting user ID
     initializeSocket();
@@ -278,72 +361,44 @@ const isValidDate = (date: string | Date) => {
 // تحديث دالة formatTime
 const formatTime = (date: string | Date) => {
   if (!date || !isValidDate(date)) {
-    return 'الآن'; // إرجاع "الآن" في حالة التاريخ غير صالح
+    return "الآن"; // إرجاع "الآن" في حالة التاريخ غير صالح
   }
-  
+
   try {
-    return new Date(date).toLocaleTimeString('ar-SA', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
+    return new Date(date).toLocaleTimeString("ar-SA", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
     });
   } catch (err) {
-    console.error('Error formatting time:', err);
-    return 'الآن';
+    console.error("Error formatting time:", err);
+    return "الآن";
   }
+};
+
+// دالة التمرير لأسفل المحادثة
+const scrollToBottom = () => {
+  nextTick(() => {
+    const container = document.getElementById("messages-container");
+    if (container) {
+      container.scrollTop = container.scrollHeight;
+    }
+  });
 };
 
 // مراقبة التغييرات في الرسائل
-watch(messages, (newMessages) => {
-  if (selectedChat.value?._id) {
-    // حفظ الرسائل في التخزين المحلي
-    localStorage.setItem(
-      `chat_${selectedChat.value._id}`, 
-      JSON.stringify(newMessages)
-    );
-    
-    // التمرير لأسفل عند إضافة رسالة جديدة
-    if (newMessages.length > 0) {
-      scrollToBottom();
-    }
-  }
-}, { deep: true });
-
-// تحديث دالة إرسال الرسالة
-const sendNewMessage = async () => {
-  if (!newMessage.value.trim() || !selectedChat.value) return;
-
-  const currentUserId = localStorage.getItem('userId');
-  const messageContent = newMessage.value;
-
-  const tempMessage = {
-    _id: `temp-${Date.now()}`,
-    content: messageContent,
-    sender: {
-      _id: currentUserId
-    },
-    createdAt: new Date().toISOString(),
-    chatId: selectedChat.value._id,
-    pending: true
-  };
-
-  try {
-    messages.value = [...messages.value, tempMessage];
-    newMessage.value = '';
+watch(
+  messages,
+  () => {
     scrollToBottom();
+  },
+  { deep: true }
+);
 
-    // إرسال الرسالة عبر Socket.IO
-    socket.value.emit("sendMessage", {
-      chatId: selectedChat.value._id,
-      message: messageContent,
-      senderId: currentUserId,
-    });
-
-  } catch (err) {
-    console.error('Error in sendNewMessage:', err);
-    messages.value = messages.value.filter(m => m._id !== tempMessage._id);
-  }
-};
+// مراقبة تغيير المحادثة المحددة
+watch(selectedChat, () => {
+  scrollToBottom();
+});
 
 // تحديث دالة تهيئة Socket.IO
 const initializeSocket = () => {
@@ -362,24 +417,6 @@ const initializeSocket = () => {
     isConnected.value = true;
   });
 
-  // استقبال الرسائل الجديدة في الوقت الفعلي
-  socket.value.on("receiveMessage", (message) => {
-    console.log("Received new message:", message);
-    if (message.chatId === selectedChat.value?._id) {
-      // إزالة الرسالة المؤقتة إذا كانت موجودة
-      messages.value = messages.value.filter(m => !m.pending);
-      
-      // إضافة الرسالة الجديدة
-      messages.value = [...messages.value, {
-        ...message,
-        createdAt: isValidDate(message.createdAt) ? message.createdAt : new Date().toISOString()
-      }].sort((a, b) => 
-        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-      );
-      scrollToBottom();
-    }
-  });
-
   socket.value.on("error", (error) => {
     console.error("Socket error:", error);
   });
@@ -388,75 +425,127 @@ const initializeSocket = () => {
     console.log("Disconnected from socket server");
     isConnected.value = false;
   });
+
+  // تسجيل معالج استقبال الرسائل
+  socket.value.on("receiveMessage", (message) => {
+    console.log("🚀 Socket Message Received:", message);
+
+    // تحديث عدد الرسائل غير المقروءة
+    updateUnreadCount(message.chatId);
+
+    if (message?.chatId === selectedChat.value?._id) {
+      refreshMessages();
+    }
+  });
 };
 
-// التمرير إلى آخر رسالة
-const scrollToBottom = () => {
-  setTimeout(() => {
-    const container = document.querySelector(".messages-container");
-    if (container) {
-      container.scrollTop = container.scrollHeight;
-    }
-  }, 100);
+// تحديث دالة إرسال الرسالة
+const sendNewMessage = async () => {
+  if (!newMessage.value.trim() || !selectedChat.value) return;
+
+  const currentUserId = process.client ? localStorage.getItem("userId") : null;
+  const messageContent = newMessage.value;
+
+  try {
+    // إرسال الرسالة مباشرة بدون إضافة رسالة مؤقتة
+    socket.value.emit("sendMessage", {
+      message: messageContent,
+      chatId: selectedChat.value._id,
+      senderId: currentUserId,
+    });
+
+    newMessage.value = "";
+
+    // تحديث الرسائل بعد الإرسال
+    setTimeout(async () => {
+      await refreshMessages();
+    }, 1000);
+  } catch (err) {
+    console.error("Error in sendNewMessage:", err);
+  }
 };
 
 // تحديث دالة اختيار المحادثة
 const selectChat = async (chat) => {
   selectedChat.value = chat;
-  messages.value = []; // مسح الرسائل السابقة
-  
-  if (socket.value?.connected) {
-    // الانضمام إلى غرفة المحادثة
-    socket.value.emit("joinChat", {
-      chatId: chat._id,
-      userId: localStorage.getItem('userId')
-    });
+  messages.value = [];
+
+  try {
+    // تحديث حالة القراءة عند فتح المحادثة
+    await markChatAsRead(chat._id);
     
-    // جلب الرسائل باستخدام API
-    const { data, error } = await getChatMessages(chat._id);
-    if (data && !error) {
-      const validMessages = data.map(msg => ({
-        ...msg,
-        createdAt: isValidDate(msg.createdAt) ? msg.createdAt : new Date().toISOString()
-      }));
+    // تحديث عدد الرسائل غير المقروءة في القائمة
+    const updatedChats = chats.value.map((c) => {
+      if (c._id === chat._id) {
+        return { ...c, unreadCount: 0 };
+      }
+      return c;
+    });
+    chats.value = updatedChats;
 
-      messages.value = validMessages.sort((a, b) => 
-        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-      );
-
-      scrollToBottom();
+    // جلب الرسائل
+    const { data } = await getChatMessages(chat._id);
+    if (data) {
+      messages.value = data;
     }
+
+    if (socket.value?.connected) {
+      socket.value.emit("joinChat", {
+        chatId: chat._id,
+        userId: currentUserId.value
+      });
+    }
+  } catch (err) {
+    console.error('Error in selectChat:', err);
   }
 };
 
-// تحديث مراقب المحادثة المحددة
-watch(selectedChat, async (newChat) => {
-  if (newChat && socket.value?.connected) {
-    messages.value = []; // مسح الرسائل السابقة
-    
-    socket.value.emit("joinChat", {
-      chatId: newChat._id,
-      userId: localStorage.getItem('userId')
-    });
-
-    // جلب الرسائل باستخدام API
-    const { data, error } = await getChatMessages(newChat._id);
-    if (data && !error) {
-      const validMessages = data.map(msg => ({
-        ...msg,
-        createdAt: isValidDate(msg.createdAt) ? msg.createdAt : new Date().toISOString()
-      }));
-
-      messages.value = validMessages.sort((a, b) => 
-        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-      );
-
-      scrollToBottom();
+// دالة تحديث عدد الرسائل غير المقروءة
+const updateUnreadCount = (chatId) => {
+  const updatedChats = chats.value.map((chat) => {
+    if (chat._id === chatId && chat._id !== selectedChat.value?._id) {
+      return {
+        ...chat,
+        unreadCount: (chat.unreadCount || 0) + 1
+      };
     }
+    return chat;
+  });
+  chats.value = updatedChats;
+};
+
+// دالة وضع علامة "مقروء" على المحادثة
+const markChatAsRead = async (chatId) => {
+  try {
+    // هنا يجب إضافة طلب API لتحديث حالة القراءة في الباكند
+    await fetch(`/api/chats/${chatId}/read`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('session-token')}`
+      }
+    });
+  } catch (err) {
+    console.error('Error marking chat as read:', err);
   }
-});
+};
+
+// تحديث دالة جلب المحادثات
+const fetchChats = async () => {
+  try {
+    const { data } = await getUserChats();
+    if (data) {
+      chats.value = data.map(chat => ({
+        ...chat,
+        unreadCount: chat.unreadCount || 0
+      }));
+    }
+  } catch (err) {
+    console.error('Error fetching chats:', err);
+  }
+};
 
 onMounted(() => {
+  fetchChats();
   initializeSocket();
 });
 
@@ -472,27 +561,33 @@ const refreshMessages = async () => {
 
   try {
     const { data, error } = await getChatMessages(selectedChat.value._id);
-    
+
     if (error) {
       throw error;
     }
 
     if (data) {
-      const validMessages = data.map(msg => ({
+      const validMessages = data.map((msg) => ({
         ...msg,
-        createdAt: isValidDate(msg.createdAt) ? msg.createdAt : new Date().toISOString()
+        createdAt: isValidDate(msg.createdAt)
+          ? msg.createdAt
+          : new Date().toISOString(),
       }));
 
-      const pendingMessages = messages.value.filter(m => m.pending);
-      
-      messages.value = [...validMessages, ...pendingMessages].sort((a, b) => 
-        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      const pendingMessages = messages.value.filter((m) => m.pending);
+
+      messages.value = [...validMessages, ...pendingMessages].sort(
+        (a, b) =>
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
       );
 
-      localStorage.setItem(`chat_${selectedChat.value._id}`, JSON.stringify(messages.value));
+      localStorage.setItem(
+        `chat_${selectedChat.value._id}`,
+        JSON.stringify(messages.value)
+      );
     }
   } catch (err) {
-    console.error('Error in refreshMessages:', err);
+    console.error("Error in refreshMessages:", err);
   }
 };
 
@@ -500,12 +595,14 @@ const refreshMessages = async () => {
 const fetchAvailableUsers = async () => {
   try {
     const response = await fetch(`${API_BASE_URL}/users`, {
-      headers: getAuthHeaders()
+      headers: getAuthHeaders(),
     });
     const data = await response.json();
-    availableUsers.value = data.filter((user: any) => user._id !== userId.value);
+    availableUsers.value = data.filter(
+      (user: any) => user._id !== userId.value
+    );
   } catch (err) {
-    console.error('Error fetching users:', err);
+    console.error("Error fetching users:", err);
   }
 };
 
@@ -513,7 +610,7 @@ const fetchAvailableUsers = async () => {
 const createNewChat = async () => {
   try {
     const { data, error } = await createChatRoom({
-      users: selectedUsers.value
+      users: selectedUsers.value,
     });
 
     if (error) {
@@ -523,16 +620,16 @@ const createNewChat = async () => {
     if (data) {
       // إضافة المحادثة الجديدة للقائمة
       chats.value = [...chats.value, data];
-      
+
       // اختيار المحادثة الجديدة
       selectChat(data);
-      
+
       // إغلاق النافذة المنبثقة
       showNewChatModal.value = false;
       selectedUsers.value = [];
     }
   } catch (err) {
-    console.error('Error creating chat:', err);
+    console.error("Error creating chat:", err);
   }
 };
 
@@ -543,6 +640,17 @@ const goBack = () => {
   router.back();
 };
 
+// دالة إغلاق المحادثة
+const closeChat = () => {
+  selectedChat.value = null;
+  messages.value = [];
+  if (socket.value?.connected) {
+    socket.value.emit("leaveChat", {
+      chatId: selectedChat.value?._id,
+    });
+  }
+};
+
 // جلب المستخدمين عند فتح النافذة المنبثقة
 watch(showNewChatModal, (newValue) => {
   if (newValue) {
@@ -550,19 +658,31 @@ watch(showNewChatModal, (newValue) => {
   }
 });
 
-// تحديث التحقق من هوية المرسل
-const isCurrentUser = (message) => {
-  return message.sender.email === 'pazarsyria@gmail.com' // أو استخدم message.sender._id === userId
-}
-
 // يمكنك أيضًا طباعة بيانات الرسائل للتحقق
-watch(messages, (newMessages) => {
-  console.log('Messages:', newMessages.map(m => ({
-    content: m.content,
-    sender: m.sender.email,
-    isCurrentUser: isCurrentUser(m)
-  })))
-}, { deep: true })
+// watch(
+//   messages,
+//   (newMessages) => {
+//     console.log(
+//       "Messages:",
+//       newMessages.map((m) => ({
+//         content: m.content,
+//         sender: m.sender.email,
+//         isCurrentUser: isCurrentUser(m),
+//       }))
+//     );
+//   },
+//   { deep: true }
+// );
+
+// دالة معالجة خطأ تحميل الصورة
+const handleImageError = (event) => {
+  event.target.src = user;
+};
+
+// يمكنك أيضًا إضافة computed property للصورة
+const userAvatar = computed(() => {
+  return selectedChat?.avatar || user;
+});
 </script>
 
 <style scoped>

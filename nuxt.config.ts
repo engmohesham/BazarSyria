@@ -6,6 +6,7 @@ export default defineNuxtConfig({
   pages: true,
   compatibilityDate: "2025-01-27",
   css: ["~/assets/css/tailwind.css"],
+
   tailwindcss: {
     exposeConfig: true,
     viewer: true,
@@ -25,6 +26,7 @@ export default defineNuxtConfig({
       ],
     },
   },
+
   app: {
     head: {
       title: "bazarSyria",
@@ -40,12 +42,20 @@ export default defineNuxtConfig({
       // ... other head elements ...
     },
   },
+
   runtimeConfig: {
     public: {
       apiBase: "https://bazar-syria.vercel.app",
     },
   },
+
   build: {
     transpile: ["@vue-leaflet/vue-leaflet"],
+  },
+
+  devtools: {
+    timeline: {
+      enabled: true
+    }
   }
 });
