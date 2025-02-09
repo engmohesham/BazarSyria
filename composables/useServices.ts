@@ -45,9 +45,6 @@ export const useServices = () => {
         {
           method: "POST",
           body: userData,
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
         }
       );
 
@@ -197,7 +194,6 @@ export const useServices = () => {
           method: "POST",
           body: adData,
           headers: {
-            "Content-Type": "multipart/form-data",
             "Authorization": `Bearer ${localStorage.getItem("session-token")}`,
           },
         }

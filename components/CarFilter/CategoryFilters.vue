@@ -1,33 +1,59 @@
 <template>
-  <div class="bg-gray-50 border-b border-gray-100 sticky lg:top-[135px] md:top-[127px] top-[110px] z-40">
-    <div class="container mx-auto px-4">
-      <div class="overflow-x-auto" dir="rtl">
-        <div class="flex space-x-reverse space-x-1 py-2 min-w-max">
-          <button
-            @click="$emit('category-change', { _id: 'all', name: 'كل التصنيفات' })"
-            :class="[
-              'px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors',
-              'all' === activeCategory
-                ? 'bg-green-600 text-white'
-                : 'text-gray-700 hover:bg-gray-100'
-            ]"
-          >
-            كل التصنيفات
-          </button>
+  <div>
+    <!-- Main Categories -->
+    <div class="bg-gray-50 border-b border-gray-100 sticky lg:top-[135px] md:top-[127px] top-[110px] z-40">
+      <div class="container mx-auto px-4">
+        <div class="overflow-x-auto" dir="rtl">
+          <div class="flex space-x-reverse space-x-1 py-2 min-w-max">
+            <button
+              @click="handleCategoryClick({ _id: 'all', name: 'كل التصنيفات' })"
+              :class="[
+                'px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors',
+                activeCategory === 'all'
+                  ? 'bg-green-600 text-white'
+                  : 'text-gray-700 hover:bg-gray-100'
+              ]"
+            >
+              كل التصنيفات
+            </button>
 
-          <button
-            v-for="category in categoriesData"
-            :key="category._id"
-            @click="$emit('category-change', category)"
-            :class="[
-              'px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors',
-              category._id === activeCategory
-                ? 'bg-green-600 text-white'
-                : 'text-gray-700 hover:bg-gray-100'
-            ]"
-          >
-            {{ category.name }}
-          </button>
+            <button
+              v-for="category in categories"
+              :key="category._id"
+              @click="handleCategoryClick(category)"
+              :class="[
+                'px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors',
+                category._id === activeCategory
+                  ? 'bg-green-600 text-white'
+                  : 'text-gray-700 hover:bg-gray-100'
+              ]"
+            >
+              {{ category.name }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Subcategories -->
+    <div v-if="activeSubcategories.length" class="bg-white py-2">
+      <div class="container mx-auto px-4">
+        <div class="overflow-x-auto" dir="rtl">
+          <div class="flex space-x-reverse space-x-1 py-2 min-w-max">
+            <button
+              v-for="subcategory in activeSubcategories"
+              :key="subcategory._id"
+              @click="handleSubcategoryClick(subcategory)"
+              :class="[
+                'px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors',
+                subcategory._id === activeSubcategory
+                  ? 'bg-green-600 text-white'
+                  : 'text-gray-700 hover:bg-gray-100'
+              ]"
+            >
+              {{ subcategory.name }}
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -35,22 +61,36 @@
 </template>
 
 <script setup>
-const { data: categories } = await useFetch(
-  'https://pzsyria.com/api/category/all'
-);
-
-// console.log(categories);
-
-const categoriesData = categories?._value?.categories;
-
 const props = defineProps({
   activeCategory: {
     type: String,
-    required: true
+    default: 'all'
+  },
+  activeSubcategory: {
+    type: String,
+    default: ''
   }
-});
+})
 
-// console.log(props.activeCategory);
+const emit = defineEmits(['update:category', 'update:subcategory'])
 
-defineEmits(['category-change']);
+// Fetch categories with subcategories
+const { data: categoriesData } = await useFetch('https://pzsyria.com/api/category/all')
+const categories = computed(() => categoriesData.value?.categories || [])
+
+// Get subcategories for active category
+const activeSubcategories = computed(() => {
+  if (props.activeCategory === 'all') return []
+  const category = categories.value.find(cat => cat._id === props.activeCategory)
+  return category?.subcategories || []
+})
+
+const handleCategoryClick = (category) => {
+  emit('update:category', category._id)
+  emit('update:subcategory', '') // Reset subcategory when changing category
+}
+
+const handleSubcategoryClick = (subcategory) => {
+  emit('update:subcategory', subcategory._id)
+}
 </script>

@@ -2,7 +2,9 @@
   <div>
     <CategoryFilters
       :active-category="activeCategory"
-      @category-change="handleCategoryChange"
+      :active-subcategory="activeSubcategory"
+      @update:category="activeCategory = $event"
+      @update:subcategory="activeSubcategory = $event"
     />
     <div class="bg-gray-100" dir="rtl">
       <div class="container md:w-[90%] mx-auto px-4 py-6">
@@ -122,7 +124,13 @@
 
           <!-- Listings - Left Side -->
           <div class="lg:w-3/4">
-            <div class="space-y-4">
+            <div v-if="isLoading" class="text-center py-4">
+              جاري التحميل...
+            </div>
+            <div v-else-if="error" class="text-red-500 text-center py-4">
+              {{ error }}
+            </div>
+            <div v-else class="space-y-4">
               <ProductCard
                 v-for="item in currentData"
                 :key="item._id"
@@ -137,7 +145,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import CategoryFilters from "./CarFilter/CategoryFilters.vue";
 import FilterSection from "./CarFilter/FilterSection.vue";
 import PriceRangeFilter from "./CarFilter/PriceRangeFilter.vue";
@@ -148,40 +156,50 @@ import {
 import ProductCard from "./ProductCard.vue";
 
 const activeCategory = ref("all");
+const activeSubcategory = ref("");
 const priceRange = ref({ min: "", max: "" });
 const products = ref(null);
 const error = ref(null);
+const isLoading = ref(false);
 
-// Fetch products from API with error handling
-try {
-  const { data, error: fetchError } = await useFetch(
-    "https://https://pzsyria.com/api/products/all"
-  );
+// Fetch products based on category and subcategory
+const fetchProducts = async () => {
+  isLoading.value = true;
+  error.value = null;
   
-  if (fetchError.value) {
-    throw new Error(fetchError.value);
+  try {
+    let url = "https://pzsyria.com/api/products/all";
+    
+    if (activeCategory.value !== "all") {
+      url = `https://pzsyria.com/api/advertisement/certain/categories?category=${activeCategory.value}`;
+      if (activeSubcategory.value) {
+        url += `&subcategory=${activeSubcategory.value}`;
+      }
+    }
+    
+    const { data, error: fetchError } = await useFetch(url);
+    
+    if (fetchError.value) {
+      throw new Error(fetchError.value);
+    }
+    
+    products.value = data.value;
+  } catch (err) {
+    console.error("Failed to fetch products:", err);
+    error.value = "فشل في تحميل المنتجات. يرجى المحاولة مرة أخرى.";
+  } finally {
+    isLoading.value = false;
   }
-  
-  products.value = data.value;
-} catch (err) {
-  console.error("Failed to fetch products:", err);
-  error.value = "Failed to load products. Please try again later.";
-}
+};
 
-// تحديث currentData لعرض جميع المنتجات أو تصفيتها حسب الفئة
-const currentData = computed(() => {
-  if (!products.value?.products) return [];
-  
-  if (activeCategory.value === 'all') {
-    return products.value.products;
-  }
-  
-  return products.value.products.filter(
-    (product) => product.categoryId === activeCategory.value
-  );
+// Watch for category or subcategory changes
+watch([activeCategory, activeSubcategory], () => {
+  fetchProducts();
 });
 
-const handleCategoryChange = (category) => {
-  activeCategory.value = category._id;
-};
+// Filter products
+const currentData = computed(() => {
+  if (!products.value?.products) return [];
+  return products.value.products;
+});
 </script>

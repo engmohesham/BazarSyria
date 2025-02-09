@@ -61,12 +61,29 @@
       </div>
     </div>
 
-    <!-- Location Confirmation Modal -->
+    <!-- Location Map Modal -->
     <ClientOnly>
       <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white rounded-lg p-6 max-w-2xl w-full mx-4">
-          <h3 class="text-lg font-medium mb-4">تأكيد الموقع</h3>
+        <div class="bg-white rounded-lg p-6 max-w-4xl w-full mx-4">
+          <h3 class="text-lg font-medium mb-4">تحديد الموقع</h3>
           
+          <!-- Map Container -->
+          <div class="h-96 mb-4">
+            <l-map
+              v-model:zoom="zoom"
+              :center="mapCenter"
+              @click="handleMapClick"
+            >
+              <l-tile-layer
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+              <l-marker
+                v-if="tempLocation.lat && tempLocation.long"
+                :lat-lng="[tempLocation.lat, tempLocation.long]"
+              />
+            </l-map>
+          </div>
+
           <!-- Loading State -->
           <div v-if="isLoadingAddress" class="flex items-center justify-center py-4">
             <Icon name="ph:spinner" class="w-6 h-6 animate-spin text-green-600" />
@@ -74,7 +91,7 @@
           </div>
 
           <!-- Address Details -->
-          <div v-else class="mb-4">
+          <div v-else-if="tempLocation.address" class="mb-4">
             <p class="text-gray-600 mb-4">
               <strong>العنوان المحدد:</strong>
               <br>
@@ -104,12 +121,19 @@
 
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue'
-import { LMap, LTileLayer, LMarker, LPopup } from '@vue-leaflet/vue-leaflet'
+import { LMap, LTileLayer, LMarker } from '@vue-leaflet/vue-leaflet'
 
 const props = defineProps({
   modelValue: {
     type: Object,
-    required: true
+    required: true,
+    default: () => ({
+      lat: '',
+      long: '',
+      city: '',
+      region: '',
+      addressDetails: ''
+    })
   }
 })
 
@@ -118,8 +142,8 @@ const emit = defineEmits(['update:modelValue'])
 const isLoading = ref(false)
 const isLoadingAddress = ref(false)
 const showModal = ref(false)
-const zoom = ref(15)
-const isMapReady = ref(false)
+const zoom = ref(13)
+const mapCenter = ref([33.5138, 36.2765]) // دمشق كمركز افتراضي
 const tempLocation = ref({ 
   lat: '', 
   long: '', 
@@ -154,82 +178,63 @@ const regionsList = computed(() => {
 
 // Watch for city changes
 watch(selectedCity, (newCity) => {
-  // Reset region when city changes
   emit('update:modelValue', {
     ...props.modelValue,
     city: newCity,
-    region: ''
+    region: '',
   })
 })
 
 onMounted(() => {
-  isMapReady.value = true
+  // Initialize map center
+  mapCenter.value = [props.modelValue.lat, props.modelValue.long]
 })
 
-// Get detailed address from coordinates using Nominatim
+// دالة معالجة النقر على الخريطة
+const handleMapClick = async (event) => {
+  const { lat, lng } = event.latlng
+  isLoadingAddress.value = true
+  
+  tempLocation.value = {
+    lat: lat,
+    long: lng,
+    address: ''
+  }
+
+  try {
+    const addressData = await getAddressFromCoords(lat, lng)
+    tempLocation.value.address = addressData.fullAddress
+  } catch (error) {
+    console.error('Error getting address:', error)
+    tempLocation.value.address = 'عنوان غير معروف'
+  }
+
+  isLoadingAddress.value = false
+}
+
+// دالة الحصول على العنوان من الإحداثيات
 const getAddressFromCoords = async (lat, lng) => {
   try {
     const response = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=ar&addressdetails=1`
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=ar`
     )
     const data = await response.json()
     
-    // Extract address components
-    const addressComponents = data.address || {}
-    
-    // Find city in our cities array
-    const cityName = addressComponents.city || 
-                    addressComponents.town || 
-                    addressComponents.village || 
-                    addressComponents.state
-                    
-    const foundCity = cityList.value.find(city => 
-      city.toLowerCase().includes(cityName?.toLowerCase())
-    )
-
-    // Find region in our regions array
-    const regionName = addressComponents.suburb || 
-                      addressComponents.neighbourhood || 
-                      addressComponents.quarter ||
-                      addressComponents.district
-                      
-    const foundRegion = regionsList.value.find(region => 
-      region.toLowerCase().includes(regionName?.toLowerCase())
-    )
-
-    // Construct detailed address
-    const detailedAddress = [
-      addressComponents.road,
-      addressComponents.neighbourhood,
-      addressComponents.suburb,
-      cityName
-    ].filter(Boolean).join('، ')
-
-    // Update form values
-    emit('update:modelValue', {
-      ...props.modelValue,
-      city: foundCity || '',
-      region: foundRegion || '',
-      addressDetails: detailedAddress || data.display_name
-    })
+    if (data.error) {
+      throw new Error(data.error)
+    }
 
     return {
       fullAddress: data.display_name,
-      components: {
-        city: foundCity,
-        region: foundRegion,
-        details: detailedAddress
-      }
+      components: data.address
     }
   } catch (error) {
     console.error('Error fetching address:', error)
-    return {
-      fullAddress: 'عنوان غير معروف',
-      components: {}
-    }
+    throw error
   }
 }
 
+// دالة الحصول على الموقع الحالي
 const getLocation = () => {
   if (!navigator.geolocation) {
     alert('متصفحك لا يدعم تحديد الموقع')
@@ -237,48 +242,33 @@ const getLocation = () => {
   }
 
   isLoading.value = true
+  showModal.value = true
 
   navigator.geolocation.getCurrentPosition(
     async (position) => {
-      const lat = position.coords.latitude
-      const long = position.coords.longitude
-      
-      isLoadingAddress.value = true
-      showModal.value = true
-      
-      // Get address details
-      const addressData = await getAddressFromCoords(lat, long)
+      const { latitude, longitude } = position.coords
+      mapCenter.value = [latitude, longitude]
       
       tempLocation.value = {
-        lat,
-        long,
-        address: addressData.fullAddress
+        lat: latitude,
+        long: longitude,
+        address: ''
       }
-      
-      isLoadingAddress.value = false
+
+      try {
+        const addressData = await getAddressFromCoords(latitude, longitude)
+        tempLocation.value.address = addressData.fullAddress
+      } catch (error) {
+        console.error('Error getting address:', error)
+        tempLocation.value.address = 'عنوان غير معروف'
+      }
+
       isLoading.value = false
     },
     (error) => {
       isLoading.value = false
-      switch(error.code) {
-        case error.PERMISSION_DENIED:
-          alert('يرجى السماح بالوصول إلى موقعك')
-          break
-        case error.POSITION_UNAVAILABLE:
-          alert('معلومات الموقع غير متوفرة')
-          break
-        case error.TIMEOUT:
-          alert('انتهت مهلة طلب الموقع')
-          break
-        default:
-          alert('حدث خطأ غير معروف')
-          break
-      }
-    },
-    {
-      enableHighAccuracy: true,
-      timeout: 5000,
-      maximumAge: 0
+      console.error('Geolocation error:', error)
+      alert('حدث خطأ في تحديد موقعك. يرجى المحاولة مرة أخرى.')
     }
   )
 }
@@ -286,9 +276,9 @@ const getLocation = () => {
 const confirmLocation = () => {
   emit('update:modelValue', {
     ...props.modelValue,
-    lat: tempLocation.value.lat,
-    long: tempLocation.value.long,
-    // Address details already updated in getAddressFromCoords
+    lat: tempLocation.value.lat.toString(),
+    long: tempLocation.value.long.toString(),
+    addressDetails: tempLocation.value.address
   })
   showModal.value = false
 }

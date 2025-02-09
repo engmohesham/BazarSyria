@@ -266,6 +266,16 @@ const base64ToFile = async (base64String, filename) => {
 
 const handleSubmit = async () => {
   try {
+    // التحقق من البيانات المطلوبة للموقع
+    if (!formData.value.location.city || 
+        !formData.value.location.region || 
+        !formData.value.location.addressDetails ||
+        !formData.value.location.lat ||
+        !formData.value.location.long) {
+      alert('الرجاء تعبئة جميع حقول الموقع')
+      return
+    }
+
     // إنشاء كائن FormData جديد
     const formDataToSend = new FormData()
 
@@ -276,23 +286,20 @@ const handleSubmit = async () => {
     formDataToSend.append('advDescription', formData.value.advDescription)
     formDataToSend.append('price', formData.value.price)
     formDataToSend.append('contact', formData.value.contactMethod)
+    formDataToSend.append('brand', formData.value.brand)
 
-    // إضافة بيانات الموقع
-    const locationData = {
-      long: formData.value.location.long,
-      lat: formData.value.location.lat,
-      city: formData.value.location.city,
-      region: formData.value.location.region,
-      addressDetails: formData.value.location.addressDetails
-    }
-    formDataToSend.append('location', JSON.stringify(locationData))
+    // إضافة بيانات الموقع بشكل صحيح
+    formDataToSend.append('location[long]', formData.value.location.long)
+    formDataToSend.append('location[lat]', formData.value.location.lat)
+    formDataToSend.append('location[city]', formData.value.location.city)
+    formDataToSend.append('location[region]', formData.value.location.region)
+    formDataToSend.append('location[addressDetails]', formData.value.location.addressDetails)
 
     // إضافة الخصائص الخاصة
-    const specialProperties = formData.value.specialProperties.map(prop => ({
-      property: prop.property,
-      value: prop.value
-    }))
-    formDataToSend.append('specialProperties', JSON.stringify(specialProperties))
+    formData.value.specialProperties.forEach((prop, index) => {
+      formDataToSend.append(`specialProperties[${index}][property]`, prop.property)
+      formDataToSend.append(`specialProperties[${index}][value]`, prop.value)
+    })
 
     // إضافة الصور
     if (formData.value.gallery && formData.value.gallery.length > 0) {
@@ -307,15 +314,21 @@ const handleSubmit = async () => {
       }
     }
 
+    // طباعة البيانات للتحقق
+    for (let pair of formDataToSend.entries()) {
+      console.log(pair[0] + ': ' + pair[1])
+    }
+
     const { error: createError } = await createAd(formDataToSend)
     
     if (createError) {
       throw new Error('Failed to create advertisement')
     }
 
-    navigateTo('/')
+    navigateTo('/account/my-ads')
   } catch (error) {
     console.error('Error creating advertisement:', error)
+    alert('حدث خطأ أثناء نشر الإعلان. الرجاء المحاولة مرة أخرى.')
   }
 }
 
