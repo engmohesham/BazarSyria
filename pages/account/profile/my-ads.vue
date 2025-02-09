@@ -1,4 +1,8 @@
 <script setup>
+definePageMeta({
+  middleware: ["auth"]
+});
+
 const activeTab = ref('active') // active, inactive, pending
 const ads = ref([])
 const loading = ref(true)

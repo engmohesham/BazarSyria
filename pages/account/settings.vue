@@ -1,4 +1,8 @@
 <script setup>
+definePageMeta({
+  middleware: ["auth"]
+});
+
 const selectedMethod = ref("الثاني"); // القيمة الافتراضية
 const newPassword = ref("");
 const confirmPassword = ref("");

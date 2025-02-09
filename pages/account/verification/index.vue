@@ -1,4 +1,8 @@
 <script setup>
+definePageMeta({
+  middleware: ["auth"]
+});
+
 const route = useRoute();
 const router = useRouter();
 const verificationType = computed(() => route.query.type || "personal");

@@ -62,7 +62,7 @@ const handleLogout = async () => {
         </NuxtLink>
 
         <NuxtLink 
-          to="/chat"
+          to="/account/chat"
           class="flex items-center gap-4 p-6 bg-white rounded-lg shadow hover:shadow-md transition-shadow"
         >
           <Icon name="ph:message-circle" class="w-8 h-8 text-green-600" />

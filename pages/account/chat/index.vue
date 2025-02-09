@@ -34,7 +34,7 @@
             </div>
             <div class="flex-1">
               <div class="flex justify-between items-start">
-                <h3 class="font-medium">{{ chat.name }}</h3>
+                <h3 class="font-medium">{{ chat.name || 'مستخدم' }}</h3>
                 <span class="text-xs text-gray-500">{{
                   formatTime(chat.lastMessageTime)
                 }}</span>
@@ -68,7 +68,7 @@
               @error="handleImageError"
             />
             <div class="text-right">
-              <h3 class="font-semibold">{{ selectedChat?.name }}</h3>
+              <h3 class="font-semibold">{{ selectedChat?.name || 'مستخدم' }}</h3>
               <p class="text-xs text-gray-500">آخر ظهور اليوم 5:07م</p>
             </div>
           </div>
@@ -343,6 +343,8 @@ onMounted(async () => {
   const { data: chatsData, error: chatsError } = await getUserChats();
   if (chatsData && !chatsError) {
     chats.value = chatsData;
+    console.log(chats.value);
+
   }
 
   // Fetch user avatar
@@ -682,6 +684,10 @@ const handleImageError = (event) => {
 // يمكنك أيضًا إضافة computed property للصورة
 const userAvatar = computed(() => {
   return selectedChat?.avatar || user;
+});
+
+definePageMeta({
+  middleware: ["auth"]
 });
 </script>
 

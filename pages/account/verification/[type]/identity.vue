@@ -1,4 +1,8 @@
 <script setup>
+definePageMeta({
+  middleware: ["auth"]
+});
+
 const route = useRoute();
 const verificationType = route.params.type;
 const router = useRouter();
@@ -66,110 +70,89 @@ const selfieImage = ref(null);
 // تحديث عدد الخطوات (4 خطوات)
 const currentStep = ref(1);
 
-// تحديث دالة فتح الكاميرا
-const openCamera = async () => {
-  isLoading.value = true;
-  try {
-    // محاولة الوصول إلى الكاميرا الخلفية أولاً
-    const constraints = {
-      video: {
-        facingMode: 'environment',
-        width: { ideal: 1280 },
-        height: { ideal: 720 }
-      }
-    };
+// Camera-related code - exactly like camera-test.vue
+const canvas = ref(null);
+const video = ref(null);
+const ctx = ref(null);
+const isStreaming = ref(false);
 
-    stream.value = await navigator.mediaDevices.getUserMedia(constraints);
+const constraints = ref({
+  audio: false,
+  video: {
+    width: { ideal: 1280 },
+    height: { ideal: 720 },
+    facingMode: 'environment' // Try to use back camera first
+  }
+});
+
+onMounted(async () => {
+  if (video.value && canvas.value) {
+    ctx.value = canvas.value.getContext("2d");
     
-    if (videoRef.value) {
-      videoRef.value.srcObject = stream.value;
-      videoRef.value.onloadedmetadata = () => {
-        videoRef.value.play();
-      };
-      
-      // التحقق من جاهزية الكاميرا
-      videoRef.value.onloadeddata = () => {
-        console.log('الكاميرا جاهزة للاستخدام');
-        isCameraReady.value = true;
-        isLoading.value = false;
-      };
-    }
-    showCamera.value = true;
-  } catch (err) {
-    console.error('Error accessing camera:', err);
-    // إذا فشل الوصول إلى الكاميرا الخلفية، جرب الكاميرا الأمامية
     try {
-      stream.value = await navigator.mediaDevices.getUserMedia({
-        video: true
-      });
-      if (videoRef.value) {
-        videoRef.value.srcObject = stream.value;
-        videoRef.value.onloadedmetadata = () => {
-          videoRef.value.play();
-        };
-        
-        // التحقق من جاهزية الكاميرا
-        videoRef.value.onloadeddata = () => {
-          console.log('الكاميرا جاهزة للاستخدام');
-          isCameraReady.value = true;
-          isLoading.value = false;
-        };
+      const stream = await navigator.mediaDevices.getUserMedia(constraints.value);
+      SetStream(stream);
+    } catch (err) {
+      console.error('Failed to get camera:', err);
+      // Fallback to any available camera
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: false,
+          video: true
+        });
+        SetStream(stream);
+      } catch (e) {
+        console.error('Camera access failed:', e);
+        error.value = 'فشل في الوصول إلى الكاميرا';
       }
-      showCamera.value = true;
-    } catch (frontErr) {
-      error.value = 'فشل في الوصول إلى الكاميرا';
-      isLoading.value = false;
     }
   }
-};
+});
 
-// تحديث دالة التقاط الصورة
-const captureImage = () => {
-  try {
-    const video = videoRef.value;
-    if (!video) return;
+function SetStream(stream) {
+  video.value.srcObject = stream;
+  video.value.play();
+  
+  video.value.onloadedmetadata = () => {
+    isStreaming.value = true;
+    Draw();
+  };
+}
 
-    const canvas = document.createElement('canvas');
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    
-    const imageData = canvas.toDataURL('image/jpeg', 0.8);
-    
-    // تخزين الصورة في المتغير المناسب حسب الخطوة
-    if (currentStep.value === 2) {
-      frontCardImage.value = imageData;
-    } else if (currentStep.value === 3) {
-      backCardImage.value = imageData;
-    } else if (currentStep.value === 4) {
-      selfieImage.value = imageData;
-    }
-    
-    closeCamera();
-  } catch (err) {
-    console.error('Error capturing image:', err);
-    error.value = 'فشل في التقاط الصورة';
+function Draw() {
+  if (isStreaming.value && ctx.value && video.value) {
+    ctx.value.drawImage(video.value, 0, 0, canvas.value.width, canvas.value.height);
+    requestAnimationFrame(Draw);
   }
+}
+
+// Cleanup on component unmount
+onUnmounted(() => {
+  if (video.value && video.value.srcObject) {
+    const tracks = video.value.srcObject.getTracks();
+    tracks.forEach(track => track.stop());
+  }
+  isStreaming.value = false;
+});
+
+// Add functions needed for identity verification
+const handleCapture = (imageData) => {
+  if (currentStep.value === 2) {
+    frontCardImage.value = imageData;
+  } else if (currentStep.value === 3) {
+    backCardImage.value = imageData;
+  } else if (currentStep.value === 4) {
+    selfieImage.value = imageData;
+  }
+  showCamera.value = false;
 };
 
-// تحديث دالة إغلاق الكاميرا
+const openCamera = () => {
+  showCamera.value = true;
+};
+
 const closeCamera = () => {
-  isCameraReady.value = false;
-  try {
-    if (stream.value) {
-      const tracks = stream.value.getTracks();
-      tracks.forEach(track => track.stop());
-      stream.value = null;
-    }
-    if (videoRef.value) {
-      videoRef.value.srcObject = null;
-    }
-    showCamera.value = false;
-  } catch (err) {
-    console.error('Error closing camera:', err);
-  }
+  showCamera.value = false;
 };
 
 // تحديث دالة التقاط الصورة
@@ -291,6 +274,11 @@ const getCurrentImage = () => {
       return null;
   }
 };
+
+// Add a computed property to determine camera type
+const cameraType = computed(() => {
+  return currentStep.value === 4 ? 'selfie' : 'id';
+});
 </script>
 
 <template>
@@ -619,37 +607,29 @@ const getCurrentImage = () => {
                   {{ getStepTitle() }}
                 </h3>
 
-                <div v-if="showCamera" class="relative bg-black rounded-lg overflow-hidden">
-                  <!-- شاشة التحميل -->
-                  <div v-if="isLoading && !isCameraReady" 
-                       class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10">
-                    <div class="text-center">
-                      <div class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-white"></div>
-                      <p class="text-white mt-2">جاري تهيئة الكاميرا...</p>
-                    </div>
-                  </div>
-
-                  <video
-                    ref="videoRef"
-                    autoplay
-                    playsinline
-                    class="w-full h-[400px] object-cover mx-auto"
-                    :style="{ transform: 'scaleX(-1)' }"
+                <div v-if="showCamera" class="relative">
+                  <video 
+                    ref="video" 
+                    autoplay 
+                    playsinline 
+                    webkit-playsinline 
+                    muted 
+                    class="hidden"
                   ></video>
-                  
-                  <div class="absolute inset-0 border-2 border-white border-opacity-50 m-8"></div>
-                  
-                  <div class="absolute top-4 left-0 right-0 text-center">
-                    <p class="text-white bg-black bg-opacity-50 p-2 mx-4 rounded">
-                      ضع البطاقة داخل الإطار والتقط الصورة
-                    </p>
-                  </div>
-                  
+
+                  <canvas 
+                    ref="canvas" 
+                    width="1280" 
+                    height="720" 
+                    class="bg-black rounded-3xl max-w-full"
+                  ></canvas>
+
+                  <!-- Camera controls -->
                   <div class="absolute bottom-4 left-0 right-0 flex justify-center gap-4">
                     <button
                       type="button"
                       @click="captureImage"
-                      :disabled="!isCameraReady"
+                      :disabled="!isStreaming"
                       class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
                     >
                       <Icon name="ph:camera" class="w-5 h-5" />
@@ -737,6 +717,17 @@ const getCurrentImage = () => {
             {{ success }}
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- Camera UI -->
+    <div v-if="showCamera" class="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4">
+      <div class="w-full max-w-2xl">
+        <CameraCapture 
+          :type="cameraType"
+          @capture="handleCapture" 
+          @close="closeCamera" 
+        />
       </div>
     </div>
   </div>

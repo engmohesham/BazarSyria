@@ -57,5 +57,19 @@ export default defineNuxtConfig({
     timeline: {
       enabled: true
     }
+  },
+
+  // Remove any CSP headers that might block camera access
+  nitro: {
+    routeRules: {
+      '/**': { 
+        cors: true,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET,HEAD,PUT,PATCH,POST,DELETE',
+          'Access-Control-Allow-Headers': '*'
+        }
+      }
+    }
   }
 });
