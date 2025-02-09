@@ -36,7 +36,7 @@
 
 <script setup>
 const { data: categories } = await useFetch(
-  'https://bazar-syria.vercel.app/category/all'
+  'https://pzsyria.com/api/category/all'
 );
 
 // console.log(categories);

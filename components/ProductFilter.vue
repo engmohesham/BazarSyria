@@ -155,7 +155,7 @@ const error = ref(null);
 // Fetch products from API with error handling
 try {
   const { data, error: fetchError } = await useFetch(
-    "https://bazar-syria.vercel.app/products/all"
+    "https://https://pzsyria.com/api/products/all"
   );
   
   if (fetchError.value) {

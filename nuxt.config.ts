@@ -45,7 +45,7 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
-      apiBase: "https://bazar-syria.vercel.app",
+      apiBase: "https://pzsyria.com/",
     },
   },
 

@@ -281,7 +281,7 @@ export const useServices = () => {
   const getSubCategories = async (categoryId: string) => {
     try {
       const { data, error } = await useFetch(
-        `${API_BASE_URL}${API_ENDPOINTS.SUBCATEGORIES}/${categoryId}/subcategories`
+        `${API_BASE_URL}${API_ENDPOINTS.SUBCATEGORIES}/${categoryId}/subCategory/all`
       );
 
       if (error.value) throw error.value;
