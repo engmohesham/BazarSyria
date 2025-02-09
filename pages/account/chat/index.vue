@@ -404,7 +404,7 @@ watch(selectedChat, () => {
 
 // تحديث دالة تهيئة Socket.IO
 const initializeSocket = () => {
-  socket.value = io("ws://147.93.120.237", {
+  socket.value = io("ws://pazarsyria.com", {
     transports: ["websocket"],
     reconnection: true,
     reconnectionAttempts: 5,
