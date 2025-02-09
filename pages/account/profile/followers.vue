@@ -8,7 +8,7 @@ const loading = ref(true)
 const followers = ref([])
 const error = ref(null)
 
-const { getFollowers, followUser, unfollowUser } = useUser()
+const { getFollowers, followUser, unfollowUser } = useServices()
 
 const fetchFollowers = async () => {
   loading.value = true
@@ -60,7 +60,7 @@ onMounted(() => {
         <!-- Header -->
         <div class="flex items-center justify-between mb-6">
           <h1 class="text-2xl font-bold">المتابعين</h1>
-          <NuxtLink to="/profile" class="text-gray-600 hover:text-gray-800">
+          <NuxtLink to="/account/profile" class="text-gray-600 hover:text-gray-800">
             <Icon name="ph:arrow-right" class="w-6 h-6" />
           </NuxtLink>
         </div>

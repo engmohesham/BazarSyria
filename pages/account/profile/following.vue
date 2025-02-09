@@ -8,7 +8,7 @@ const loading = ref(true)
 const following = ref([])
 const error = ref(null)
 
-const { getFollowing, unfollowUser } = useUser()
+const { getFollowing, unfollowUser } = useServices()
 
 const fetchFollowing = async () => {
   loading.value = true
@@ -16,9 +16,8 @@ const fetchFollowing = async () => {
     const { data, error: apiError } = await getFollowing()
     if (apiError) throw apiError
     
-    // تأكد من تنسيق البيانات الصحيح
     following.value = data?.following || []
-    console.log('Following data:', following.value) // للتحقق من البيانات
+    console.log('Following data:', following.value)
   } catch (err) {
     error.value = 'فشل في تحميل قائمة المتابَعين'
     console.error('Error fetching following:', err)
@@ -31,13 +30,12 @@ const handleUnfollow = async (userId) => {
   try {
     const { error: apiError } = await unfollowUser(userId)
     if (apiError) throw apiError
-    await fetchFollowing() // تحديث القائمة بعد إلغاء المتابعة
+    await fetchFollowing()
   } catch (err) {
     console.error('Error unfollowing user:', err)
   }
 }
 
-// جلب البيانات عند تحميل الصفحة
 onMounted(() => {
   fetchFollowing()
 })
@@ -50,7 +48,7 @@ onMounted(() => {
         <!-- Header -->
         <div class="flex items-center justify-between mb-6">
           <h1 class="text-2xl font-bold">الأشخاص الذين تتابعهم</h1>
-          <NuxtLink to="/profile" class="text-gray-600 hover:text-gray-800">
+          <NuxtLink to="/account/profile" class="text-gray-600 hover:text-gray-800">
             <Icon name="ph:arrow-right" class="w-6 h-6" />
           </NuxtLink>
         </div>

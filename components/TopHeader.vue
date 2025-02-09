@@ -467,7 +467,7 @@ const menuItems = [
   { to: '/account/profile/invoices', icon: 'ph:receipt', text: 'الفواتير' },
   { to: '/account/profile/settings', icon: 'ph:gear', text: 'الاعدادات' },
   { to: '/contact', icon: 'ph:phone', text: 'اتصل بنا' },
-  { to: '/my-ads', icon: 'ph:megaphone', text: 'إعلاناتي' }
+  { to: '/account/profile/my-ads', icon: 'ph:megaphone', text: 'إعلاناتي' }
 ]
 
 const navigateToProfile = () => {

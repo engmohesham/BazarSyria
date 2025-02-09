@@ -8,8 +8,8 @@ export const API_ENDPOINTS = {
   
   // User
   PROFILE: '/auth/profile',
-  FOLLOWERS: '/users/followers',
-  FOLLOWING: '/users/following',
+  FOLLOWERS: '/user/profile/followers',
+  FOLLOWING: '/user/profile/followings',
   FOLLOW: '/users/follow',
   UNFOLLOW: '/users/unfollow',
   
