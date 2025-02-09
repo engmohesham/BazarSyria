@@ -162,7 +162,7 @@ export const useServices = () => {
       );
 
       if (error.value) throw error.value;
-      return { data: data.value?.ads || [], error: null };
+      return { data: data._value?.advertisements || [], error: null };
     } catch (err) {
       console.error("Error fetching user ads:", err);
       return { data: [], error: err };

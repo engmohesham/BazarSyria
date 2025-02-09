@@ -404,42 +404,71 @@ watch(selectedChat, () => {
 
 // تحديث دالة تهيئة Socket.IO
 const initializeSocket = () => {
-  socket.value = io("ws://pzsyria.com", {
-    transports: ["websocket"],
-    reconnection: true,
-    reconnectionAttempts: 5,
-    reconnectionDelay: 3000,
-    auth: {
-      token: localStorage.getItem("session-token"),
-    },
-  });
+  try {
+    socket.value = io("https://pzsyria.com", {
+      transports: ["websocket", "polling"],
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 3000,
+      timeout: 10000,
+      auth: {
+        token: localStorage.getItem("session-token"),
+      },
+    });
 
-  socket.value.on("connect", () => {
-    console.log("Connected to socket server");
-    isConnected.value = true;
-  });
+    socket.value.on("connect", () => {
+      console.log("Connected to socket server");
+      isConnected.value = true;
+    });
 
-  socket.value.on("error", (error) => {
-    console.error("Socket error:", error);
-  });
+    socket.value.on("connect_error", (error) => {
+      console.error("Connection error:", error);
+      if (socket.value.io.opts.transports.includes('websocket')) {
+        socket.value.io.opts.transports = ['polling'];
+      }
+    });
 
-  socket.value.on("disconnect", () => {
-    console.log("Disconnected from socket server");
-    isConnected.value = false;
-  });
+    socket.value.on("error", (error) => {
+      console.error("Socket error:", error);
+    });
 
-  // تسجيل معالج استقبال الرسائل
-  socket.value.on("receiveMessage", (message) => {
-    console.log("🚀 Socket Message Received:", message);
+    socket.value.on("disconnect", (reason) => {
+      console.log("Disconnected from socket server, reason:", reason);
+      isConnected.value = false;
+    });
 
-    // تحديث عدد الرسائل غير المقروءة
-    updateUnreadCount(message.chatId);
+    // تسجيل معالج استقبال الرسائل
+    socket.value.on("receiveMessage", (message) => {
+      console.log("🚀 Socket Message Received:", message);
 
-    if (message?.chatId === selectedChat.value?._id) {
-      refreshMessages();
-    }
-  });
+      // تحديث عدد الرسائل غير المقروءة
+      updateUnreadCount(message.chatId);
+
+      if (message?.chatId === selectedChat.value?._id) {
+        refreshMessages();
+      }
+    });
+  } catch (error) {
+    console.error("Error initializing socket:", error);
+  }
 };
+
+// إضافة دالة لإعادة الاتصال يدوياً
+const reconnectSocket = () => {
+  if (socket.value) {
+    socket.value.disconnect();
+  }
+  initializeSocket();
+};
+
+// تحديث watch للاتصال
+watch(isConnected, (newValue) => {
+  if (!newValue) {
+    setTimeout(() => {
+      reconnectSocket();
+    }, 5000);
+  }
+});
 
 // تحديث دالة إرسال الرسالة
 const sendNewMessage = async () => {
@@ -520,7 +549,7 @@ const updateUnreadCount = (chatId) => {
 const markChatAsRead = async (chatId) => {
   try {
     // هنا يجب إضافة طلب API لتحديث حالة القراءة في الباكند
-    await fetch(`/api/chats/${chatId}/read`, {
+    await fetch(`${API_BASE_URL}/chats/${chatId}/read`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('session-token')}`
@@ -548,7 +577,10 @@ const fetchChats = async () => {
 
 onMounted(() => {
   fetchChats();
-  initializeSocket();
+  const token = localStorage.getItem("session-token");
+  if (token) {
+    initializeSocket();
+  }
 });
 
 onUnmounted(() => {
@@ -659,22 +691,6 @@ watch(showNewChatModal, (newValue) => {
     fetchAvailableUsers();
   }
 });
-
-// يمكنك أيضًا طباعة بيانات الرسائل للتحقق
-// watch(
-//   messages,
-//   (newMessages) => {
-//     console.log(
-//       "Messages:",
-//       newMessages.map((m) => ({
-//         content: m.content,
-//         sender: m.sender.email,
-//         isCurrentUser: isCurrentUser(m),
-//       }))
-//     );
-//   },
-//   { deep: true }
-// );
 
 // دالة معالجة خطأ تحميل الصورة
 const handleImageError = (event) => {
