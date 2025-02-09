@@ -196,7 +196,10 @@ export const useServices = () => {
         {
           method: "POST",
           body: adData,
-          headers: getAuthHeaders(),
+          headers: {
+            "Content-Type": "multipart/form-data",
+            "Authorization": `Bearer ${localStorage.getItem("session-token")}`,
+          },
         }
       );
 
@@ -281,7 +284,10 @@ export const useServices = () => {
   const getSubCategories = async (categoryId: string) => {
     try {
       const { data, error } = await useFetch(
-        `${API_BASE_URL}${API_ENDPOINTS.SUBCATEGORIES}/${categoryId}/subCategory/all`
+        `${API_BASE_URL}${API_ENDPOINTS.SUBCATEGORIES}/${categoryId}/subcategories`,
+        {
+          headers: getAuthHeaders(),
+        }
       );
 
       if (error.value) throw error.value;
@@ -293,19 +299,19 @@ export const useServices = () => {
   };
 
   // Brand Methods
-  const getBrands = async () => {
-    try {
-      const { data, error } = await useFetch(
-        `${API_BASE_URL}${API_ENDPOINTS.BRANDS}`
-      );
+  // const getBrands = async () => {
+  //   try {
+  //     const { data, error } = await useFetch(
+  //       `${API_BASE_URL}${API_ENDPOINTS.BRANDS}`
+  //     );
 
-      if (error.value) throw error.value;
-      return { data: data.value?.brands || [], error: null };
-    } catch (err) {
-      console.error("Error fetching brands:", err);
-      return { data: [], error: err };
-    }
-  };
+  //     if (error.value) throw error.value;
+  //     return { data: data.value?.brands || [], error: null };
+  //   } catch (err) {
+  //     console.error("Error fetching brands:", err);
+  //     return { data: [], error: err };
+  //   }
+  // };
 
   // Location Methods
   const getCities = async () => {
@@ -495,12 +501,12 @@ export const useServices = () => {
     // New Methods
     getCategories,
     getSubCategories,
-    getBrands,
+    // getBrands,
     getCities,
     getRegions,
-    getConditions,
-    getFuelTypes,
-    getTransmissions,
+    // getConditions,
+    // getFuelTypes,
+    // getTransmissions,
 
     // Chat Methods
     createChatRoom,

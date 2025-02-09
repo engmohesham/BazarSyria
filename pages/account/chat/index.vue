@@ -271,13 +271,13 @@ const currentUserEmail = computed(() => {
 
 // دالة التحقق من المرسل مع طباعة البيانات للتأكد
 const isCurrentUser = (message) => {
-  console.log("Message Data:", {
-    messageId: message._id,
-    senderId: message.sender?._id,
-    senderEmail: message.sender?.email,
-    currentUserId: currentUserId.value,
-    currentUserEmail: currentUserEmail.value,
-  });
+  // console.log("Message Data:", {
+  //   messageId: message._id,
+  //   senderId: message.sender?._id,
+  //   senderEmail: message.sender?.email,
+  //   currentUserId: currentUserId.value,
+  //   currentUserEmail: currentUserEmail.value,
+  // });
 
   // التحقق من المرسل باستخدام senderId مباشرة
   if (message.senderId) {

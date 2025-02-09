@@ -96,9 +96,7 @@ const formData = ref({
   category: '',
   subCategory: '',
   brand: '',
-  condition: '',
-  fuelType: '',
-  transmission: '',
+  specialProperties: [],
   advTitle: '',
   advDescription: '',
   gallery: [],
@@ -111,7 +109,7 @@ const formData = ref({
   },
   price: '',
   phoneNumber: '',
-  contactMethod: 'phone'
+  contactMethod: 'both'
 })
 
 const categories = ref([])
@@ -122,6 +120,7 @@ const regions = ref([])
 const conditions = ref([])
 const fuelTypes = ref([])
 const transmissions = ref([])
+const allSubCategories = ref([])
 
 // Fetch initial data
 onMounted(async () => {
@@ -130,37 +129,99 @@ onMounted(async () => {
     const { data: categoriesData } = await getCategories()
     categories.value = categoriesData
 
-    // Fetch brands
-    const { data: brandsData } = await getBrands()
-    brands.value = brandsData
+    // // Fetch brands
+    // const { data: brandsData } = await getBrands()
+    // brands.value = brandsData
 
-    // Fetch cities
-    const { data: citiesData } = await getCities()
-    cities.value = citiesData
+    // // Fetch cities
+    // const { data: citiesData } = await getCities()
+    // cities.value = citiesData
 
-    // Fetch specifications
-    const { data: conditionsData } = await getConditions()
-    conditions.value = conditionsData
+    // // Fetch specifications
+    // const { data: conditionsData } = await getConditions()
+    // conditions.value = conditionsData
 
-    const { data: fuelTypesData } = await getFuelTypes()
-    fuelTypes.value = fuelTypesData
+    // const { data: fuelTypesData } = await getFuelTypes()
+    // fuelTypes.value = fuelTypesData
 
-    const { data: transmissionsData } = await getTransmissions()
-    transmissions.value = transmissionsData
+    // const { data: transmissionsData } = await getTransmissions()
+    // transmissions.value = transmissionsData
   } catch (error) {
     console.error('Error fetching initial data:', error)
   }
 })
 
-// Watch for category changes to fetch subcategories
+// تعديل watch للفئة لتعبئة جميع البيانات المطلوبة
 watch(() => formData.value.category, async (newCategoryId) => {
   if (newCategoryId) {
     try {
+      // Fetch subcategories
       const { data } = await getSubCategories(newCategoryId)
-      subCategories.value = data
+      allSubCategories.value = data
+      
+      // Find selected category
+      const selectedCategory = categories.value.find(cat => cat._id === newCategoryId)
+      if (selectedCategory) {
+        // Reset subcategory when category changes
+        formData.value.subCategory = ''
+
+        // تعبئة العلامات التجارية
+        if (selectedCategory.tradeMarks) {
+          brands.value = selectedCategory.tradeMarks.map(brand => ({
+            _id: brand,
+            name: brand
+          }))
+        }
+
+        // تعبئة الخصائص الخاصة والقوائم المنسدلة
+        if (selectedCategory.specialProperties) {
+          // تعبئة أنواع الوقود
+          const fuelTypeProp = selectedCategory.specialProperties.find(prop => prop.property === "Fuel Type")
+          if (fuelTypeProp) {
+            fuelTypes.value = fuelTypeProp.values.map(value => ({
+              _id: value,
+              name: value
+            }))
+          }
+
+          // تعبئة أنواع ناقل الحركة
+          const transmissionProp = selectedCategory.specialProperties.find(prop => prop.property === "Transmission")
+          if (transmissionProp) {
+            transmissions.value = transmissionProp.values.map(value => ({
+              _id: value,
+              name: value
+            }))
+          }
+
+          // تعبئة حالة السيارة
+          const conditionProp = selectedCategory.specialProperties.find(prop => prop.property === "Condition")
+          if (conditionProp) {
+            conditions.value = conditionProp.values.map(value => ({
+              _id: value,
+              name: value
+            }))
+          }
+
+          // تعبئة الخصائص الخاصة في النموذج
+          formData.value.specialProperties = selectedCategory.specialProperties.map(prop => ({
+            property: prop.property,
+            type: prop.type,
+            value: ''
+          }))
+        }
+      }
     } catch (error) {
-      console.error('Error fetching sub-categories:', error)
+      console.error('Error fetching category data:', error)
     }
+  } else {
+    // Reset when no category is selected
+    allSubCategories.value = []
+    formData.value.subCategory = ''
+    brands.value = []
+    fuelTypes.value = []
+    transmissions.value = []
+    conditions.value = []
+    formData.value.specialProperties = []
   }
 })
 
@@ -196,9 +257,57 @@ const removeImage = (index) => {
   formData.value.gallery.splice(index, 1)
 }
 
+// دالة مساعدة لتحويل Base64 إلى ملف
+const base64ToFile = async (base64String, filename) => {
+  const response = await fetch(base64String)
+  const blob = await response.blob()
+  return new File([blob], filename, { type: blob.type })
+}
+
 const handleSubmit = async () => {
   try {
-    const { error: createError } = await createAd(formData.value)
+    // إنشاء كائن FormData جديد
+    const formDataToSend = new FormData()
+
+    // إضافة البيانات الأساسية
+    formDataToSend.append('category', formData.value.category)
+    formDataToSend.append('subCategory', formData.value.subCategory)
+    formDataToSend.append('advTitle', formData.value.advTitle)
+    formDataToSend.append('advDescription', formData.value.advDescription)
+    formDataToSend.append('price', formData.value.price)
+    formDataToSend.append('contact', formData.value.contactMethod)
+
+    // إضافة بيانات الموقع
+    const locationData = {
+      long: formData.value.location.long,
+      lat: formData.value.location.lat,
+      city: formData.value.location.city,
+      region: formData.value.location.region,
+      addressDetails: formData.value.location.addressDetails
+    }
+    formDataToSend.append('location', JSON.stringify(locationData))
+
+    // إضافة الخصائص الخاصة
+    const specialProperties = formData.value.specialProperties.map(prop => ({
+      property: prop.property,
+      value: prop.value
+    }))
+    formDataToSend.append('specialProperties', JSON.stringify(specialProperties))
+
+    // إضافة الصور
+    if (formData.value.gallery && formData.value.gallery.length > 0) {
+      for (let i = 0; i < formData.value.gallery.length; i++) {
+        const image = formData.value.gallery[i]
+        if (image instanceof File) {
+          formDataToSend.append('gallery', image)
+        } else if (typeof image === 'string' && image.startsWith('data:image')) {
+          const imageFile = await base64ToFile(image, `image-${i}.jpg`)
+          formDataToSend.append('gallery', imageFile)
+        }
+      }
+    }
+
+    const { error: createError } = await createAd(formDataToSend)
     
     if (createError) {
       throw new Error('Failed to create advertisement')

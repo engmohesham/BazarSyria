@@ -19,13 +19,13 @@
           المدينة *
         </label>
         <select 
-          v-model="modelValue.city"
+          v-model="selectedCity"
           class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-green-500"
           required
         >
-          <option value="" disabled selected>ادخل المدينة</option>
-          <option v-for="city in cities" :key="city._id" :value="city._id">
-            {{ city.name }}
+          <option value="" disabled selected>اختر المدينة</option>
+          <option v-for="city in cityList" :key="city" :value="city">
+            {{ city }}
           </option>
         </select>
       </div>
@@ -38,10 +38,11 @@
           v-model="modelValue.region"
           class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-green-500"
           required
+          :disabled="!selectedCity"
         >
-          <option value="" disabled selected>ادخل المنطقة</option>
-          <option v-for="region in regions" :key="region._id" :value="region._id">
-            {{ region.name }}
+          <option value="" disabled selected>اختر المنطقة</option>
+          <option v-for="region in regionsList" :key="region" :value="region">
+            {{ region }}
           </option>
         </select>
       </div>
@@ -102,21 +103,13 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { LMap, LTileLayer, LMarker, LPopup } from '@vue-leaflet/vue-leaflet'
 
 const props = defineProps({
   modelValue: {
     type: Object,
     required: true
-  },
-  cities: {
-    type: Array,
-    default: () => []
-  },
-  regions: {
-    type: Array,
-    default: () => []
   }
 })
 
@@ -131,6 +124,42 @@ const tempLocation = ref({
   lat: '', 
   long: '', 
   address: '' 
+})
+
+// Cities and Regions data
+const citiesData = {
+  "Damascus": [
+    "الميدان", "المزة", "أبو رمانة", "الشعلان", "المالكي",
+    "ركن الدين", "برزة", "كفرسوسة", "باب توما", "باب شرقي",
+    "القابون", "دمر", "قدسيا", "الزبلطاني"
+  ],
+  "Rif Dimashq": [
+    "التل", "قدسيا", "الزبداني", "داريا", "معضمية الشام",
+    "دوما", "حرستا", "عربين", "زملكا", "عين ترما",
+    "كفربطنا", "سقبا", "جسرين", "جرمانا", "النبك",
+    "يبرود", "القطيفة", "دير عطية", "الكسوة", "صحنايا"
+  ],
+  // ... add all other cities and their regions
+}
+
+// Selected city for managing regions
+const selectedCity = ref('')
+
+// Computed properties for cities and regions lists
+const cityList = computed(() => Object.keys(citiesData))
+
+const regionsList = computed(() => {
+  return selectedCity.value ? citiesData[selectedCity.value] : []
+})
+
+// Watch for city changes
+watch(selectedCity, (newCity) => {
+  // Reset region when city changes
+  emit('update:modelValue', {
+    ...props.modelValue,
+    city: newCity,
+    region: ''
+  })
 })
 
 onMounted(() => {
@@ -154,8 +183,8 @@ const getAddressFromCoords = async (lat, lng) => {
                     addressComponents.village || 
                     addressComponents.state
                     
-    const foundCity = props.cities.find(city => 
-      city.name.toLowerCase().includes(cityName?.toLowerCase())
+    const foundCity = cityList.value.find(city => 
+      city.toLowerCase().includes(cityName?.toLowerCase())
     )
 
     // Find region in our regions array
@@ -164,8 +193,8 @@ const getAddressFromCoords = async (lat, lng) => {
                       addressComponents.quarter ||
                       addressComponents.district
                       
-    const foundRegion = props.regions.find(region => 
-      region.name.toLowerCase().includes(regionName?.toLowerCase())
+    const foundRegion = regionsList.value.find(region => 
+      region.toLowerCase().includes(regionName?.toLowerCase())
     )
 
     // Construct detailed address
@@ -179,8 +208,8 @@ const getAddressFromCoords = async (lat, lng) => {
     // Update form values
     emit('update:modelValue', {
       ...props.modelValue,
-      city: foundCity?._id || '',
-      region: foundRegion?._id || '',
+      city: foundCity || '',
+      region: foundRegion || '',
       addressDetails: detailedAddress || data.display_name
     })
 
