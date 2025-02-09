@@ -428,7 +428,7 @@ const cameraType = computed(() => {
             <template v-else>
               <!-- مؤشر الخطوات -->
               <div class="mb-8">
-                <div class="flex items-center justify-center">
+                <div class="flex items-center justify-center gap-5 overflow-x-auto overflow-y-hidden h-[180px] w-full pr-36 md:pr-0">
                   <div class="flex items-center">
                     <!-- خطوة 1: البيانات الشخصية -->
                     <div class="flex items-center relative">
@@ -438,7 +438,7 @@ const cameraType = computed(() => {
                       ]">
                         1
                       </div>
-                      <div class="absolute -bottom-6 w-32 text-center text-sm">
+                      <div class="absolute -left-10 -bottom-8 w-32 text-center text-sm">
                         البيانات الشخصية
                       </div>
                     </div>
@@ -458,7 +458,7 @@ const cameraType = computed(() => {
                       ]">
                         2
                       </div>
-                      <div class="absolute -bottom-6 w-32 text-center text-sm">
+                      <div class="absolute -left-10 -bottom-8 w-32 text-center text-sm">
                         الوجه الأمامي
                       </div>
                     </div>
@@ -478,7 +478,7 @@ const cameraType = computed(() => {
                       ]">
                         3
                       </div>
-                      <div class="absolute -bottom-6 w-32 text-center text-sm">
+                      <div class="absolute -left-10 -bottom-8 w-32 text-center text-sm">
                         الوجه الخلفي
                       </div>
                     </div>
@@ -498,7 +498,7 @@ const cameraType = computed(() => {
                       ]">
                         4
                       </div>
-                      <div class="absolute -bottom-6 w-32 text-center text-sm">
+                      <div class="absolute -left-10 -bottom-8 w-32 text-center text-sm">
                         صورة شخصية
                       </div>
                     </div>
@@ -603,7 +603,7 @@ const cameraType = computed(() => {
               </div>
 
               <div v-else-if="currentStep > 1" class="space-y-4">
-                <h3 class="text-lg font-medium text-center mb-4">
+                <h3 class="text-lg font-medium text-center mb-4 overflow-x-auto w-full">
                   {{ getStepTitle() }}
                 </h3>
 

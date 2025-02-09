@@ -208,7 +208,7 @@
       <div
         v-if="isMobileMenuOpen"
         ref="menuRef"
-        class="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-50"
+        class="lg:hidden fixed mt-20 inset-0 bg-black bg-opacity-50 z-50"
       >
         <div
           class="absolute top-[20px] left-0 mx-5 pb-10 right-0 bg-white border-t border-gray-100 shadow-lg z-50 max-h-[calc(100vh-61px)] overflow-y-auto p-6"

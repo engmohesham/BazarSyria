@@ -65,7 +65,7 @@
           leave-from-class="transform translate-y-0 opacity-100"
           leave-to-class="transform -translate-y-full opacity-0"
         >
-          <div v-if="isMobileMenuOpen" ref="mobileMenuRef" class="fixed left-0 right-0 top-[105px] bottom-0 bg-white border-t border-gray-100 shadow-lg z-50 overflow-y-auto">
+          <div v-if="isMobileMenuOpen" ref="mobileMenuRef" class="fixed left-0 right-0 top-[125px] bottom-0 bg-white border-t border-gray-100 shadow-lg z-50 overflow-y-auto">
             <div class="container mx-auto px-4 py-2">
               <ul class="space-y-2">
                 <li v-for="(item, index) in menuItems" :key="index">
