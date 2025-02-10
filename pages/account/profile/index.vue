@@ -1,4 +1,5 @@
 <script setup>
+import user from "~/assets/user.png";
 const router = useRouter();
 const { getProfile, updateProfile } = useServices();
 const userData = ref({
@@ -116,7 +117,7 @@ console.log(userData.value);
             <div class="flex flex-col items-center">
               <!-- الصورة الشخصية -->
               <img
-                :src="userData.avatar || 'https://via.placeholder.com/100'"
+                :src="`${API_BASE_URL}/${userData.avatar}` || user"
                 class="w-32 h-32 rounded-full border-4 border-white object-cover"
                 alt="الصورة الشخصية"
               />

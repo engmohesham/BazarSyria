@@ -1,19 +1,32 @@
 <template>
   <div class="bg-white rounded-lg shadow-sm p-6">
-    <!-- Map Button -->
-    <button 
-      type="button"
-      @click="getLocation"
-      class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors mb-6"
-      :disabled="isLoading"
-    >
-      <Icon v-if="!isLoading" name="ph:map-pin" class="w-5 h-5" />
-      <Icon v-else name="ph:spinner" class="w-5 h-5 animate-spin" />
-      {{ isLoading ? 'جاري تحديد موقعك...' : 'اضافة العنوان على الخريطة' }}
-    </button>
+    <!-- Location Required Message -->
+    <div v-if="!hasLocation" class="mb-6 text-center">
+      <p class="text-red-600 mb-4">يجب تحديد موقعك أولاً</p>
+      <button 
+        type="button"
+        @click="getLocation"
+        class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+        :disabled="isLoading"
+      >
+        <Icon v-if="!isLoading" name="ph:map-pin" class="w-5 h-5" />
+        <Icon v-else name="ph:spinner" class="w-5 h-5 animate-spin" />
+        {{ isLoading ? 'جاري تحديد موقعك...' : 'تحديد موقعك على الخريطة' }}
+      </button>
+    </div>
 
-    <!-- City and Region -->
-    <div class="space-y-4">
+    <!-- City and Region Selection (Only visible after location is set) -->
+    <div v-if="hasLocation" class="space-y-4">
+      <!-- Map Update Button -->
+      <button 
+        type="button"
+        @click="getLocation"
+        class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors mb-6"
+      >
+        <Icon name="ph:map-pin" class="w-5 h-5" />
+        تحديث الموقع
+      </button>
+
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-2">
           المدينة *
@@ -23,7 +36,7 @@
           class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-green-500"
           required
         >
-          <option value="" disabled selected>اختر المدينة</option>
+          <option value="" disabled>اختر المدينة</option>
           <option v-for="city in cityList" :key="city" :value="city">
             {{ city }}
           </option>
@@ -40,7 +53,7 @@
           required
           :disabled="!selectedCity"
         >
-          <option value="" disabled selected>اختر المنطقة</option>
+          <option value="" disabled>اختر المنطقة</option>
           <option v-for="region in regionsList" :key="region" :value="region">
             {{ region }}
           </option>
@@ -150,21 +163,36 @@ const tempLocation = ref({
   address: '' 
 })
 
-// Cities and Regions data
+// Update the cities data with Arabic names
 const citiesData = {
-  "Damascus": [
+  "دمشق": [
     "الميدان", "المزة", "أبو رمانة", "الشعلان", "المالكي",
     "ركن الدين", "برزة", "كفرسوسة", "باب توما", "باب شرقي",
     "القابون", "دمر", "قدسيا", "الزبلطاني"
   ],
-  "Rif Dimashq": [
+  "ريف دمشق": [
     "التل", "قدسيا", "الزبداني", "داريا", "معضمية الشام",
     "دوما", "حرستا", "عربين", "زملكا", "عين ترما",
     "كفربطنا", "سقبا", "جسرين", "جرمانا", "النبك",
     "يبرود", "القطيفة", "دير عطية", "الكسوة", "صحنايا"
   ],
-  // ... add all other cities and their regions
-}
+  "حلب": [
+    "الجميلية", "السليمانية", "الشهباء", "الأعظمية", "الميدان",
+    "السكري", "الفرقان", "الحمدانية", "الشيخ مقصود", "بستان القصر"
+  ],
+  "حمص": [
+    "الوعر", "الإنشاءات", "الخالدية", "عكرمة", "باب السباع",
+    "القصور", "الحميدية", "كرم الشامي", "باب هود", "جب الجندلي"
+  ],
+  "اللاذقية": [
+    "الأشرفية", "الصليبة", "العوينة", "القلعة", "المشروع السابع",
+    "الرمل الشمالي", "الرمل الجنوبي", "ضاحية تشرين", "الزراعة", "الشيخ ضاهر"
+  ],
+  "طرطوس": [
+    "المشبكة", "الرمل", "المينا", "الغمقة", "القصور",
+    "الحميدية", "المشروع السادس", "الرابية", "الكرنك", "البحصة"
+  ]
+};
 
 // Selected city for managing regions
 const selectedCity = ref('')
@@ -234,53 +262,106 @@ const getAddressFromCoords = async (lat, lng) => {
   }
 }
 
-// دالة الحصول على الموقع الحالي
+// Add new ref for tracking if location is set
+const hasLocation = ref(false)
+
+// Add city coordinates mapping
+const cityCoordinates = {
+  "دمشق": { lat: 33.5138, lng: 36.2765 },
+  "ريف دمشق": { lat: 33.5138, lng: 36.2765 },
+  "حلب": { lat: 36.2021, lng: 37.1343 },
+  "حمص": { lat: 34.7324, lng: 36.7137 },
+  "اللاذقية": { lat: 35.5317, lng: 35.7915 },
+  "طرطوس": { lat: 34.8889, lng: 35.8866 }
+}
+
+// Function to find nearest city based on coordinates
+const findNearestCity = (lat, lng) => {
+  let nearestCity = null;
+  let shortestDistance = Infinity;
+
+  Object.entries(cityCoordinates).forEach(([city, coords]) => {
+    const distance = calculateDistance(lat, lng, coords.lat, coords.lng);
+    if (distance < shortestDistance) {
+      shortestDistance = distance;
+      nearestCity = city;
+    }
+  });
+
+  return nearestCity;
+}
+
+// Calculate distance between two points using Haversine formula
+const calculateDistance = (lat1, lon1, lat2, lon2) => {
+  const R = 6371; // Earth's radius in km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+}
+
+// Update getLocation function
 const getLocation = () => {
   if (!navigator.geolocation) {
-    alert('متصفحك لا يدعم تحديد الموقع')
-    return
+    alert('متصفحك لا يدعم تحديد الموقع');
+    return;
   }
 
-  isLoading.value = true
-  showModal.value = true
+  isLoading.value = true;
+  showModal.value = true;
 
   navigator.geolocation.getCurrentPosition(
     async (position) => {
-      const { latitude, longitude } = position.coords
-      mapCenter.value = [latitude, longitude]
+      const { latitude, longitude } = position.coords;
+      mapCenter.value = [latitude, longitude];
       
       tempLocation.value = {
         lat: latitude,
         long: longitude,
         address: ''
-      }
+      };
 
       try {
-        const addressData = await getAddressFromCoords(latitude, longitude)
-        tempLocation.value.address = addressData.fullAddress
+        const addressData = await getAddressFromCoords(latitude, longitude);
+        tempLocation.value.address = addressData.fullAddress;
+        
+        // Find and set nearest city
+        const nearestCity = findNearestCity(latitude, longitude);
+        if (nearestCity) {
+          selectedCity.value = nearestCity;
+        }
+
+        hasLocation.value = true;
       } catch (error) {
-        console.error('Error getting address:', error)
-        tempLocation.value.address = 'عنوان غير معروف'
+        console.error('Error getting address:', error);
+        tempLocation.value.address = 'عنوان غير معروف';
       }
 
-      isLoading.value = false
+      isLoading.value = false;
     },
     (error) => {
-      isLoading.value = false
-      console.error('Geolocation error:', error)
-      alert('حدث خطأ في تحديد موقعك. يرجى المحاولة مرة أخرى.')
-    }
-  )
+      isLoading.value = false;
+      console.error('Geolocation error:', error);
+      alert('حدث خطأ في تحديد موقعك. يرجى المحاولة مرة أخرى.');
+    },
+    { enableHighAccuracy: true }
+  );
 }
 
+// Update confirmLocation function
 const confirmLocation = () => {
   emit('update:modelValue', {
     ...props.modelValue,
     lat: tempLocation.value.lat.toString(),
     long: tempLocation.value.long.toString(),
+    city: selectedCity.value,
     addressDetails: tempLocation.value.address
-  })
-  showModal.value = false
+  });
+  showModal.value = false;
 }
 
 const cancelLocation = () => {

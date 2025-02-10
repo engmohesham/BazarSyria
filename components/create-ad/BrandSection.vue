@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-white rounded-lg shadow-sm p-6">
+  <div v-if="showBrands" class="bg-white rounded-lg shadow-sm p-6">
     <div>
       <label class="block text-sm font-medium text-gray-700 mb-2">
         الماركة *
@@ -20,7 +20,9 @@
 </template>
 
 <script setup>
-defineProps({
+import { computed } from 'vue';
+
+const props = defineProps({
   modelValue: {
     type: String,
     required: true
@@ -28,8 +30,16 @@ defineProps({
   brands: {
     type: Array,
     default: () => []
+  },
+  selectedCategory: {
+    type: Object,
+    default: null
   }
-})
+});
 
-defineEmits(['update:modelValue'])
+const showBrands = computed(() => {
+  return props.selectedCategory && props.selectedCategory.tradeMarks?.length > 0;
+});
+
+defineEmits(['update:modelValue']);
 </script> 

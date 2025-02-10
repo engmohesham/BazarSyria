@@ -1,7 +1,12 @@
 <template>
   <div class="flex h-screen">
     <!-- Right Sidebar - Chat List -->
-    <div class="w-80 border-r bg-white">
+    <div 
+      :class="[
+        'border-r bg-white transition-all duration-300',
+        selectedChat && isMobile ? 'hidden' : 'w-full md:w-80'
+      ]"
+    >
       <div class="p-4 border-b">
         <div class="flex items-center justify-between">
           <button @click="goBack" class="text-gray-600">
@@ -34,7 +39,7 @@
             </div>
             <div class="flex-1">
               <div class="flex justify-between items-start">
-                <h3 class="font-medium">{{ chat.name || 'مستخدم' }}</h3>
+                <h3 class="font-medium">{{ getChatName(chat) }}</h3>
                 <span class="text-xs text-gray-500">{{
                   formatTime(chat.lastMessageTime)
                 }}</span>
@@ -52,12 +57,21 @@
     </div>
 
     <!-- Main Chat Area -->
-    <div class="flex-1 flex flex-col" v-if="selectedChat">
+    <div 
+      v-if="selectedChat" 
+      :class="[
+        'flex-1 flex flex-col',
+        isMobile ? 'fixed inset-0 z-10 top-36 bg-white' : ''
+      ]"
+    >
       <!-- Header -->
       <div class="bg-white p-2.5 flex items-center justify-between border-b">
         <div class="flex items-center gap-4">
-          <!-- زر الرجوع -->
-          <button @click="closeChat" class="text-gray-600">
+          <!-- Back button - only show on mobile -->
+          <button 
+            @click="closeChat" 
+            class="text-gray-600 md:hidden"
+          >
             <Icon name="heroicons:arrow-right" class="w-5 h-5" />
           </button>
           <div class="flex items-center gap-2">
@@ -68,7 +82,7 @@
               @error="handleImageError"
             />
             <div class="text-right">
-              <h3 class="font-semibold">{{ selectedChat?.name || 'مستخدم' }}</h3>
+              <h3 class="font-semibold">{{ getChatName(selectedChat) }}</h3>
               <p class="text-xs text-gray-500">آخر ظهور اليوم 5:07م</p>
             </div>
           </div>
@@ -158,7 +172,10 @@
     </div>
 
     <!-- Placeholder when no chat is selected -->
-    <div v-else class="flex-1 flex items-center justify-center bg-gray-50">
+    <div 
+      v-else 
+      class="hidden md:flex flex-1 items-center justify-center bg-gray-50"
+    >
       <div class="text-center text-gray-500">
         <Icon
           name="heroicons:chat-bubble-left-right"
@@ -168,12 +185,12 @@
       </div>
     </div>
 
-    <!-- Modal إنشاء محادثة جديدة -->
+    <!-- New Chat Modal -->
     <div
       v-if="showNewChatModal"
-      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
     >
-      <div class="bg-white rounded-lg p-6 w-96">
+      <div class="bg-white rounded-lg p-6 w-full max-w-md mx-auto">
         <div class="flex justify-between items-center mb-4">
           <h3 class="text-lg font-semibold">محادثة جديدة</h3>
           <button @click="showNewChatModal = false">
@@ -702,6 +719,53 @@ const userAvatar = computed(() => {
   return selectedChat?.avatar || user;
 });
 
+// Add this computed function to get the other user's name
+const getChatName = (chat) => {
+  // If it's a group chat, return the chat name directly
+  if (chat.isGroup) {
+    return chat.name;
+  }
+  
+  // For one-on-one chats, find the other user
+  const otherUser = chat.users?.find(user => user._id !== currentUserId.value);
+  return otherUser?.name || 'مستخدم';
+};
+
+// Add responsive state
+const isMobile = ref(false);
+
+// Check screen size on mount and resize
+const checkScreenSize = () => {
+  isMobile.value = window.innerWidth < 768; // 768px is the md breakpoint
+};
+
+onMounted(() => {
+  if (process.client) {
+    checkScreenSize();
+    window.addEventListener('resize', checkScreenSize);
+  }
+});
+
+onUnmounted(() => {
+  if (process.client) {
+    window.removeEventListener('resize', checkScreenSize);
+  }
+});
+
+// Update message input styles
+const messageInputClass = computed(() => {
+  return [
+    'flex-1',
+    'bg-gray-50',
+    'rounded-full',
+    'px-4',
+    'py-2',
+    'focus:outline-none',
+    'text-right',
+    isMobile.value ? 'text-sm' : 'text-base'
+  ].join(' ');
+});
+
 definePageMeta({
   middleware: ["auth"]
 });
@@ -725,5 +789,39 @@ definePageMeta({
 /* توجيه النص للعربية */
 .rtl {
   direction: rtl;
+}
+
+/* Add responsive styles */
+@media (max-width: 768px) {
+  .messages-container {
+    padding: 1rem;
+  }
+
+  .message-bubble {
+    max-width: 85%;
+  }
+}
+
+/* Prevent body scroll when modal is open */
+.modal-open {
+  overflow: hidden;
+}
+
+/* Smooth transitions */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+/* Ensure proper touch handling on mobile */
+@media (hover: none) {
+  .hover\:bg-gray-50:hover {
+    background-color: inherit;
+  }
 }
 </style>

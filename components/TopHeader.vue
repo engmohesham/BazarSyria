@@ -8,6 +8,7 @@
             :src="logo"
             alt="بازار سوريا"
             class="h-16 lg:h-14 w-auto transition-all duration-200"
+
           />
         </NuxtLink>
       </div>
@@ -31,17 +32,18 @@
 
       <!-- Desktop Actions -->
       <div class="hidden lg:flex items-center gap-4">
-        <NuxtLink
-          to="/create-ad"
+        <button
+          @click="navigateTo('/create-ad')"
           class="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
         >
-          <span class="text-sm font-medium">+ أضف إعلانك</span>
-        </NuxtLink>
+          <Icon name="ph:plus" class="w-5 h-5" />
+          <span class="text-sm font-medium">أضف إعلانك</span>
+        </button>
         <div class="flex items-center gap-4">
           <!-- Login/Profile Section -->
           <template v-if="!isLoggedIn">
             <div class="relative">
-              <button 
+              <button
                 @click="toggleDropdown"
                 class="flex items-center gap-2 hover:text-green-600 transition-colors"
               >
@@ -49,7 +51,7 @@
                 <Icon name="ph:caret-down" class="w-4 h-4" />
               </button>
               <!-- Dropdown menu -->
-              <div 
+              <div
                 v-show="isDropdownOpen"
                 class="absolute top-full right-0 mt-2 z-50 w-48 bg-white rounded-md shadow-lg py-1"
               >
@@ -70,30 +72,35 @@
           </template>
           <template v-else>
             <div class="relative dropdown-container">
-              <button 
+              <button
                 @click.stop="toggleProfileDropdown"
                 class="flex items-center gap-2 hover:text-green-600 transition-colors"
               >
                 <img
-                  src="https://via.placeholder.com/32"
+                  :src="profile?.avatar ? profile?.avatar : user"
                   alt="User"
                   class="w-8 h-8 rounded-full border-2 border-gray-100"
                 />
+
                 <Icon name="ph:caret-down" class="w-4 h-4" />
               </button>
               <!-- Profile Dropdown Menu -->
-              <div 
+              <div
                 v-show="isProfileDropdownOpen"
                 class="absolute top-full right-0 mt-2 z-50 w-64 bg-white rounded-md shadow-lg py-2"
               >
                 <!-- User Info -->
                 <div class="px-4 py-2 border-b border-gray-100">
-                  <div class="flex items-center gap-3 mb-2 cursor-pointer" @click="navigateToProfile">
+                  <div
+                    class="flex items-center gap-3 mb-2 cursor-pointer"
+                    @click="navigateTo('/account')"
+                  >
                     <img
-                      src="https://via.placeholder.com/32"
+                      :src="profile?.avatar ? profile?.avatar : user"
                       alt="User"
                       class="w-10 h-10 rounded-full border-2 border-gray-100"
                     />
+
                     <div class="text-right">
                       <p class="font-medium">محمد العامري</p>
                       <p class="text-sm text-gray-500">أهلاً بك</p>
@@ -103,53 +110,55 @@
 
                 <!-- Menu Items -->
                 <div class="py-1" dir="ltr">
-                  <NuxtLink
+                  <!-- <NuxtLink
                     to="/account/profile/wallet"
                     class="flex items-center justify-end gap-3 px-4 py-2 text-gray-700 hover:bg-gray-50"
                   >
                     <span>المحفظة</span>
                     <Icon name="ph:wallet" class="w-5 h-5" />
-                  </NuxtLink>
+                  </NuxtLink> -->
 
-                  <NuxtLink
-                    to="/profile/my-ads"
+                  <button
+                    @click="navigateTo('/account/profile/my-ads')"
                     class="flex items-center justify-end gap-3 px-4 py-2 text-gray-700 hover:bg-gray-50"
                   >
                     <span>اعلاناتي</span>
-                    <Icon name="ph:megaphone" class="w-5 h-5" />
-                  </NuxtLink>
 
-                  <NuxtLink
-                    to="/account/profile/following"
+                    <Icon name="ph:megaphone" class="w-5 h-5" />
+                  </button>
+
+                  <button
+                    @click="navigateTo('/account/profile/following')"
                     class="flex items-center justify-end gap-3 px-4 py-2 text-gray-700 hover:bg-gray-50"
                   >
                     <span>المتابعين</span>
-                    <Icon name="ph:users" class="w-5 h-5" />
-                  </NuxtLink>
 
-                  <NuxtLink
+                    <Icon name="ph:users" class="w-5 h-5" />
+                  </button>
+
+                  <!-- <NuxtLink
                     to="/account/profile/favorites"
                     class="flex items-center justify-end gap-3 px-4 py-2 text-gray-700 hover:bg-gray-50"
                   >
                     <span>المفضلة</span>
                     <Icon name="ph:heart" class="w-5 h-5" />
-                  </NuxtLink>
+                  </NuxtLink> -->
 
-                  <NuxtLink
-                    to="/account/profile/invoices"
+                  <button
+                    @click="navigateTo('/account/chat')"
                     class="flex items-center justify-end gap-3 px-4 py-2 text-gray-700 hover:bg-gray-50"
                   >
-                    <span>الفواتير</span>
-                    <Icon name="ph:receipt" class="w-5 h-5" />
-                  </NuxtLink>
+                    <span>المحادثات</span>
+                    <Icon name="ph:chat-circle" class="w-5 h-5" />
+                  </button>
 
-                  <NuxtLink
-                    to="/account/profile/settings"
+                  <button
+                    to="/account/settings"
                     class="flex items-center justify-end gap-3 px-4 py-2 text-gray-700 hover:bg-gray-50"
                   >
                     <span>الاعدادات</span>
                     <Icon name="ph:gear" class="w-5 h-5" />
-                  </NuxtLink>
+                  </button>
 
                   <button
                     @click="handleLogout"
@@ -163,15 +172,16 @@
             </div>
           </template>
           <div class="flex items-center gap-4">
-            <button
+            <!-- <button
               class="flex p-1.5 rounded-full hover:bg-gray-100 transition-colors relative"
             >
               <Icon name="ph:bell" class="w-5 h-5 text-gray-500" />
               <span
                 class="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"
               ></span>
-            </button>
+            </button> -->
             <button
+              @click="navigateTo('/account/chat')"
               class="flex p-1.5 rounded-full hover:bg-gray-100 transition-colors relative"
             >
               <Icon name="ph:chat-circle" class="w-5 h-5 text-gray-500" />
@@ -211,7 +221,7 @@
         class="lg:hidden fixed mt-20 inset-0 bg-black bg-opacity-50 z-50"
       >
         <div
-          class="absolute top-[20px] left-0 mx-5 pb-10 right-0 bg-white border-t border-gray-100 shadow-lg z-50 max-h-[calc(100vh-61px)] overflow-y-auto p-6"
+          class="absolute top-[20px] left-0 mx-5 pb-24 right-0 bg-white border-t border-gray-100 shadow-lg z-50 max-h-[calc(100vh-61px)] overflow-y-auto p-6"
         >
           <!-- Header -->
           <div class="flex items-center justify-between gap-4 mb-6">
@@ -240,79 +250,87 @@
               />
             </div>
 
-            <NuxtLink
-              to="/create-ad"
+            <button
+              @click="navigateTo('/create-ad')"
               class="w-full flex items-center justify-between px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
             >
               <Icon name="ph:plus" class="w-5 h-5" />
               <span class="text-sm font-medium">+ أضف إعلانك</span>
-            </NuxtLink>
+            </button>
           </div>
 
           <!-- User Section -->
           <template v-if="isLoggedIn">
             <!-- User Info -->
-            <div 
-              class="flex items-center gap-3 px-4 mb-6 border-b border-gray-100 pb-4 cursor-pointer" 
-              @click="navigateToProfile"
+            <div
+              class="flex items-center gap-3 px-4 mb-6 border-b border-gray-100 pb-4 cursor-pointer"
+              @click="navigateTo('/account')"
             >
               <div class="text-right flex-1">
                 <p class="font-medium text-lg">محمد العامري</p>
+
                 <p class="text-sm text-gray-500">أهلاً بك</p>
               </div>
               <img
-                src="https://via.placeholder.com/32"
+                :src="profile?.avatar ? profile?.avatar : user"
                 alt="User"
                 class="w-12 h-12 rounded-full border-2 border-gray-100"
               />
+
             </div>
 
             <!-- Menu Grid -->
             <div class="grid grid-cols-2 gap-4 mb-6">
-              <NuxtLink
+              <button
                 v-for="(item, index) in menuItems"
                 :key="index"
-                :to="item.to"
+                @click="navigateTo(item.to)"
                 class="flex items-center gap-3 py-3 px-4 text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-50"
               >
                 <Icon :name="item.icon" class="w-5 h-5" />
                 <span>{{ item.text }}</span>
-              </NuxtLink>
+              </button>
             </div>
 
             <!-- Notifications and Messages -->
             <div class="grid grid-cols-2 gap-4 border-t border-gray-100 pt-4">
-              <NuxtLink to="/notifications" class="flex items-center justify-center gap-2">
+              <!-- <NuxtLink to="/notifications" class="flex items-center justify-center gap-2">
                 <div class="relative">
                   <Icon name="ph:bell" class="w-6 h-6 text-gray-600" />
                   <span class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
                 </div>
                 <span class="text-sm text-gray-600">الإشعارات</span>
-              </NuxtLink>
+              </NuxtLink> -->
 
-              <NuxtLink to="/messages" class="flex items-center justify-center gap-2">
+              <button
+                @click="navigateTo('/account/chat')"
+                class="flex items-center justify-center gap-2"
+              >
                 <div class="relative">
                   <Icon name="ph:chat-circle" class="w-6 h-6 text-gray-600" />
-                  <span class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                  <span
+                    class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"
+                  ></span>
                 </div>
                 <span class="text-sm text-gray-600">الرسائل</span>
-              </NuxtLink>
+              </button>
+
+              <button
+                @click="handleLogout"
+                class="col-span-2 flex items-center gap-3 py-3 px-4 text-red-600 hover:text-red-700 rounded-lg hover:bg-red-50 border bord er-red-100"
+              >
+                <Icon name="ph:sign-out" class="w-5 h-5" />
+                <span>تسجيل الخروج</span>
+              </button>
             </div>
 
             <!-- Add Logout Button -->
-            <button
-              @click="handleLogout"
-              class="col-span-2 flex items-center gap-3 py-3 px-4 text-red-600 hover:text-red-700 rounded-lg hover:bg-red-50 border border-red-100"
-            >
-              <Icon name="ph:sign-out" class="w-5 h-5" />
-              <span>تسجيل الخروج</span>
-            </button>
           </template>
 
           <!-- Login/Register Section -->
           <template v-else>
             <div class="grid grid-cols-2 gap-4">
-              <button 
+              <button
                 @click="handleLoginClick"
                 class="flex flex-col items-center py-3 px-4 rounded-lg hover:bg-gray-50 group"
               >
@@ -324,7 +342,7 @@
                   >تسجيل الدخول</span
                 >
               </button>
-              <button 
+              <button
                 @click="handleRegisterClick"
                 class="flex flex-col items-center py-3 px-4 rounded-lg hover:bg-gray-50 group"
               >
@@ -348,61 +366,64 @@
 import { ref, onMounted, onUnmounted } from "vue";
 import logo from "~/assets/logo.png";
 import { useRouter } from "vue-router";
+import user from "~/assets/user.png";
 
 const props = defineProps({
   isLoggedIn: {
     type: Boolean,
-    default: false
-  }
-})
+    default: false,
+  },
+});
 
-const emit = defineEmits(['open-login', 'open-register'])
+const emit = defineEmits(["open-login", "open-register"]);
 
-const isMobileMenuOpen = ref(false)
-const menuRef = ref(null)
-const buttonRef = ref(null)
-const isDropdownOpen = ref(false)
-const dropdownRef = ref(null)
-const router = useRouter()
-const isProfileDropdownOpen = ref(false)
+const isMobileMenuOpen = ref(false);
+const menuRef = ref(null);
+const buttonRef = ref(null);
+const isDropdownOpen = ref(false);
+const dropdownRef = ref(null);
+const router = useRouter();
+const isProfileDropdownOpen = ref(false);
+const { getProfile } = useServices();
+const { data: profile, error: profileError } = getProfile();
 
 const toggleDropdown = () => {
-  isDropdownOpen.value = !isDropdownOpen.value
-}
+  isDropdownOpen.value = !isDropdownOpen.value;
+};
 
 const closeDropdown = () => {
-  isDropdownOpen.value = false
-}
+  isDropdownOpen.value = false;
+};
 
 const handleLoginClick = () => {
-  emit('open-login')
-  closeDropdown()
-}
+  emit("open-login");
+  closeDropdown();
+};
 
 const handleRegisterClick = () => {
-  emit('open-register')
-  closeDropdown()
-}
+  emit("open-register");
+  closeDropdown();
+};
 
 // Handle click outside for dropdown
 onMounted(() => {
-  document.addEventListener('click', (event) => {
-    const dropdown = document.querySelector('.relative') // Adjust selector as needed
+  document.addEventListener("click", (event) => {
+    const dropdown = document.querySelector(".relative"); // Adjust selector as needed
     if (dropdown && !dropdown.contains(event.target)) {
-      closeDropdown()
+      closeDropdown();
     }
-  })
-})
+  });
+});
 
 onUnmounted(() => {
-  document.removeEventListener('click', closeDropdown)
-})
+  document.removeEventListener("click", closeDropdown);
+});
 
 // Mobile menu handlers
 const toggleMobileMenu = () => {
-  isMobileMenuOpen.value = !isMobileMenuOpen.value
-  console.log(isMobileMenuOpen.value)
-}
+  isMobileMenuOpen.value = !isMobileMenuOpen.value;
+  console.log(isMobileMenuOpen.value);
+};
 
 const handleClickOutside = (event) => {
   if (
@@ -411,69 +432,69 @@ const handleClickOutside = (event) => {
     !menuRef.value.contains(event.target) &&
     !buttonRef.value.contains(event.target)
   ) {
-    isMobileMenuOpen.value = false
+    isMobileMenuOpen.value = false;
   }
-}
+};
 
 const handleLogout = async () => {
   try {
     // Remove token from localStorage
-    localStorage.removeItem('session-token')
-    
+    localStorage.removeItem("session-token");
+
     // Close any open menus
-    isProfileDropdownOpen.value = false
-    isMobileMenuOpen.value = false
-    
+    isProfileDropdownOpen.value = false;
+    isMobileMenuOpen.value = false;
+
     // Optional: Call logout API endpoint
     // await fetch('/api/auth/logout')
-    
+
     // Redirect to home page
-    router.push('/')
-    
+    router.push("/");
+
     // Reload page to reset state
-    window.location.reload()
+    window.location.reload();
   } catch (error) {
-    console.error('Error during logout:', error)
+    console.error("Error during logout:", error);
   }
-}
+};
 
 const toggleProfileDropdown = () => {
-  isProfileDropdownOpen.value = !isProfileDropdownOpen.value
-}
+  isProfileDropdownOpen.value = !isProfileDropdownOpen.value;
+};
 
 // Handle click outside for profile dropdown
 onMounted(() => {
-  document.addEventListener('click', (event) => {
-    const profileDropdown = document.querySelector('.dropdown-container')
+  document.addEventListener("click", (event) => {
+    const profileDropdown = document.querySelector(".dropdown-container");
     if (profileDropdown && !profileDropdown.contains(event.target)) {
-      isProfileDropdownOpen.value = false
+      isProfileDropdownOpen.value = false;
     }
-  })
-})
+  });
+});
 
 onMounted(() => {
-  document.addEventListener("mousedown", handleClickOutside)
-})
+  document.addEventListener("mousedown", handleClickOutside);
+});
 
 onUnmounted(() => {
-  document.removeEventListener("mousedown", handleClickOutside)
-})
+  document.removeEventListener("mousedown", handleClickOutside);
+});
 
 // Add this to your setup:
 const menuItems = [
-  { to: '/account/profile/wallet', icon: 'ph:wallet', text: 'المحفظة' },
-  { to: '/account/profile/following', icon: 'ph:users', text: 'المتابَعين' },
-  { to: '/account/profile/favorites', icon: 'ph:heart', text: 'المفضلة' },
-  { to: '/account/profile/invoices', icon: 'ph:receipt', text: 'الفواتير' },
-  { to: '/account/profile/settings', icon: 'ph:gear', text: 'الاعدادات' },
-  { to: '/contact', icon: 'ph:phone', text: 'اتصل بنا' },
-  { to: '/account/profile/my-ads', icon: 'ph:megaphone', text: 'إعلاناتي' }
-]
+  { to: "/account/profile/wallet", icon: "ph:wallet", text: "المحفظة" },
+  { to: "/account/profile/following", icon: "ph:users", text: "المتابَعين" },
+  { to: "/account/profile/favorites", icon: "ph:heart", text: "المفضلة" },
+  { to: "/account/profile/invoices", icon: "ph:receipt", text: "الفواتير" },
+  { to: "/account/profile/settings", icon: "ph:gear", text: "الاعدادات" },
+  { to: "/contact", icon: "ph:phone", text: "اتصل بنا" },
+  { to: "/account/profile/my-ads", icon: "ph:megaphone", text: "إعلاناتي" },
+];
 
-const navigateToProfile = () => {
-  router.push('/account');
+const navigateTo = (route) => {
+  router.push(route);
   toggleMobileMenu();
-}
+};
 </script>
 
 <style scoped>

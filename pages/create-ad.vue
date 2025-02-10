@@ -28,6 +28,7 @@
           <BrandSection
             v-model="formData.brand"
             :brands="brands"
+            :selected-category="selectedCategory"
           />
 
           <SpecificationsSection
@@ -35,6 +36,7 @@
             :conditions="conditions"
             :fuel-types="fuelTypes"
             :transmissions="transmissions"
+            :selected-category="selectedCategory"
           />
 
           <AdDetailsSection
@@ -65,7 +67,7 @@
 </template>
 
 <script setup>
-import { onMounted, ref, watch } from 'vue'
+import { onMounted, ref, watch, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useServices } from '../composables/useServices'
 
@@ -121,6 +123,11 @@ const conditions = ref([])
 const fuelTypes = ref([])
 const transmissions = ref([])
 const allSubCategories = ref([])
+
+// Add computed for selected category
+const selectedCategory = computed(() => {
+  return categories.value.find(cat => cat._id === formData.value.category) || null;
+})
 
 // Fetch initial data
 onMounted(async () => {
