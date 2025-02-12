@@ -38,7 +38,11 @@ export const useServices = () => {
       return { data: data.value, error: null, message: data.value.message };
     } catch (err) {
       console.error("Login error:", err);
-      return { data: null, error: err, message: "An unexpected error occurred" };
+      return {
+        data: null,
+        error: err,
+        message: "An unexpected error occurred",
+      };
     }
   };
 
@@ -496,7 +500,7 @@ export const useServices = () => {
           method: "POST",
           body: formData,
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("session-token")}`
+            Authorization: `Bearer ${localStorage.getItem("session-token")}`,
           },
         }
       );
@@ -506,6 +510,70 @@ export const useServices = () => {
     } catch (err) {
       console.error("Error updating identity:", err);
       return { data: null, error: err };
+    }
+  };
+
+  const updateProfile = async (profileData: {
+    name?: string;
+    email?: string;
+    phone?: string;
+    location?: string;
+    avatar?: File | string;
+    coverImage?: File | string;
+    bio?: string;
+    role?: string;
+    id: string;
+  }) => {
+    try {
+      if (!profileData.id) {
+        throw new Error('User ID is required for profile update');
+      }
+
+      // Create FormData if we have file uploads
+      const formData = new FormData();
+
+      // Add all text fields
+      Object.keys(profileData).forEach((key) => {
+        if (profileData[key] !== undefined && profileData[key] !== null) {
+          // Handle file uploads differently
+          if (key === "avatar" || key === "coverImage") {
+            if (profileData[key] instanceof File) {
+              formData.append(key, profileData[key]);
+            }
+          } else {
+            formData.append(key, profileData[key].toString());
+          }
+        }
+      });
+
+      const { data, error } = await useFetch(
+        `${API_BASE_URL}${API_ENDPOINTS.UPDATE_PROFILE}/${profileData.id}`,
+        {
+          method: "PATCH",
+          body: formData,
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("session-token")}`,
+          },
+        }
+      );
+
+      if (error.value) {
+        console.error("Profile update error:", error.value);
+        throw error.value;
+      }
+
+      return {
+        data: data.value,
+        error: null,
+        message: "تم تحديث الملف الشخصي بنجاح",
+      };
+    } catch (err) {
+      console.error("Error updating profile:", err);
+      return {
+        data: null,
+        error: err,
+        message: "حدث خطأ أثناء تحديث الملف الشخصي",
+      };
     }
   };
 
@@ -526,6 +594,7 @@ export const useServices = () => {
     followUser,
     unfollowUser,
     updateIdentity,
+    updateProfile,
 
     // Advertisement Methods
     fetchUserAds,

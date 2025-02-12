@@ -1,83 +1,122 @@
 <script setup>
 import user from "~/assets/user.png";
+import defaultAvatar from "~/assets/user.png";
+import defaultCover from "~/assets/cover.jpeg";
+
 const router = useRouter();
 const { getProfile, updateProfile } = useServices();
-const userData = ref({
-  ads: [],
-  avatar: null,
-  coverImage: "",
-  createdAt: "",
-  email: "",
-  followers: [],
-  following: [],
-  joinDate: "",
-  location: "",
-  memberId: "",
-  name: "",
-  phone: "",
-  ratings: [],
-  type: "",
-  verified: false,
-});
 
-const loading = ref(true);
-const error = ref("");
-
-onMounted(async () => {
-  const token = localStorage.getItem("session-token");
-  if (!token) {
-    router.push("/");
-    return;
-  }
-
-  try {
-    const { data, error: profileError } = await getProfile();
-
-    if (profileError) {
-      error.value = "فشل في تحميل بيانات الملف الشخصي";
-      return;
+const {
+  data: userData,
+  error: profileError,
+  refresh,
+} = await useAsyncData(
+  "profile",
+  async () => {
+    const token = localStorage.getItem("session-token");
+    if (!token) {
+      router.push("/");
+      return null;
     }
 
-    // console.log(data.user)
+    try {
+      const { data, error } = await getProfile();
 
-    // تحديث البيانات مع الحفاظ على الهيكل المطلوب
-    userData.value = {
-      ads: data.user.ads || [],
-      avatar: data.user.avatar,
-      coverImage: data.user.coverImage || "",
-      createdAt: data.user.createdAt,
-      email: data.user.email || "",
-      followers: data.user.followers || [],
-      following: data.user.following || [],
-      joinDate: data.user.joinDate || "",
-      location: data.user.location || "",
-      memberId: data.user.memberId || "",
-      name: data.user.name || "",
-      phone: data.user.phone || "",
-      ratings: data.user.ratings || [],
-      type: data.user.type || "",
-      verified: data.user.verified || false,
-    };
+      if (error) {
+        throw new Error("فشل في تحميل بيانات الملف الشخصي");
+      }
 
-    console.log("تم تحديث البيانات:", userData.value);
-  } catch (e) {
-    console.error("خطأ في تحميل البيانات:", e);
-    error.value = "حدث خطأ في تحميل البيانات";
-  } finally {
-    loading.value = false;
+      return {
+        ads: [],
+        avatar: data.user.avatar || null,
+        coverImage: "",
+        createdAt: data.user.createdAt,
+        email: data.user.email || "",
+        followers: data.user.followers || [],
+        following: data.user.following || [],
+        joinDate: data.user.createdAt,
+        location: "",
+        memberId: data.user.memberId || "",
+        name: data.user.name || "",
+        phone: data.user.phone || "",
+        ratings: data.user.ratings || [],
+        verified: data.user.idVerificationStatus || "deactivated",
+        id: data.user._id || "",
+        emailVerified: data.user.emailVerified || false,
+        role: data.user.role || "user",
+        identificationVerified: data.user.identificationVerified || false,
+      };
+    } catch (e) {
+      console.error("خطأ في تحميل البيانات:", e);
+      throw e;
+    }
+  },
+  {
+    server: false, // تنفيذ فقط على جانب العميل
+    lazy: true, // تحميل البيانات عند الحاجة
   }
+);
+
+// Computed properties for images
+const avatarImage = computed(() => {
+  if (!userData.value?.avatar) return defaultAvatar;
+  return `${API_BASE_URL}/${userData.value.avatar}`;
 });
 
-const handleUpdateProfile = async () => {
+const coverImage = computed(() => {
+  if (!userData.value?.coverImage) return defaultCover;
+  return userData.value.coverImage;
+});
+
+const handleUpdateProfile = async (e) => {
+  e.preventDefault();
   try {
-    const { error: updateError } = await updateProfile(userData.value);
-    if (updateError) {
-      throw new Error("Failed to update profile");
+    const { error, message } = await updateProfile({
+      name: userData.value.name,
+      email: userData.value.email,
+      phone: userData.value.phone,
+      location: userData.value.location,
+      bio: userData.value.bio,
+      role: userData.value.role,
+      id: userData.value.id,
+      // Only include files if they've been changed
+      ...(userData.value.newAvatar && { avatar: userData.value.newAvatar }),
+      ...(userData.value.newCoverImage && {
+        coverImage: userData.value.newCoverImage,
+      }),
+    });
+
+    if (error) {
+      throw new Error(error);
     }
+
     // Show success message
+    alert(message || "تم تحديث الملف الشخصي بنجاح");
+
+    // Refresh the profile data
+    await refresh();
   } catch (error) {
     console.error("Error updating profile:", error);
-    // Show error message
+    alert("حدث خطأ أثناء تحديث الملف الشخصي");
+  }
+};
+
+// Add handlers for file uploads
+const handleAvatarChange = (event) => {
+  const file = event.target.files[0];
+  if (file) {
+    userData.value.newAvatar = file;
+    // Create preview URL
+    userData.value.avatar = URL.createObjectURL(file);
+  }
+};
+
+const handleCoverImageChange = (event) => {
+  const file = event.target.files[0];
+  if (file) {
+    userData.value.newCoverImage = file;
+    // Create preview URL
+    userData.value.coverImage = URL.createObjectURL(file);
   }
 };
 
@@ -86,15 +125,20 @@ console.log(userData.value);
 
 <template>
   <div class="bg-gray-100 min-h-screen" dir="rtl">
-    <div v-if="loading" class="text-center py-8">جاري التحميل...</div>
-    <div v-else-if="error" class="text-center py-8 text-red-600">
-      {{ error }}
+    <div v-if="$fetchState?.pending" class="text-center py-8">
+      جاري التحميل...
     </div>
-    <div v-else>
+    <div v-else-if="profileError" class="text-center py-8 text-red-600">
+      {{ profileError }}
+    </div>
+    <div v-else-if="userData">
       <!-- رأس الصفحة مع العنوان -->
       <div class="bg-white p-4 border-b">
         <div class="flex items-center justify-between max-w-4xl mx-auto">
-          <button @click="router.back()" class="text-gray-600 hover:text-gray-800">
+          <button
+            @click="router.back()"
+            class="text-gray-600 hover:text-gray-800"
+          >
             <Icon name="ph:arrow-right-bold" class="w-6 h-6" />
           </button>
           <h1 class="text-xl font-bold">حسابي</h1>
@@ -105,19 +149,21 @@ console.log(userData.value);
       <!-- صورة الغلاف والمعلومات الشخصية -->
       <div class="max-w-4xl mx-auto">
         <!-- صورة الغلاف -->
-        <div class="relative h-64 overflow-hidden rounded-b-lg">
+        <div class="relative h-64 rounded-b-lg">
           <img
-            :src="userData.coverImage || '/default-cover.jpg'"
+            :src="coverImage"
             class="w-full h-full object-cover"
             alt="صورة الغلاف"
           />
 
           <!-- الصورة الشخصية والمعلومات -->
-          <div class="absolute -bottom-16 w-full">
+          <div
+            class="absolute -bottom-16 right-1/2 translate-x-1/2 bg-white rounded-lg px-3 py-2 w-fit"
+          >
             <div class="flex flex-col items-center">
               <!-- الصورة الشخصية -->
               <img
-                :src="`${API_BASE_URL}/${userData.avatar}` || user"
+                :src="avatarImage"
                 class="w-32 h-32 rounded-full border-4 border-white object-cover"
                 alt="الصورة الشخصية"
               />
@@ -218,13 +264,21 @@ console.log(userData.value);
               <div class="flex items-center gap-2">
                 <Icon
                   :name="
-                    userData.verified ? 'ph:check-circle-fill' : 'ph:x-circle'
+                    userData.verified === 'active'
+                      ? 'ph:check-circle-fill'
+                      : 'ph:x-circle'
                   "
                   class="w-5 h-5"
-                  :class="userData.verified ? 'text-green-500' : 'text-red-500'"
+                  :class="
+                    userData.verified === 'active'
+                      ? 'text-green-500'
+                      : userData.verified === 'pending'
+                      ? 'text-yellow-500'
+                      : 'text-red-500'
+                  "
                 />
                 <span>{{
-                  userData.verified ? "حساب موثق" : "حساب غير موثق"
+                  userData.verified === 'active' ? "حساب موثق" : userData.verified === 'pending' ? "الحساب تحت المراجعة" : "حساب غير موثق"
                 }}</span>
               </div>
             </div>
@@ -324,10 +378,43 @@ console.log(userData.value);
                 ></textarea>
               </div>
 
+              <!-- Add file inputs for avatar and cover image -->
+              <div class="relative">
+                <input
+                  type="file"
+                  accept="image/*"
+                  @change="handleAvatarChange"
+                  class="hidden"
+                  ref="avatarInput"
+                />
+                <button
+                  @click="$refs.avatarInput.click()"
+                  class="absolute bottom-0 right-0"
+                >
+                  <PhCamera :size="20" class="text-gray-600" />
+                </button>
+              </div>
+
+              <div class="relative">
+                <input
+                  type="file"
+                  accept="image/*"
+                  @change="handleCoverImageChange"
+                  class="hidden"
+                  ref="coverInput"
+                />
+                <button
+                  @click="$refs.coverInput.click()"
+                  class="absolute top-4 right-4"
+                >
+                  <PhCamera :size="20" class="text-gray-600" />
+                </button>
+              </div>
+
               <!-- زر الحفظ -->
               <div>
                 <button
-                  type="submit"
+                  @click="handleUpdateProfile"
                   class="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition-colors"
                 >
                   حفظ التغييرات
