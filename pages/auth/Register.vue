@@ -1,4 +1,15 @@
 <script setup>
+import { 
+  PhX, 
+  PhUser, 
+  PhBuildings, 
+  PhPhone, 
+  PhEnvelope, 
+  PhLock,
+  PhXCircle,
+  PhCheckCircle
+} from "@phosphor-icons/vue";
+
 const router = useRouter();
 const { register } = useServices();
 const isOpen = ref(false);
@@ -157,10 +168,11 @@ import logo from "~/assets/logo.png";
       :class="[registerError ? 'bg-red-100' : 'bg-green-100']"
     >
       <div class="flex items-center">
-        <Icon 
-          :name="registerError ? 'ph:x-circle' : 'ph:check-circle'" 
-          class="w-6 h-6 mr-2"
+        <component 
+          :is="registerError ? PhXCircle : PhCheckCircle"
+          :size="24"
           :class="[registerError ? 'text-red-500' : 'text-green-500']"
+          class="mr-2"
         />
         <p :class="[registerError ? 'text-red-700' : 'text-green-700']">
           {{ error }}
@@ -174,7 +186,7 @@ import logo from "~/assets/logo.png";
         <!-- Close button -->
         <div class="flex justify-end">
           <button @click="closeModal" class="text-gray-500 hover:text-gray-700">
-            <Icon name="ph:x" class="w-6 h-6" />
+            <PhX :size="24" />
           </button>
         </div>
 
@@ -198,7 +210,7 @@ import logo from "~/assets/logo.png";
               selectedType === 'تجاري' ? 'border-green-500' : 'border-gray-200',
             ]"
           >
-            <Icon name="ph:buildings" class="w-8 h-8 mb-2" />
+            <PhBuildings :size="32" class="mb-2" />
             <span>تجاري</span>
           </button>
           <button
@@ -208,7 +220,7 @@ import logo from "~/assets/logo.png";
               selectedType === 'شخصي' ? 'border-green-500' : 'border-gray-200',
             ]"
           >
-            <Icon name="ph:user" class="w-8 h-8 mb-2" />
+            <PhUser :size="32" class="mb-2" />
             <span>شخصي</span>
           </button>
         </div>
@@ -231,9 +243,10 @@ import logo from "~/assets/logo.png";
                 dir="rtl"
                 @input="handleInput"
               />
-              <Icon
-                :name="selectedType === 'شخصي' ? 'ph:user' : 'ph:buildings'"
-                class="absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 w-5 h-5"
+              <component 
+                :is="selectedType === 'شخصي' ? PhUser : PhBuildings"
+                :size="20"
+                class="absolute top-1/2 right-3 -translate-y-1/2 text-gray-400"
               />
             </div>
           </div>
@@ -254,10 +267,7 @@ import logo from "~/assets/logo.png";
                 dir="rtl"
                 @input="handleInput"
               />
-              <Icon
-                name="ph:phone"
-                class="absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 w-5 h-5"
-              />
+              <PhPhone :size="20" class="absolute top-1/2 right-3 -translate-y-1/2 text-gray-400" />
             </div>
           </div>
 
@@ -277,10 +287,7 @@ import logo from "~/assets/logo.png";
                 dir="rtl"
                 @input="handleInput"
               />
-              <Icon
-                name="ph:envelope"
-                class="absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 w-5 h-5"
-              />
+              <PhEnvelope :size="20" class="absolute top-1/2 right-3 -translate-y-1/2 text-gray-400" />
             </div>
           </div>
 
@@ -300,10 +307,7 @@ import logo from "~/assets/logo.png";
                 dir="rtl"
                 @input="handleInput"
               />
-              <Icon
-                name="ph:lock"
-                class="absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 w-5 h-5"
-              />
+              <PhLock :size="20" class="absolute top-1/2 right-3 -translate-y-1/2 text-gray-400" />
             </div>
           </div>
 

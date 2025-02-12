@@ -1,4 +1,12 @@
 <script setup>
+import { 
+  PhUserCircle,
+  PhPlusCircle,
+  PhList,
+  PhChatCircleDots,
+  PhGear
+} from "@phosphor-icons/vue";
+
 const router = useRouter()
 const { logout } = useServices()
 
@@ -34,7 +42,7 @@ const handleLogout = async () => {
           to="/account/profile"
           class="flex items-center gap-4 p-6 bg-white rounded-lg shadow hover:shadow-md transition-shadow"
         >
-          <Icon name="ph:user-circle" class="w-8 h-8 text-green-600" />
+          <PhUserCircle :size="32" class="text-green-600" />
           <div>
             <h3 class="font-medium">الملف الشخصي</h3>
             <p class="text-sm text-gray-500">عرض وتعديل معلوماتك الشخصية</p>
@@ -45,7 +53,7 @@ const handleLogout = async () => {
           to="/create-ad"
           class="flex items-center gap-4 p-6 bg-white rounded-lg shadow hover:shadow-md transition-shadow"
         >
-          <Icon name="ph:plus-circle" class="w-8 h-8 text-green-600" />
+          <PhPlusCircle :size="32" class="text-green-600" />
           <div>
             <h3 class="font-medium">إضافة إعلان</h3>
             <p class="text-sm text-gray-500">نشر إعلان جديد</p>
@@ -56,7 +64,7 @@ const handleLogout = async () => {
           to="/account/profile/my-ads"
           class="flex items-center gap-4 p-6 bg-white rounded-lg shadow hover:shadow-md transition-shadow"
         >
-          <Icon name="ph:list" class="w-8 h-8 text-green-600" />
+          <PhList :size="32" class="text-green-600" />
           <div>
             <h3 class="font-medium">إعلاناتي</h3>
             <p class="text-sm text-gray-500">إدارة إعلاناتك النشطة</p>
@@ -67,7 +75,7 @@ const handleLogout = async () => {
           to="/account/chat"
           class="flex items-center gap-4 p-6 bg-white rounded-lg shadow hover:shadow-md transition-shadow"
         >
-          <Icon name="ph:chat-circle-dots" class="w-8 h-8 text-green-600" />
+          <PhChatCircleDots :size="32" class="text-green-600" />
           <div>
             <h3 class="font-medium">المحادثات</h3>
             <p class="text-sm text-gray-500">المحادثات الموجودة</p>
@@ -78,7 +86,7 @@ const handleLogout = async () => {
           to="/account/settings"
           class="flex items-center gap-4 p-6 bg-white rounded-lg shadow hover:shadow-md transition-shadow"
         >
-          <Icon name="ph:gear" class="w-8 h-8 text-green-600" />
+          <PhGear :size="32" class="text-green-600" />
           <div>
             <h3 class="font-medium">الإعدادات العامة</h3>
             <p class="text-sm text-gray-500">تعديل إعدادات الحساب</p>

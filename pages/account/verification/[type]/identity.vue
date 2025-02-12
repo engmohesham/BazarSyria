@@ -1,4 +1,15 @@
 <script setup>
+import { 
+  PhBuildings,
+  PhUser,
+  PhArrowLeft,
+  PhUploadSimple,
+  PhX,
+  PhCamera,
+  PhXCircle,
+  PhCheckCircle
+} from "@phosphor-icons/vue";
+
 definePageMeta({
   middleware: ["auth"]
 });
@@ -343,7 +354,7 @@ const cameraType = computed(() => {
             @click="router.back()"
             class="text-gray-600 hover:text-gray-800"
           >
-            <Icon name="ph:arrow-left" class="w-6 h-6" />
+            <PhArrowLeft :size="24" />
           </button>
         </div>
 
@@ -453,10 +464,7 @@ const cameraType = computed(() => {
                 <div
                   class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center"
                 >
-                  <Icon
-                    name="ph:upload-simple"
-                    class="w-8 h-8 text-gray-400 mx-auto mb-2"
-                  />
+                  <PhUploadSimple :size="32" class="text-gray-400 mx-auto mb-2" />
                   <p class="text-sm text-gray-500 mb-2">
                     قم بتحميل صور واضحة للمستندات التالية:
                   </p>
@@ -684,7 +692,7 @@ const cameraType = computed(() => {
                       :disabled="!isStreaming"
                       class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
                     >
-                      <Icon name="ph:camera" class="w-5 h-5" />
+                      <PhCamera :size="20" />
                       التقاط الصورة
                     </button>
                     <button
@@ -692,7 +700,7 @@ const cameraType = computed(() => {
                       @click="closeCamera"
                       class="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition-colors flex items-center gap-2"
                     >
-                      <Icon name="ph:x" class="w-5 h-5" />
+                      <PhX :size="20" />
                       إلغاء
                     </button>
                   </div>
@@ -712,7 +720,7 @@ const cameraType = computed(() => {
                       @click="retakePhoto"
                       class="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition-colors flex items-center gap-2"
                     >
-                      <Icon name="ph:camera" class="w-5 h-5" />
+                      <PhCamera :size="20" />
                       إعادة التقاط الصورة
                     </button>
                   </div>
@@ -725,7 +733,7 @@ const cameraType = computed(() => {
                     :disabled="isLoading"
                     class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 mx-auto"
                   >
-                    <Icon name="ph:camera" class="w-5 h-5" />
+                    <PhCamera :size="20" />
                     {{ isLoading ? 'جاري فتح الكاميرا...' : 'التقاط الصورة' }}
                   </button>
                 </div>
@@ -762,11 +770,13 @@ const cameraType = computed(() => {
           </form>
 
           <!-- رسائل الخطأ والنجاح -->
-          <div v-if="error" class="text-red-500 text-sm text-center mt-4">
-            {{ error }}
+          <div v-if="error" class="flex items-center">
+            <PhXCircle :size="24" class="text-red-500 mr-2" />
+            <p class="text-red-700">{{ error }}</p>
           </div>
-          <div v-if="success" class="text-green-500 text-sm text-center mt-4">
-            {{ success }}
+          <div v-if="success" class="flex items-center">
+            <PhCheckCircle :size="24" class="text-green-500 mr-2" />
+            <p class="text-green-700">{{ success }}</p>
           </div>
         </div>
       </div>
@@ -775,11 +785,18 @@ const cameraType = computed(() => {
     <!-- Camera UI -->
     <div v-if="showCamera" class="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4">
       <div class="w-full max-w-2xl">
-        <CameraCapture 
-          :type="cameraType"
-          @capture="handleCapture" 
-          @close="closeCamera" 
-        />
+        <button @click="closeCamera" class="absolute top-4 right-4 p-2 bg-white rounded-full shadow-lg">
+          <PhX :size="24" class="text-gray-600" />
+        </button>
+        
+        <button
+          type="button"
+          @click="captureImage"
+          class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
+        >
+          <PhCamera :size="20" />
+          التقاط الصورة
+        </button>
       </div>
     </div>
   </div>

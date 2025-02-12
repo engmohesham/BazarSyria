@@ -19,7 +19,7 @@
               class="flex items-center text-gray-700 hover:text-green-600 text-[13px] font-semibold transition-colors"
             >
               المزيد
-              <Icon name="ph:caret-down" class="w-4 h-4 mr-1" />
+              <PhCaretDown class="w-4 h-4 ml-1" />
             </button>
             <Transition
               enter-active-class="transition duration-200 ease-out"
@@ -53,7 +53,7 @@
         >
           <div class="flex items-center">
             <span class="text-sm font-semibold ml-2">القائمة</span>
-            <Icon :name="isMobileMenuOpen ? 'ph:x' : 'ph:list'" class="w-5 h-5" />
+            <PhList class="w-6 h-6" />
           </div>
         </button>
         
@@ -97,6 +97,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
+import { PhCaretDown, PhList } from "@phosphor-icons/vue"
 
 const menuItems = [
   { name: 'عربيات و قطع غيار', href: '#' },

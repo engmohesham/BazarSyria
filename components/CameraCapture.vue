@@ -1,4 +1,6 @@
 <script setup>
+import { PhX, PhCamera } from "@phosphor-icons/vue";
+
 const emit = defineEmits(['capture', 'close']);
 
 const canvas = ref(null);
@@ -162,7 +164,7 @@ onUnmounted(() => {
         :disabled="!isStreaming"
         class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
       >
-        <Icon name="ph:camera" class="w-5 h-5" />
+        <PhCamera class="w-5 h-5" />
         التقاط الصورة
       </button>
       <button
@@ -170,9 +172,13 @@ onUnmounted(() => {
         @click="closeCamera"
         class="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition-colors flex items-center gap-2"
       >
-        <Icon name="ph:x" class="w-5 h-5" />
+        <PhX class="w-5 h-5" />
         إلغاء
       </button>
     </div>
+
+    <button @click="$emit('close')" class="absolute top-4 right-4 p-2 bg-white rounded-full shadow-lg">
+      <PhX class="w-6 h-6 text-gray-600" />
+    </button>
   </div>
 </template> 
