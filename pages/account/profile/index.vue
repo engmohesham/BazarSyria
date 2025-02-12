@@ -1,10 +1,10 @@
 <script setup>
-import user from "~/assets/user.png";
 import defaultAvatar from "~/assets/user.png";
 import defaultCover from "~/assets/cover.jpeg";
 
 const router = useRouter();
 const { getProfile, updateProfile } = useServices();
+const { notification, showNotification } = useNotification();
 
 const {
   data: userData,
@@ -45,6 +45,7 @@ const {
         emailVerified: data.user.emailVerified || false,
         role: data.user.role || "user",
         identificationVerified: data.user.identificationVerified || false,
+        gender: data.user.gender || "",
       };
     } catch (e) {
       console.error("خطأ في تحميل البيانات:", e);
@@ -68,36 +69,86 @@ const coverImage = computed(() => {
   return userData.value.coverImage;
 });
 
+// Add these new refs for date handling
+const selectedDay = ref("");
+const selectedMonth = ref("");
+const selectedYear = ref("");
+
+// Generate arrays for days, months, and years
+const days = Array.from({ length: 31 }, (_, i) => i + 1);
+const months = Array.from({ length: 12 }, (_, i) => i + 1);
+const currentYear = new Date().getFullYear();
+const years = Array.from({ length: 100 }, (_, i) => currentYear - i);
+
+// Watch for changes in date selections and update birthDate
+watch([selectedDay, selectedMonth, selectedYear], ([day, month, year]) => {
+  if (day && month && year) {
+    // Format date as YYYY-MM-DD
+    const formattedMonth = month.toString().padStart(2, "0");
+    const formattedDay = day.toString().padStart(2, "0");
+    userData.value.birthDate = `${year}-${formattedMonth}-${formattedDay}`;
+  }
+});
+
+// Initialize date selections when userData is loaded
+watchEffect(() => {
+  if (userData.value?.birthDate) {
+    const date = new Date(userData.value.birthDate);
+    selectedDay.value = date.getDate();
+    selectedMonth.value = date.getMonth() + 1;
+    selectedYear.value = date.getFullYear();
+  }
+});
+
+// Define gender options with matching API values
+const genderOptions = [
+  { value: "male", label: "ذكر" }, // Matches API's "male" value
+  { value: "female", label: "أنثى" }, // Will match API's "female" value
+];
+
+// Initialize gender when userData is loaded
+watchEffect(() => {
+  if (userData.value) {
+    // API returns "male" or "female" directly, so we can use it as is
+    userData.value.gender = userData.value.gender || "";
+    console.log("Current gender:", userData.value.gender); // For debugging
+  }
+});
+
+// Update handleUpdateProfile function to ensure gender is included
 const handleUpdateProfile = async (e) => {
   e.preventDefault();
   try {
-    const { error, message } = await updateProfile({
+    const updateData = {
+      id: userData.value.id,
       name: userData.value.name,
       email: userData.value.email,
       phone: userData.value.phone,
       location: userData.value.location,
       bio: userData.value.bio,
-      role: userData.value.role,
-      id: userData.value.id,
-      // Only include files if they've been changed
-      ...(userData.value.newAvatar && { avatar: userData.value.newAvatar }),
-      ...(userData.value.newCoverImage && {
-        coverImage: userData.value.newCoverImage,
-      }),
-    });
+      gender: userData.value.gender, // Make sure gender is included
+      birthDate: userData.value.birthDate,
+    };
+
+    // Only add files if they've been changed
+    if (userData.value.newAvatar instanceof File) {
+      updateData.avatar = userData.value.newAvatar;
+    }
+    if (userData.value.newCoverImage instanceof File) {
+      updateData.coverImage = userData.value.newCoverImage;
+    }
+
+    const { error, message } = await updateProfile(updateData);
 
     if (error) {
       throw new Error(error);
     }
 
-    // Show success message
-    alert(message || "تم تحديث الملف الشخصي بنجاح");
-
-    // Refresh the profile data
+    showNotification(message || "تم تحديث الملف الشخصي بنجاح", "success");
     await refresh();
   } catch (error) {
     console.error("Error updating profile:", error);
-    alert("حدث خطأ أثناء تحديث الملف الشخصي");
+    showNotification("حدث خطأ أثناء تحديث الملف الشخصي", "error");
   }
 };
 
@@ -125,6 +176,46 @@ console.log(userData.value);
 
 <template>
   <div class="bg-gray-100 min-h-screen" dir="rtl">
+    <Transition
+      enter-active-class="transform ease-out duration-300 transition"
+      enter-from-class="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-2"
+      enter-to-class="translate-y-0 opacity-100 sm:translate-x-0"
+      leave-active-class="transition ease-in duration-100"
+      leave-from-class="opacity-100"
+      leave-to-class="opacity-0"
+    >
+      <div
+        v-if="notification.show"
+        class="fixed top-4 left-4 z-50 rounded-md p-4 max-w-sm w-full shadow-lg"
+        :class="{
+          'bg-green-50': notification.type === 'success',
+          'bg-red-50': notification.type === 'error',
+        }"
+      >
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <Icon
+              v-if="notification.type === 'success'"
+              name="ph:check-circle-fill"
+              class="h-5 w-5 text-green-400"
+            />
+            <Icon v-else name="ph:x-circle-fill" class="h-5 w-5 text-red-400" />
+          </div>
+          <div class="mr-3">
+            <p
+              class="text-sm font-medium"
+              :class="{
+                'text-green-800': notification.type === 'success',
+                'text-red-800': notification.type === 'error',
+              }"
+            >
+              {{ notification.message }}
+            </p>
+          </div>
+        </div>
+      </div>
+    </Transition>
+
     <div v-if="$fetchState?.pending" class="text-center py-8">
       جاري التحميل...
     </div>
@@ -278,7 +369,11 @@ console.log(userData.value);
                   "
                 />
                 <span>{{
-                  userData.verified === 'active' ? "حساب موثق" : userData.verified === 'pending' ? "الحساب تحت المراجعة" : "حساب غير موثق"
+                  userData.verified === "active"
+                    ? "حساب موثق"
+                    : userData.verified === "pending"
+                    ? "الحساب تحت المراجعة"
+                    : "حساب غير موثق"
                 }}</span>
               </div>
             </div>
@@ -304,33 +399,52 @@ console.log(userData.value);
                 >
                 <div class="grid grid-cols-3 gap-4">
                   <select
+                    v-model="selectedDay"
                     class="block w-full px-3 py-2 border border-gray-300 rounded-md"
                   >
-                    <option>يوم</option>
+                    <option value="">يوم</option>
+                    <option v-for="day in days" :key="day" :value="day">
+                      {{ day }}
+                    </option>
                   </select>
                   <select
+                    v-model="selectedMonth"
                     class="block w-full px-3 py-2 border border-gray-300 rounded-md"
                   >
-                    <option>شهر</option>
+                    <option value="">شهر</option>
+                    <option v-for="month in months" :key="month" :value="month">
+                      {{ month }}
+                    </option>
                   </select>
                   <select
+                    v-model="selectedYear"
                     class="block w-full px-3 py-2 border border-gray-300 rounded-md"
                   >
-                    <option>سنة</option>
+                    <option value="">سنة</option>
+                    <option v-for="year in years" :key="year" :value="year">
+                      {{ year }}
+                    </option>
                   </select>
                 </div>
               </div>
 
               <!-- الجنس -->
-              <div>
-                <label class="block text-sm font-medium text-gray-700"
+              <div class="mt-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2"
                   >الجنس</label
                 >
                 <select
-                  class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+                  v-model="userData.gender"
+                  class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
                 >
-                  <option>ذكر</option>
-                  <option>أنثى</option>
+                  <option value="">اختر الجنس</option>
+                  <option
+                    v-for="option in genderOptions"
+                    :key="option.value"
+                    :value="option.value"
+                  >
+                    {{ option.label }}
+                  </option>
                 </select>
               </div>
 
@@ -440,5 +554,50 @@ console.log(userData.value);
     rgba(0, 0, 0, 0.4),
     rgba(0, 0, 0, 0.6)
   );
+}
+
+.transform {
+  --tw-translate-x: 0;
+  --tw-translate-y: 0;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y));
+}
+
+.transition {
+  transition-property: color, background-color, border-color,
+    text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter,
+    backdrop-filter;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+.duration-300 {
+  transition-duration: 300ms;
+}
+
+.duration-100 {
+  transition-duration: 100ms;
+}
+
+.ease-out {
+  transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
+}
+
+.ease-in {
+  transition-timing-function: cubic-bezier(0.4, 0, 1, 1);
+}
+
+/* Add these styles for better select appearance */
+select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: left 0.5rem center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
+  padding-left: 2.5rem;
+}
+
+select:focus {
+  border-color: #10b981;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
 }
 </style>

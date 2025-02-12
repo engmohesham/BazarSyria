@@ -518,10 +518,11 @@ export const useServices = () => {
     email?: string;
     phone?: string;
     location?: string;
-    avatar?: File | string;
-    coverImage?: File | string;
+    avatar?: File;
+    coverImage?: File;
     bio?: string;
-    role?: string;
+    gender?: 'male' | 'female';
+    birthDate?: string;
     id: string;
   }) => {
     try {
@@ -529,25 +530,25 @@ export const useServices = () => {
         throw new Error('User ID is required for profile update');
       }
 
-      // Create FormData if we have file uploads
       const formData = new FormData();
 
-      // Add all text fields
-      Object.keys(profileData).forEach((key) => {
-        if (profileData[key] !== undefined && profileData[key] !== null) {
-          // Handle file uploads differently
-          if (key === "avatar" || key === "coverImage") {
-            if (profileData[key] instanceof File) {
-              formData.append(key, profileData[key]);
-            }
-          } else {
-            formData.append(key, profileData[key].toString());
-          }
+      // Add all non-file fields
+      Object.entries(profileData).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && !(value instanceof File)) {
+          formData.append(key, value.toString());
         }
       });
 
+      // Add file fields if present
+      if (profileData.avatar instanceof File) {
+        formData.append('avatar', profileData.avatar);
+      }
+      if (profileData.coverImage instanceof File) {
+        formData.append('coverImage', profileData.coverImage);
+      }
+
       const { data, error } = await useFetch(
-        `${API_BASE_URL}${API_ENDPOINTS.UPDATE_PROFILE}/${profileData.id}`,
+        `${API_BASE_URL}${API_ENDPOINTS.UPDATE_PROFILE}/${profileData.id}/update`,
         {
           method: "PATCH",
           body: formData,
