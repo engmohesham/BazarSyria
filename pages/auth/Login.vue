@@ -96,7 +96,7 @@ import logo from '~/assets/logo.png'
       <!-- Close button -->
       <div class="flex justify-end mb-4">
         <button @click="closeModal" class="text-gray-500 hover:text-gray-700">
-          <Icon name="ph:x" class="w-6 h-6" />
+          <Icon name="material-symbols:close" class="w-6 h-6" />
         </button>
       </div>
 
@@ -187,7 +187,7 @@ import logo from '~/assets/logo.png'
   >
     <div class="flex items-center">
       <Icon 
-        :name="error ? 'ph:x-circle' : 'ph:check-circle'" 
+        :name="error ? 'material-symbols:error' : 'material-symbols:check-circle'" 
         class="w-6 h-6 mr-2"
         :class="[error ? 'text-red-500' : 'text-green-500']"
       />
