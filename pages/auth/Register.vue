@@ -10,8 +10,7 @@ const email = ref("");
 const password = ref("");
 const error = ref("");
 const loading = ref(false);
-
-
+const registerError = ref(false);
 
 const openModal = () => {
   isOpen.value = true;
@@ -37,11 +36,13 @@ const emit = defineEmits(["register-success"]);
 const handleRegister = async () => {
   loading.value = true;
   error.value = "";
+  registerError.value = false;
 
   try {
     // Validate required fields
     if (!name.value && !companyName.value) {
       error.value = "الرجاء إدخال الاسم";
+      registerError.value = true;
       return;
     }
     if (!phone.value) {
@@ -79,17 +80,25 @@ const handleRegister = async () => {
       console.log(`${key}: ${value}`);
     }
 
-    const { error: registerError } = await register(formData);
+    const { error: apiError, message } = await register(formData);
 
-    if (registerError) {
-      error.value = "فشل التسجيل. يرجى المحاولة مرة أخرى.";
+    if (apiError) {
+      error.value = message || "فشل التسجيل. يرجى المحاولة مرة أخرى.";
+      registerError.value = true;
       return;
     }
 
-    emit("register-success");
-    closeModal();
+    // Show success message
+    error.value = message || "تم التسجيل بنجاح";
+    registerError.value = false;
+    // Wait for 2 seconds before closing the modal
+    setTimeout(() => {
+      closeModal();
+    }, 2000);
+
   } catch (e) {
     error.value = "حدث خطأ أثناء التسجيل";
+    registerError.value = true;
     console.error('Registration error:', e);
   } finally {
     loading.value = false;
@@ -141,6 +150,24 @@ import logo from "~/assets/logo.png";
     v-if="isOpen"
     class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
   >
+    <!-- Message Popup -->
+    <div 
+      v-if="error"
+      class="fixed top-4 right-4 p-4 rounded-lg shadow-lg max-w-md z-50"
+      :class="[registerError ? 'bg-red-100' : 'bg-green-100']"
+    >
+      <div class="flex items-center">
+        <Icon 
+          :name="registerError ? 'ph:x-circle' : 'ph:check-circle'" 
+          class="w-6 h-6 mr-2"
+          :class="[registerError ? 'text-red-500' : 'text-green-500']"
+        />
+        <p :class="[registerError ? 'text-red-700' : 'text-green-700']">
+          {{ error }}
+        </p>
+      </div>
+    </div>
+
     <div class="bg-white rounded-lg w-full max-w-md max-h-[90vh] flex flex-col">
       <!-- Header Section (Fixed) -->
       <div class="p-6 border-b">

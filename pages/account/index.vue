@@ -8,6 +8,8 @@ definePageMeta({
 
 const handleLogout = async () => {
   await logout()
+  localStorage.removeItem("session-token")
+  window.dispatchEvent(new CustomEvent('invalid-token'))
   router.push('/')
 }
 </script>

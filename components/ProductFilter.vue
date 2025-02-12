@@ -168,7 +168,7 @@ const fetchProducts = async () => {
   error.value = null;
   
   try {
-    let url = "https://pzsyria.com/api/products/all";
+    let url = "https://pzsyria.com/api/advertisement/all";
     
     if (activeCategory.value !== "all") {
       url = `https://pzsyria.com/api/advertisement/certain/categories?category=${activeCategory.value}`;
@@ -178,7 +178,6 @@ const fetchProducts = async () => {
     }
     
     const { data, error: fetchError } = await useFetch(url);
-    
     if (fetchError.value) {
       throw new Error(fetchError.value);
     }
@@ -199,7 +198,7 @@ watch([activeCategory, activeSubcategory], () => {
 
 // Filter products
 const currentData = computed(() => {
-  if (!products.value?.products) return [];
-  return products.value.products;
+  if (!products.value?.advertisements) return [];
+  return products.value.advertisements;
 });
 </script>

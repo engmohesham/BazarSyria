@@ -206,7 +206,38 @@ const goToPreviousStep = () => {
   }
 };
 
-// تعديل handleSubmit
+// Add this utility function at the top of the script
+const compressImage = async (base64String, maxWidth = 800) => {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.src = base64String;
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      // Calculate new dimensions maintaining aspect ratio
+      let width = img.width;
+      let height = img.height;
+      
+      if (width > maxWidth) {
+        height = (maxWidth * height) / width;
+        width = maxWidth;
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+      
+      // Draw and compress
+      ctx.drawImage(img, 0, 0, width, height);
+      
+      // Convert to compressed JPEG
+      const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+      resolve(compressedBase64);
+    };
+  });
+};
+
+// Modified handleSubmit function
 const handleSubmit = async () => {
   if (!frontCardImage.value || !backCardImage.value || !selfieImage.value) {
     error.value = 'يرجى إكمال جميع الصور المطلوبة';
@@ -214,15 +245,34 @@ const handleSubmit = async () => {
   }
 
   try {
-    const submitData = {
-      type: verificationType,
-      ...formData.value,
-      frontCardImage: frontCardImage.value,
-      backCardImage: backCardImage.value,
-      selfieImage: selfieImage.value
-    };
+    isLoading.value = true;
+    
+    // Create FormData object
+    const formDataToSend = new FormData();
+    
+    // Add text fields
+    formDataToSend.append('userType', 'personal');
+    formDataToSend.append('firstName', formData.value.firstName);
+    formDataToSend.append('lastName', formData.value.lastName);
+    formDataToSend.append('address', formData.value.address);
+    formDataToSend.append('birthDate', formData.value.birthDate);
+    formDataToSend.append('identity', formData.value.idNumber);
 
-    const { error: apiError } = await updateIdentity(submitData);
+    // Compress images before converting to blobs
+    const compressedFront = await compressImage(frontCardImage.value);
+    const compressedBack = await compressImage(backCardImage.value);
+    const compressedSelfie = await compressImage(selfieImage.value);
+
+    // Convert compressed base64 to blobs
+    const frontBlob = await fetch(compressedFront).then(r => r.blob());
+    const backBlob = await fetch(compressedBack).then(r => r.blob());
+    const selfieBlob = await fetch(compressedSelfie).then(r => r.blob());
+
+    formDataToSend.append('identificationFront', frontBlob, 'front-card.jpg');
+    formDataToSend.append('identificationBack', backBlob, 'back-card.jpg');
+    formDataToSend.append('faceFrontSide', selfieBlob, 'face-front.jpg');
+
+    const { error: apiError } = await updateIdentity(formDataToSend);
     if (apiError) throw apiError;
 
     success.value = "تم إرسال طلب التوثيق بنجاح";
@@ -232,6 +282,8 @@ const handleSubmit = async () => {
   } catch (err) {
     error.value = "فشل في إرسال طلب التوثيق";
     console.error("Error updating identity:", err);
+  } finally {
+    isLoading.value = false;
   }
 };
 

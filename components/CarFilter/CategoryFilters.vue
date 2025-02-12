@@ -74,15 +74,26 @@ const props = defineProps({
 
 const emit = defineEmits(['update:category', 'update:subcategory'])
 
-// Fetch categories with subcategories
+// Fetch categories
 const { data: categoriesData } = await useFetch('https://pzsyria.com/api/category/all')
 const categories = computed(() => categoriesData.value?.categories || [])
+
+// Fetch subcategories when active category changes
+const { data: subcategoriesData } = await useFetch(
+  computed(() => props.activeCategory === 'all' 
+    ? null 
+    : `https://pzsyria.com/api/subCategory/${props.activeCategory}/subcategories`
+  ),
+  { 
+    watch: [props.activeCategory],
+    immediate: false 
+  }
+)
 
 // Get subcategories for active category
 const activeSubcategories = computed(() => {
   if (props.activeCategory === 'all') return []
-  const category = categories.value.find(cat => cat._id === props.activeCategory)
-  return category?.subcategories || []
+  return subcategoriesData.value?.subcategories || []
 })
 
 const handleCategoryClick = (category) => {

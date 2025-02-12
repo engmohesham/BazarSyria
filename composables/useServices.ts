@@ -24,17 +24,21 @@ export const useServices = () => {
         }
       );
 
-      if (error.value) throw error.value;
+      if (error.value) {
+        // Extract error message from the response
+        const errorMessage = error.value?.data?.message || "Login failed";
+        console.error("Login error:", errorMessage);
+        return { data: null, error: error.value, message: errorMessage };
+      }
 
       if (data.value?.token) {
         localStorage.setItem("session-token", data.value.token);
         isLoggedIn.value = true;
       }
-
-      return { data: data.value, error: null };
+      return { data: data.value, error: null, message: data.value.message };
     } catch (err) {
       console.error("Login error:", err);
-      return { data: null, error: err };
+      return { data: null, error: err, message: "An unexpected error occurred" };
     }
   };
 
@@ -47,9 +51,10 @@ export const useServices = () => {
           body: userData,
         }
       );
+      console.log(data.value.message);
 
       if (error.value) throw error.value;
-      return { data: data.value, error: null };
+      return { data: data.value, error: null, message: data.value.message };
     } catch (err) {
       console.error("Register error:", err);
       return { data: null, error: err };
@@ -194,7 +199,7 @@ export const useServices = () => {
           method: "POST",
           body: adData,
           headers: {
-            "Authorization": `Bearer ${localStorage.getItem("session-token")}`,
+            Authorization: `Bearer ${localStorage.getItem("session-token")}`,
           },
         }
       );
@@ -387,7 +392,7 @@ export const useServices = () => {
       const { data, error } = await useFetch(
         `${API_BASE_URL}${API_ENDPOINTS.CHAT}`,
         {
-          method: 'POST',
+          method: "POST",
           body: { participantId },
           headers: getAuthHeaders(),
         }
@@ -396,7 +401,7 @@ export const useServices = () => {
       if (error.value) throw error.value;
       return { data: data.value, error: null };
     } catch (err) {
-      console.error('Error creating chat room:', err);
+      console.error("Error creating chat room:", err);
       return { data: null, error: err };
     }
   };
@@ -413,7 +418,7 @@ export const useServices = () => {
       if (error.value) throw error.value;
       return { data: data.value, error: null };
     } catch (err) {
-      console.error('Error fetching user chats:', err);
+      console.error("Error fetching user chats:", err);
       return { data: null, error: err };
     }
   };
@@ -432,39 +437,74 @@ export const useServices = () => {
       if (error.value) throw error.value;
       return { data: data.value, error: null };
     } catch (err) {
-      console.error('Error fetching chat messages:', err);
+      console.error("Error fetching chat messages:", err);
       return { data: null, error: err };
     }
   };
 
   const sendMessage = async (chatId: string, content: string) => {
     try {
-      const { data, error } = await useFetch(
-        `${API_BASE_URL}/chat/messages`,
-        {
-          method: 'POST',
-          body: JSON.stringify({
-            chatId,
-            content,
-            sender: localStorage.getItem('userId')
-          }),
-          headers: {
-            ...getAuthHeaders(),
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+      const { data, error } = await useFetch(`${API_BASE_URL}/chat/messages`, {
+        method: "POST",
+        body: JSON.stringify({
+          chatId,
+          content,
+          sender: localStorage.getItem("userId"),
+        }),
+        headers: {
+          ...getAuthHeaders(),
+          "Content-Type": "application/json",
+        },
+      });
 
       // console.log('Send Message Response:', data.value);
 
       if (error.value) {
-        console.error('Send Message Error:', error.value);
+        console.error("Send Message Error:", error.value);
         throw error.value;
       }
-      
+
       return { data: data.value, error: null };
     } catch (err) {
-      console.error('Error sending message:', err);
+      console.error("Error sending message:", err);
+      return { data: null, error: err };
+    }
+  };
+
+  const getAdById = async (id: string) => {
+    try {
+      const { data, error } = await useFetch(
+        `${API_BASE_URL}${API_ENDPOINTS.ADS}/${id}`,
+        {
+          headers: getAuthHeaders(),
+        }
+      );
+
+      if (error.value) throw error.value;
+      return { data: data.value, error: null };
+    } catch (err) {
+      console.error("Error fetching ad:", err);
+      return { data: null, error: err };
+    }
+  };
+
+  const updateIdentity = async (formData: FormData) => {
+    try {
+      const { data, error } = await useFetch(
+        `${API_BASE_URL}${API_ENDPOINTS.VERIFICATION}/verify-request`,
+        {
+          method: "POST",
+          body: formData,
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("session-token")}`
+          },
+        }
+      );
+
+      if (error.value) throw error.value;
+      return { data: data.value, error: null };
+    } catch (err) {
+      console.error("Error updating identity:", err);
       return { data: null, error: err };
     }
   };
@@ -485,6 +525,7 @@ export const useServices = () => {
     getFollowing,
     followUser,
     unfollowUser,
+    updateIdentity,
 
     // Advertisement Methods
     fetchUserAds,
@@ -493,6 +534,7 @@ export const useServices = () => {
     deleteAd,
     toggleAdStatus,
     getProducts,
+    getAdById,
 
     // New Methods
     getCategories,

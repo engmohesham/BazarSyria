@@ -8,7 +8,6 @@
             :src="logo"
             alt="بازار سوريا"
             class="h-16 lg:h-14 w-auto transition-all duration-200"
-
           />
         </NuxtLink>
       </div>
@@ -33,7 +32,16 @@
       <!-- Desktop Actions -->
       <div class="hidden lg:flex items-center gap-4">
         <button
+          v-if="isLoggedIn"
           @click="navigateTo('/create-ad')"
+          class="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+        >
+          <Icon name="ph:plus" class="w-5 h-5" />
+          <span class="text-sm font-medium">أضف إعلانك</span>
+        </button>
+        <button
+          v-else="isLoggedIn"
+          @click="emit('open-login')"
           class="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
         >
           <Icon name="ph:plus" class="w-5 h-5" />
@@ -87,7 +95,7 @@
               <!-- Profile Dropdown Menu -->
               <div
                 v-show="isProfileDropdownOpen"
-                class="absolute top-full right-0 mt-2 z-50 w-64 bg-white rounded-md shadow-lg py-2"
+                class="absolute top-full -left-20 mt-2 z-50 w-64 bg-white rounded-md shadow-lg py-2"
               >
                 <!-- User Info -->
                 <div class="px-4 py-2 border-b border-gray-100">
@@ -109,7 +117,7 @@
                 </div>
 
                 <!-- Menu Items -->
-                <div class="py-1" dir="ltr">
+                <div class="py-1" dir="rtl">
                   <!-- <NuxtLink
                     to="/account/profile/wallet"
                     class="flex items-center justify-end gap-3 px-4 py-2 text-gray-700 hover:bg-gray-50"
@@ -122,18 +130,16 @@
                     @click="navigateTo('/account/profile/my-ads')"
                     class="flex items-center justify-end gap-3 px-4 py-2 text-gray-700 hover:bg-gray-50"
                   >
-                    <span>اعلاناتي</span>
-
                     <Icon name="ph:megaphone" class="w-5 h-5" />
+                    <span>اعلاناتي</span>
                   </button>
 
                   <button
                     @click="navigateTo('/account/profile/following')"
                     class="flex items-center justify-end gap-3 px-4 py-2 text-gray-700 hover:bg-gray-50"
                   >
-                    <span>المتابعين</span>
-
                     <Icon name="ph:users" class="w-5 h-5" />
+                    <span>المتابعين</span>
                   </button>
 
                   <!-- <NuxtLink
@@ -148,24 +154,24 @@
                     @click="navigateTo('/account/chat')"
                     class="flex items-center justify-end gap-3 px-4 py-2 text-gray-700 hover:bg-gray-50"
                   >
-                    <span>المحادثات</span>
                     <Icon name="ph:chat-circle" class="w-5 h-5" />
+                    <span>المحادثات</span>
                   </button>
 
                   <button
                     to="/account/settings"
                     class="flex items-center justify-end gap-3 px-4 py-2 text-gray-700 hover:bg-gray-50"
                   >
-                    <span>الاعدادات</span>
                     <Icon name="ph:gear" class="w-5 h-5" />
+                    <span>الاعدادات</span>
                   </button>
 
                   <button
                     @click="handleLogout"
-                    class="w-full flex items-center justify-end gap-3 px-4 py-2 text-red-600 hover:bg-gray-50 border-t border-gray-100"
+                    class="w-full flex items-center justify-start gap-3 px-4 py-2 text-red-600 hover:bg-gray-50 border-t border-gray-100"
                   >
-                    <span>تسجيل الخروج</span>
                     <Icon name="ph:sign-out" class="w-5 h-5" />
+                    <span>تسجيل الخروج</span>
                   </button>
                 </div>
               </div>
@@ -221,7 +227,7 @@
         class="lg:hidden fixed mt-20 inset-0 bg-black bg-opacity-50 z-50"
       >
         <div
-          class="absolute top-[20px] left-0 mx-5 pb-24 right-0 bg-white border-t border-gray-100 shadow-lg z-50 max-h-[calc(100vh-61px)] overflow-y-auto p-6"
+          class="absolute top-[20px] left-0 right-0 mx-5 pb-24 bg-white border-t border-gray-100 shadow-lg z-50 max-h-[calc(100vh-61px)] overflow-y-auto p-6"
         >
           <!-- Header -->
           <div class="flex items-center justify-between gap-4 mb-6">
@@ -251,7 +257,16 @@
             </div>
 
             <button
+              v-if="isLoggedIn"
               @click="navigateTo('/create-ad')"
+              class="w-full flex items-center justify-between px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            >
+              <Icon name="ph:plus" class="w-5 h-5" />
+              <span class="text-sm font-medium">+ أضف إعلانك</span>
+            </button>
+            <button
+              v-else="isLoggedIn"
+              @click="emit('open-login')"
               class="w-full flex items-center justify-between px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
             >
               <Icon name="ph:plus" class="w-5 h-5" />
@@ -276,7 +291,6 @@
                 alt="User"
                 class="w-12 h-12 rounded-full border-2 border-gray-100"
               />
-
             </div>
 
             <!-- Menu Grid -->
@@ -386,6 +400,7 @@ const router = useRouter();
 const isProfileDropdownOpen = ref(false);
 const { getProfile } = useServices();
 const { data: profile, error: profileError } = getProfile();
+const loginModalRef = ref(null);
 
 const toggleDropdown = () => {
   isDropdownOpen.value = !isDropdownOpen.value;
@@ -413,10 +428,17 @@ onMounted(() => {
       closeDropdown();
     }
   });
+
+  window.addEventListener("open-login-modal", () => {
+    emit("open-login");
+  });
 });
 
 onUnmounted(() => {
   document.removeEventListener("click", closeDropdown);
+  window.removeEventListener("open-login-modal", () => {
+    emit("open-login");
+  });
 });
 
 // Mobile menu handlers
@@ -440,19 +462,16 @@ const handleLogout = async () => {
   try {
     // Remove token from localStorage
     localStorage.removeItem("session-token");
+    
+    // Dispatch invalid token event
+    window.dispatchEvent(new CustomEvent('invalid-token'));
 
     // Close any open menus
     isProfileDropdownOpen.value = false;
     isMobileMenuOpen.value = false;
 
-    // Optional: Call logout API endpoint
-    // await fetch('/api/auth/logout')
-
     // Redirect to home page
     router.push("/");
-
-    // Reload page to reset state
-    window.location.reload();
   } catch (error) {
     console.error("Error during logout:", error);
   }
@@ -485,9 +504,9 @@ const menuItems = [
   { to: "/account/profile/wallet", icon: "ph:wallet", text: "المحفظة" },
   { to: "/account/profile/following", icon: "ph:users", text: "المتابَعين" },
   { to: "/account/profile/favorites", icon: "ph:heart", text: "المفضلة" },
-  { to: "/account/profile/invoices", icon: "ph:receipt", text: "الفواتير" },
-  { to: "/account/profile/settings", icon: "ph:gear", text: "الاعدادات" },
-  { to: "/contact", icon: "ph:phone", text: "اتصل بنا" },
+  // { to: "/account/profile/invoices", icon: "ph:receipt", text: "الفواتير" },
+  { to: "/account/settings", icon: "ph:gear", text: "الاعدادات" },
+  // { to: "/contact", icon: "ph:phone", text: "اتصل بنا" },
   { to: "/account/profile/my-ads", icon: "ph:megaphone", text: "إعلاناتي" },
 ];
 

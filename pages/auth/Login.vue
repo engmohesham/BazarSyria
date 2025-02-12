@@ -6,6 +6,7 @@ const email = ref('')
 const password = ref('')
 const error = ref('')
 const loading = ref(false)
+const success = ref('')
 
 const openModal = () => {
   isOpen.value = true
@@ -24,21 +25,27 @@ const emit = defineEmits(['login-success'])
 const handleLogin = async () => {
   loading.value = true
   error.value = ''
+  success.value = ''
 
   try {
-    const { data, error: loginError } = await login({
+    const { data, error: loginError, message } = await login({
       email: email.value,
       password: password.value
     })
     
     if (loginError) {
-      error.value = 'فشل تسجيل الدخول. يرجى التحقق من بياناتك.'
+      error.value = message || 'فشل تسجيل الدخول. يرجى التحقق من بياناتك.'
       return
     }
 
+    success.value = 'تم تسجيل الدخول بنجاح'
+    
+    // Wait for 1.5 seconds to show success message
+    await new Promise(resolve => setTimeout(resolve, 1500))
+    
     emit('login-success')
     closeModal()
-    await router.push('/account')
+    await router.push('/')
   } catch (e) {
     error.value = 'حدث خطأ أثناء تسجيل الدخول'
   } finally {
@@ -68,6 +75,15 @@ const handleRegisterClick = () => {
 //     router.push('/account')
 //   }
 // })
+
+// Add listener for opening login modal
+onMounted(() => {
+  window.addEventListener('open-login-modal', openModal)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('open-login-modal', openModal)
+})
 
 defineExpose({ openModal, closeModal })
 
@@ -159,6 +175,24 @@ import logo from '~/assets/logo.png'
         >
           تسجيل حساب جديد
         </button>
+      </p>
+    </div>
+  </div>
+
+  <!-- Add this for popup messages -->
+  <div 
+    v-if="error || success" 
+    class="fixed top-4 right-4 p-4 rounded-lg shadow-lg max-w-md z-50"
+    :class="[error ? 'bg-red-100' : 'bg-green-100']"
+  >
+    <div class="flex items-center">
+      <Icon 
+        :name="error ? 'ph:x-circle' : 'ph:check-circle'" 
+        class="w-6 h-6 mr-2"
+        :class="[error ? 'text-red-500' : 'text-green-500']"
+      />
+      <p :class="[error ? 'text-red-700' : 'text-green-700']">
+        {{ error || success }}
       </p>
     </div>
   </div>

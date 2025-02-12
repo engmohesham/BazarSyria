@@ -22,14 +22,35 @@
 <script setup>
 import Login from '~/pages/auth/Login.vue'
 import Register from '~/pages/auth/Register.vue'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 
 const loginModal = ref(null)
 const registerModal = ref(null)
 const isLoggedIn = ref(false)
 
-// Check initial login state
+// Check initial login state and set up invalid token listener
 onMounted(() => {
-  isLoggedIn.value = !!localStorage.getItem('session-token')
+  const checkLoginState = () => {
+    isLoggedIn.value = !!localStorage.getItem('session-token')
+  }
+  
+  // Initial check
+  checkLoginState()
+  
+  const handleInvalidToken = () => {
+    isLoggedIn.value = false
+    localStorage.removeItem('session-token')
+    router.push('/')
+  }
+
+  window.addEventListener('invalid-token', handleInvalidToken)
+  
+  // Clean up event listener
+  onUnmounted(() => {
+    window.removeEventListener('invalid-token', handleInvalidToken)
+  })
 })
 
 const openLogin = () => {
@@ -48,4 +69,8 @@ const handleRegisterSuccess = () => {
   // Optionally handle registration success
   openLogin() // Open login modal after successful registration
 }
+
+definePageMeta({
+  middleware: "auth",
+});
 </script>

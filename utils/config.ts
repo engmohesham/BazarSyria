@@ -38,6 +38,8 @@ export const API_ENDPOINTS = {
   CHAT: '/chat',
   CHAT_MESSAGES: '/chat/messages',
 
+  VERIFICATION: '/verification',
+
 }
 
 // تحديث دالة getAuthHeaders لتكون متوافقة مع SSR

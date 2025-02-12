@@ -8,14 +8,14 @@
       ]"
     >
       <div class="p-4 border-b">
-        <div class="flex items-center justify-between">
+        <div class="flex items-center gap-5">
           <button @click="goBack" class="text-gray-600">
             <Icon name="heroicons:arrow-right" class="w-5 h-5" />
           </button>
           <h2 class="font-semibold text-lg">المحادثات</h2>
-          <button @click="showNewChatModal = true">
+          <!-- <button @click="showNewChatModal = true">
             <Icon name="heroicons:plus" class="w-5 h-5" />
-          </button>
+          </button> -->
         </div>
       </div>
       <div class="overflow-y-auto">

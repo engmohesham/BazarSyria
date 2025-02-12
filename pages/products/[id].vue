@@ -29,7 +29,7 @@
             />
 
             <!-- Product Specifications Component -->
-            <ProductSpecifications :specifications="specifications" />
+            <!-- <ProductSpecifications :specifications="specifications" /> -->
             <!-- المواصفات البارزة -->
             <div class="border-t border-b py-6 m-6">
               <h3 class="text-lg font-semibold mb-4">المواصفات البارزة</h3>
@@ -93,63 +93,62 @@ import ProductGallery from "@/components/SingleProduct/ProductGallery.vue";
 import ProductHeader from "@/components/SingleProduct/ProductHeader.vue";
 import ProductSpecifications from "@/components/SingleProduct/ProductSpecifications.vue";
 import ContactButtons from "@/components/SingleProduct/ContactButtons.vue";
-import car1 from "~/assets/cars/car.jpg";
-import car2 from "~/assets/cars/car2.jpg";
-import car3 from "~/assets/cars/car3.jpg";
 import { useRoute } from 'vue-router'
-const { getProduct } = useServices()
 
 const route = useRoute();
-// Replace useFetch with the composable
-const { data: product, error } = await getProduct(route.params.id)
+const { getAdById } = useServices();
 
-// Update the product data handling
+// Fetch product data using the new API endpoint
+const { data: adData } = await getAdById(route.params.id);
+
+console.log(adData.advertisement);
+// Transform API data into component format
 const productData = computed(() => {
-  if (!product.value) return null;
+  if (!adData.advertisement) return null;
   return {
-    name: product.value.name,
-    price: product.value.price,
-    location: product.value.location,
-    timeAgo: product.value.timeAgo,
-    description: product.value.description,
-    image: product.value.image,
-    gallery: product.value.gallery,
-    categoryId: product.value.categoryId,
-    subCategoryId: product.value.subCategoryId
+    name: adData.advertisement.title,
+    price: adData.advertisement.price,
+    location: adData.advertisement.location,
+    timeAgo: adData.advertisement.createdAt, // You might want to format this
+    description: adData.advertisement.description,
+    image: adData.advertisement.mainImage,
+    gallery: adData.advertisement.images || [],
+    categoryId: adData.advertisement.category,
+    subCategoryId: adData.advertisement.subcategory
   };
 });
 
-// Example specifications - adjust based on your API data
+// Transform specifications based on API data
 const specifications = computed(() => [
   {
     icon: "ph:car",
     label: "الموديل",
-    value: productData.value?.description || "",
+    value: adData.value?.model || "",
   },
   {
     icon: "ph:gauge",
     label: "عداد",
-    value: "90000",
+    value: adData.value?.mileage || "0",
   },
   {
     icon: "ph:calendar",
     label: "سنة",
-    value: "2023",
+    value: adData.value?.year || "",
   },
   {
     icon: "ph:gas-pump",
     label: "نوع الوقود",
-    value: "بنزين",
+    value: adData.value?.fuelType || "",
   },
   {
     icon: "ph:gear",
     label: "ناقل الحركة",
-    value: "اوتوماتيك",
+    value: adData.value?.transmission || "",
   },
   {
     icon: "ph:user",
-    label: "مستعمل",
-    value: "مستعمل",
+    label: "الحالة",
+    value: adData.value?.condition || "",
   },
 ]);
 </script>
