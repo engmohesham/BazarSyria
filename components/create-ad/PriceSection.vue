@@ -103,7 +103,7 @@
               type="tel"
               class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-green-500"
               placeholder="ادخل رقم الواتساب"
-              maxlength="9"
+              maxlength="10"
               required
             />
           </div>
@@ -150,6 +150,7 @@ const handlePhoneInput = (event, type) => {
   const cleanValue = value.replace(/\D/g, '')
 
   if (type === 'whatsapp') {
+    whatsappError.value = ''
     emit('update:modelValue', {
       ...props.modelValue,
       whatsappNumber: cleanValue

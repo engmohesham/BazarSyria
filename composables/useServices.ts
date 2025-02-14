@@ -199,7 +199,7 @@ export const useServices = () => {
   const createAd = async (adData: any) => {
     try {
       const { data, error } = await useFetch(
-        `${API_BASE_URL}${API_ENDPOINTS.ADS}`,
+        `${API_BASE_URL}${API_ENDPOINTS.AD}`,
         {
           method: "POST",
           body: adData,
@@ -220,7 +220,7 @@ export const useServices = () => {
   const updateAd = async (adId: string, adData: any) => {
     try {
       const { data, error } = await useFetch(
-        `${API_BASE_URL}${API_ENDPOINTS.ADS}/${adId}`,
+        `${API_BASE_URL}${API_ENDPOINTS.AD}/${adId}`,
         {
           method: "PUT",
           body: adData,
@@ -239,7 +239,7 @@ export const useServices = () => {
   const deleteAd = async (adId: string) => {
     try {
       const { error } = await useFetch(
-        `${API_BASE_URL}${API_ENDPOINTS.ADS}/${adId}`,
+        `${API_BASE_URL}${API_ENDPOINTS.AD}/${adId}`,
         {
           method: "DELETE",
           headers: getAuthHeaders(),
