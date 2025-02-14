@@ -303,10 +303,14 @@ const handleSubmit = async () => {
     formDataToSend.append('location[addressDetails]', formData.value.location.addressDetails)
 
     // إضافة الخصائص الخاصة
-    formData.value.specialProperties.forEach((prop, index) => {
-      formDataToSend.append(`specialProperties[${index}][property]`, prop.property)
-      formDataToSend.append(`specialProperties[${index}][value]`, prop.value)
-    })
+    if (formData.value.specialProperties && formData.value.specialProperties.length > 0) {
+      formData.value.specialProperties.forEach((prop, index) => {
+        if (prop.value) { // Only send properties that have values
+          formDataToSend.append(`specialProperties[${index}][property]`, prop.property)
+          formDataToSend.append(`specialProperties[${index}][value]`, prop.value)
+        }
+      })
+    }
 
     // إضافة الصور
     if (formData.value.gallery && formData.value.gallery.length > 0) {
@@ -332,7 +336,7 @@ const handleSubmit = async () => {
       throw new Error('Failed to create advertisement')
     }
 
-    navigateTo('/account/my-ads')
+    navigateTo('/account/profile/my-ads')
   } catch (error) {
     console.error('Error creating advertisement:', error)
     alert('حدث خطأ أثناء نشر الإعلان. الرجاء المحاولة مرة أخرى.')

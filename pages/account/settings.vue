@@ -3,14 +3,75 @@ definePageMeta({
   middleware: ["auth"]
 });
 
-const selectedMethod = ref("الثاني"); // القيمة الافتراضية
+const selectedMethod = ref("الثاني");
 const newPassword = ref("");
 const confirmPassword = ref("");
 const error = ref("");
 const success = ref("");
+const currentUser = ref(null);
+const isLoading = ref(true);
 
-const { updateSettings, updatePassword, updateVerification } = useServices();
+const { updateSettings, updatePassword, updateVerification, getProfile } = useServices();
 const router = useRouter();
+
+// Fetch fresh profile data from API
+const fetchProfileData = async () => {
+  isLoading.value = true;
+  try {
+    const { data, error: apiError } = await getProfile();
+    
+    if (apiError) throw apiError;
+
+    if (data?.user) {
+      // تحديث البيانات في localStorage
+      localStorage.setItem("user", JSON.stringify(data.user));
+      // تحديث حالة المستخدم في الكومبوننت
+      currentUser.value = data.user;
+      // تحديث طريقة التواصل المختارة
+      selectedMethod.value = data.user.contactMethod || "الثاني";
+    }
+  } catch (err) {
+    console.error("Error fetching profile data:", err);
+    error.value = "فشل في تحميل بيانات الملف الشخصي";
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+// Computed property for verification status
+const verificationStatus = computed(() => {
+  if (!currentUser.value) return null;
+
+  const status = currentUser.value.idVerificationStatus;
+  
+  switch (status) {
+    case 'approved':
+      return {
+        text: 'تم توثيق حسابك بنجاح',
+        icon: 'ph:check-circle',
+        color: 'text-green-600',
+        showButton: false,
+        bgColor: 'bg-green-50'
+      };
+    case 'pending':
+      return {
+        text: 'طلب التوثيق قيد المراجعة',
+        icon: 'ph:clock',
+        color: 'text-yellow-600',
+        showButton: false,
+        bgColor: 'bg-yellow-50'
+      };
+    case 'deactivated':
+    default:
+      return {
+        text: 'للاستمرار في استخدام منصة بازار سوريا يتوجب عليك توثيق هويتك',
+        icon: 'hugeicons:user-id-verification',
+        color: 'text-gray-600',
+        showButton: true,
+        bgColor: 'bg-gray-50'
+      };
+  }
+});
 
 const handlePasswordChange = async () => {
   error.value = "";
@@ -59,118 +120,155 @@ const handleVerification = (type) => {
     console.error("Error in verification:", err);
   }
 };
+
+// استخدام watchEffect لمراقبة التغييرات والتحميل الأولي
+watchEffect(() => {
+  if (process.client) {
+    fetchProfileData();
+  }
+});
+
+// إعادة تحميل البيانات عند التحميل الأولي
+onMounted(() => {
+  if (process.client) {
+    fetchProfileData();
+  }
+});
 </script>
 
 <template>
   <div class="bg-gray-100 min-h-screen py-8" dir="rtl">
-    <div class="container mx-auto px-4">
+    <!-- Loading State -->
+    <div v-if="isLoading" class="container mx-auto px-4 text-center py-8">
+      جاري التحميل...
+    </div>
+
+    <div v-else class="container mx-auto px-4">
       <div class="max-w-3xl mx-auto">
-        <!-- رأس الصفحة -->
-        <div class="flex items-center justify-between mb-6">
-          <h1 class="text-2xl font-bold">الإعدادات العامة</h1>
-          <NuxtLink
-            to="/account"
-            class="text-gray-600 hover:text-gray-800"
-          >
-            <Icon name="ph:arrow-left" class="w-6 h-6" />
-          </NuxtLink>
+        <!-- Error Message -->
+        <div v-if="error" class="bg-red-50 text-red-600 p-4 rounded-lg mb-6">
+          {{ error }}
         </div>
 
-        <!-- طريقة التواصل -->
-        <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
-          <h2 class="text-lg font-semibold mb-4">طريقة التواصل</h2>
-          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <button
-              v-for="method in [
-                'برقم الهاتف',
-                'الثاني',
-                'عبر رسول سوريا',
-                'لا يوجد',
-              ]"
-              :key="method"
-              @click="handleMethodChange(method)"
-              :class="[
-                'p-4 rounded-lg border-2 text-center transition-colors',
-                selectedMethod === method
-                  ? 'border-green-500 bg-green-50'
-                  : 'border-gray-200 hover:border-gray-300',
-              ]"
+        <!-- Content -->
+        <template v-if="currentUser">
+          <!-- رأس الصفحة -->
+          <div class="flex items-center justify-between mb-6">
+            <h1 class="text-2xl font-bold">الإعدادات العامة</h1>
+            <NuxtLink
+              to="/account"
+              class="text-gray-600 hover:text-gray-800"
             >
-              {{ method }}
-            </button>
+              <Icon name="ph:arrow-left" class="w-6 h-6" />
+            </NuxtLink>
           </div>
-        </div>
 
-        <!-- إنشاء كلمة مرور -->
-        <div class="bg-white rounded-lg shadow-sm p-6">
-          <h2 class="text-lg font-semibold mb-4">إنشاء كلمة مرور</h2>
-          <form @submit.prevent="handlePasswordChange" class="space-y-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">
-                كلمة مرور جديدة
-              </label>
-              <input
-                v-model="newPassword"
-                type="password"
-                class="w-full border rounded-lg py-2 px-3"
-                placeholder="كلمة مرور جديدة"
-              />
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">
-                تأكيد كلمة المرور
-              </label>
-              <input
-                v-model="confirmPassword"
-                type="password"
-                class="w-full border rounded-lg py-2 px-3"
-                placeholder="تأكيد كلمة المرور"
-              />
-            </div>
-
-            <div v-if="error" class="text-red-500 text-sm">
-              {{ error }}
-            </div>
-
-            <div v-if="success" class="text-green-500 text-sm">
-              {{ success }}
-            </div>
-
-            <button
-              type="submit"
-              class="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700"
-            >
-              حفظ التغييرات
-            </button>
-          </form>
-        </div>
-
-        <!-- توثيق الحساب -->
-        <div class="bg-white rounded-lg shadow-sm p-6 mt-6">
-          <h2 class="text-lg font-semibold mb-6">توثيق الحساب</h2>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- توثيق الحساب للأفراد -->
-            <div class="bg-gray-50 rounded-lg p-6 text-center">
-              <div class="flex justify-center mb-4">
-                <Icon
-                  name="hugeicons:user-id-verification"
-                  class="w-12 h-12 text-green-600"
-                />
-              </div>
-              <h3 class="font-semibold mb-2">توثيق الحساب</h3>
-              <p class="text-sm text-gray-600 mb-4">
-                للاستمرار في استخدام منصة بازار سوريا يتوجب عليك توثيق هويتك
-              </p>
+          <!-- طريقة التواصل -->
+          <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+            <h2 class="text-lg font-semibold mb-4">طريقة التواصل</h2>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
               <button
-                @click="handleVerification('all')"
-                class="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700"
+                v-for="method in [
+                  'برقم الهاتف',
+                  'الثاني',
+                  'عبر رسول سوريا',
+                  'لا يوجد',
+                ]"
+                :key="method"
+                @click="handleMethodChange(method)"
+                :class="[
+                  'p-4 rounded-lg border-2 text-center transition-colors',
+                  selectedMethod === method
+                    ? 'border-green-500 bg-green-50'
+                    : 'border-gray-200 hover:border-gray-300',
+                ]"
               >
-                توثيق الهوية
+                {{ method }}
               </button>
             </div>
           </div>
-        </div>
+
+          <!-- إنشاء كلمة مرور -->
+          <div class="bg-white rounded-lg shadow-sm p-6">
+            <h2 class="text-lg font-semibold mb-4">إنشاء كلمة مرور</h2>
+            <form @submit.prevent="handlePasswordChange" class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">
+                  كلمة مرور جديدة
+                </label>
+                <input
+                  v-model="newPassword"
+                  type="password"
+                  class="w-full border rounded-lg py-2 px-3"
+                  placeholder="كلمة مرور جديدة"
+                />
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">
+                  تأكيد كلمة المرور
+                </label>
+                <input
+                  v-model="confirmPassword"
+                  type="password"
+                  class="w-full border rounded-lg py-2 px-3"
+                  placeholder="تأكيد كلمة المرور"
+                />
+              </div>
+
+              <div v-if="error" class="text-red-500 text-sm">
+                {{ error }}
+              </div>
+
+              <div v-if="success" class="text-green-500 text-sm">
+                {{ success }}
+              </div>
+
+              <button
+                type="submit"
+                class="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700"
+              >
+                حفظ التغييرات
+              </button>
+            </form>
+          </div>
+
+          <!-- توثيق الحساب -->
+          <div class="bg-white rounded-lg shadow-sm p-6 mt-6">
+            <h2 class="text-lg font-semibold mb-6">توثيق الحساب</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <!-- توثيق الحساب للأفراد -->
+              <div 
+                v-if="verificationStatus"
+                :class="[
+                  'rounded-lg p-6 text-center',
+                  verificationStatus.bgColor
+                ]"
+              >
+                <div class="flex justify-center mb-4">
+                  <Icon
+                    :name="verificationStatus.icon"
+                    :class="[
+                      'w-12 h-12',
+                      verificationStatus.color
+                    ]"
+                  />
+                </div>
+                <h3 class="font-semibold mb-2">توثيق الحساب</h3>
+                <p class="text-sm text-gray-600 mb-4">
+                  {{ verificationStatus.text }}
+                </p>
+                <button
+                  v-if="verificationStatus.showButton"
+                  @click="handleVerification('all')"
+                  class="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700"
+                >
+                  توثيق الهوية
+                </button>
+              </div>
+            </div>
+          </div>
+        </template>
       </div>
     </div>
   </div>

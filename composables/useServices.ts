@@ -67,13 +67,14 @@ export const useServices = () => {
 
   const logout = () => {
     localStorage.removeItem("session-token");
+    localStorage.clear();
     isLoggedIn.value = false;
   };
 
   // User Methods
   const getProfile = async () => {
     try {
-      const { data, error } = await useFetch(
+      const data = await $fetch(
         `${API_BASE_URL}${API_ENDPOINTS.PROFILE}`,
         {
           headers: getAuthHeaders(),
@@ -82,8 +83,8 @@ export const useServices = () => {
 
       // console.log(data);
 
-      if (error.value) throw error.value;
-      return { data: data.value, error: null };
+      // console.log(data);
+      return { data: data, error: null };
     } catch (err) {
       console.error("Error fetching profile:", err);
       return { data: null, error: err };
@@ -127,7 +128,7 @@ export const useServices = () => {
   const followUser = async (userId: string) => {
     try {
       const { error } = await useFetch(
-        `${API_BASE_URL}${API_ENDPOINTS.FOLLOW}/${userId}`,
+        `${API_BASE_URL}${API_ENDPOINTS.FOLLOW}/${userId}/follow`,
         {
           method: "POST",
           headers: getAuthHeaders(),
@@ -145,7 +146,7 @@ export const useServices = () => {
   const unfollowUser = async (userId: string) => {
     try {
       const { error } = await useFetch(
-        `${API_BASE_URL}${API_ENDPOINTS.UNFOLLOW}/${userId}`,
+        `${API_BASE_URL}${API_ENDPOINTS.UNFOLLOW}/${userId}/unfollow`,
         {
           method: "POST",
           headers: getAuthHeaders(),
@@ -391,21 +392,28 @@ export const useServices = () => {
   };
 
   // Chat Methods
-  const createChatRoom = async (participantId: string) => {
+  const createChatRoom = async (payload: { users: string[] }) => {
     try {
       const { data, error } = await useFetch(
         `${API_BASE_URL}${API_ENDPOINTS.CHAT}`,
         {
-          method: "POST",
-          body: { participantId },
-          headers: getAuthHeaders(),
+          method: 'POST',
+          body: payload,
+          headers: {
+            ...getAuthHeaders(),
+            'Content-Type': 'application/json',
+          },
         }
       );
 
-      if (error.value) throw error.value;
+      if (error.value) {
+        console.error('Create chat room error:', error.value);
+        return { data: null, error: error.value };
+      }
+
       return { data: data.value, error: null };
     } catch (err) {
-      console.error("Error creating chat room:", err);
+      console.error('Create chat room error:', err);
       return { data: null, error: err };
     }
   };
@@ -478,7 +486,7 @@ export const useServices = () => {
   const getAdById = async (id: string) => {
     try {
       const { data, error } = await useFetch(
-        `${API_BASE_URL}${API_ENDPOINTS.ADS}/${id}`,
+        `${API_BASE_URL}${API_ENDPOINTS.AD}/${id}`,
         {
           headers: getAuthHeaders(),
         }
@@ -578,6 +586,23 @@ export const useServices = () => {
     }
   };
 
+  const getUserById = async (userId: string) => {
+    try {
+      const { data, error } = await useFetch(
+        `${API_BASE_URL}/user/${userId}`,
+        {
+          headers: getAuthHeaders(),
+        }
+      );
+
+      if (error.value) throw error.value;
+      return { data: data.value, error: null };
+    } catch (err) {
+      console.error('Error fetching user:', err);
+      return { data: null, error: err };
+    }
+  };
+
   return {
     // State
     isLoggedIn,
@@ -621,5 +646,7 @@ export const useServices = () => {
     getUserChats,
     getChatMessages,
     sendMessage,
+
+    getUserById,
   };
 };

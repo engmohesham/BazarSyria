@@ -18,7 +18,7 @@
           <button
             class="absolute left-0 top-1/2 -translate-y-1/2 w-12 h-full flex items-center justify-center bg-green-600 rounded-l-lg hover:bg-green-700 transition-colors"
           >
-            <Icon name="ph:magnifying-glass" class="w-5 h-5 text-white" />
+            <PhMagnifyingGlass class="w-5 h-5 text-white" />
           </button>
           <input
             type="text"
@@ -36,7 +36,7 @@
           @click="navigateTo('/create-ad')"
           class="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
         >
-          <Icon name="ph:plus" class="w-5 h-5" />
+          <PhPlus class="w-5 h-5" />
           <span class="text-sm font-medium">أضف إعلانك</span>
         </button>
         <button
@@ -44,7 +44,7 @@
           @click="emit('open-login')"
           class="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
         >
-          <Icon name="ph:plus" class="w-5 h-5" />
+          <PhPlus class="w-5 h-5" />
           <span class="text-sm font-medium">أضف إعلانك</span>
         </button>
         <div class="flex items-center gap-4">
@@ -55,8 +55,8 @@
                 @click="toggleDropdown"
                 class="flex items-center gap-2 hover:text-green-600 transition-colors"
               >
-                <Icon name="ph:user" class="w-5 h-5" />
-                <Icon name="ph:caret-down" class="w-4 h-4" />
+                <PhUser class="w-5 h-5" />
+                <PhCaretDown class="w-4 h-4" />
               </button>
               <!-- Dropdown menu -->
               <div
@@ -90,7 +90,7 @@
                   class="w-8 h-8 rounded-full border-2 border-gray-100"
                 />
 
-                <Icon name="ph:caret-down" class="w-4 h-4" />
+                <PhCaretDown class="w-4 h-4" />
               </button>
               <!-- Profile Dropdown Menu -->
               <div
@@ -123,14 +123,14 @@
                     class="flex items-center justify-end gap-3 px-4 py-2 text-gray-700 hover:bg-gray-50"
                   >
                     <span>المحفظة</span>
-                    <Icon name="ph:wallet" class="w-5 h-5" />
+                    <PhWallet class="w-5 h-5" />
                   </NuxtLink> -->
 
                   <button
                     @click="navigateTo('/account/profile/my-ads')"
                     class="flex items-center justify-end gap-3 px-4 py-2 text-gray-700 hover:bg-gray-50"
                   >
-                    <Icon name="ph:megaphone" class="w-5 h-5" />
+                    <PhMegaphone class="w-5 h-5" />
                     <span>اعلاناتي</span>
                   </button>
 
@@ -138,7 +138,7 @@
                     @click="navigateTo('/account/profile/following')"
                     class="flex items-center justify-end gap-3 px-4 py-2 text-gray-700 hover:bg-gray-50"
                   >
-                    <Icon name="ph:users" class="w-5 h-5" />
+                    <PhUsers class="w-5 h-5" />
                     <span>المتابعين</span>
                   </button>
 
@@ -147,14 +147,14 @@
                     class="flex items-center justify-end gap-3 px-4 py-2 text-gray-700 hover:bg-gray-50"
                   >
                     <span>المفضلة</span>
-                    <Icon name="ph:heart" class="w-5 h-5" />
+                    <PhHeart class="w-5 h-5" />
                   </NuxtLink> -->
 
                   <button
                     @click="navigateTo('/account/chat')"
                     class="flex items-center justify-end gap-3 px-4 py-2 text-gray-700 hover:bg-gray-50"
                   >
-                    <Icon name="ph:chat-circle" class="w-5 h-5" />
+                    <PhChatCircle class="w-5 h-5" />
                     <span>المحادثات</span>
                   </button>
 
@@ -162,7 +162,7 @@
                     to="/account/settings"
                     class="flex items-center justify-end gap-3 px-4 py-2 text-gray-700 hover:bg-gray-50"
                   >
-                    <Icon name="ph:gear" class="w-5 h-5" />
+                    <PhGear class="w-5 h-5" />
                     <span>الاعدادات</span>
                   </button>
 
@@ -170,7 +170,7 @@
                     @click="handleLogout"
                     class="w-full flex items-center justify-start gap-3 px-4 py-2 text-red-600 hover:bg-gray-50 border-t border-gray-100"
                   >
-                    <Icon name="ph:sign-out" class="w-5 h-5" />
+                    <PhSignOut class="w-5 h-5" />
                     <span>تسجيل الخروج</span>
                   </button>
                 </div>
@@ -181,7 +181,7 @@
             <!-- <button
               class="flex p-1.5 rounded-full hover:bg-gray-100 transition-colors relative"
             >
-              <Icon name="ph:bell" class="w-5 h-5 text-gray-500" />
+              <PhBell class="w-5 h-5 text-gray-500" />
               <span
                 class="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"
               ></span>
@@ -190,7 +190,7 @@
               @click="navigateTo('/account/chat')"
               class="flex p-1.5 rounded-full hover:bg-gray-100 transition-colors relative"
             >
-              <Icon name="ph:chat-circle" class="w-5 h-5 text-gray-500" />
+              <PhChatCircle class="w-5 h-5 text-gray-500" />
               <span
                 class="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"
               ></span>
@@ -205,10 +205,7 @@
         class="lg:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
         @click="toggleMobileMenu"
       >
-        <Icon
-          :name="isMobileMenuOpen ? 'ph:x' : 'ph:list'"
-          class="w-6 h-6 text-gray-600"
-        />
+        <PhList class="w-6 h-6 text-gray-600" />
       </button>
     </div>
 
@@ -236,7 +233,7 @@
               class="mr-auto text-gray-600 border p-2 flex justify-center items-center rounded-full w-fit h-fit cursor-pointer hover:bg-red-600 hover:text-white hover:scale-105 ease-linear duration-150"
               v-on:click="toggleMobileMenu"
             >
-              <Icon name="ph:x" size="25" />
+              <PhX size="25" />
             </div>
           </div>
 
@@ -246,7 +243,7 @@
               <button
                 class="absolute left-0 top-1/2 -translate-y-1/2 w-12 h-full flex items-center justify-center bg-green-600 rounded-l-lg hover:bg-green-700 transition-colors"
               >
-                <Icon name="ph:magnifying-glass" class="w-5 h-5 text-white" />
+                <PhMagnifyingGlass class="w-5 h-5 text-white" />
               </button>
               <input
                 type="text"
@@ -261,7 +258,7 @@
               @click="navigateTo('/create-ad')"
               class="w-full flex items-center justify-between px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
             >
-              <Icon name="ph:plus" class="w-5 h-5" />
+              <PhPlus class="w-5 h-5" />
               <span class="text-sm font-medium">+ أضف إعلانك</span>
             </button>
             <button
@@ -269,7 +266,7 @@
               @click="emit('open-login')"
               class="w-full flex items-center justify-between px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
             >
-              <Icon name="ph:plus" class="w-5 h-5" />
+              <PhPlus class="w-5 h-5" />
               <span class="text-sm font-medium">+ أضف إعلانك</span>
             </button>
           </div>
@@ -301,7 +298,7 @@
                 @click="navigateTo(item.to)"
                 class="flex items-center gap-3 py-3 px-4 text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-50"
               >
-                <Icon :name="item.icon" class="w-5 h-5" />
+                <PhPlus class="w-5 h-5" />
                 <span>{{ item.text }}</span>
               </button>
             </div>
@@ -310,7 +307,7 @@
             <div class="grid grid-cols-2 gap-4 border-t border-gray-100 pt-4">
               <!-- <NuxtLink to="/notifications" class="flex items-center justify-center gap-2">
                 <div class="relative">
-                  <Icon name="ph:bell" class="w-6 h-6 text-gray-600" />
+                  <PhBell class="w-6 h-6 text-gray-600" />
                   <span class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
                 </div>
                 <span class="text-sm text-gray-600">الإشعارات</span>
@@ -321,7 +318,7 @@
                 class="flex items-center justify-center gap-2"
               >
                 <div class="relative">
-                  <Icon name="ph:chat-circle" class="w-6 h-6 text-gray-600" />
+                  <PhChatCircle class="w-6 h-6 text-gray-600" />
                   <span
                     class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"
                   ></span>
@@ -333,7 +330,7 @@
                 @click="handleLogout"
                 class="col-span-2 flex items-center gap-3 py-3 px-4 text-red-600 hover:text-red-700 rounded-lg hover:bg-red-50 border bord er-red-100"
               >
-                <Icon name="ph:sign-out" class="w-5 h-5" />
+                <PhSignOut class="w-5 h-5" />
                 <span>تسجيل الخروج</span>
               </button>
             </div>
@@ -348,10 +345,7 @@
                 @click="handleLoginClick"
                 class="flex flex-col items-center py-3 px-4 rounded-lg hover:bg-gray-50 group"
               >
-                <Icon
-                  name="ph:sign-in"
-                  class="w-6 h-6 text-gray-500 group-hover:text-green-600 mb-1"
-                />
+                <PhSignIn class="w-6 h-6 text-gray-500 group-hover:text-green-600 mb-1" />
                 <span class="text-sm text-gray-500 group-hover:text-green-600"
                   >تسجيل الدخول</span
                 >
@@ -360,10 +354,7 @@
                 @click="handleRegisterClick"
                 class="flex flex-col items-center py-3 px-4 rounded-lg hover:bg-gray-50 group"
               >
-                <Icon
-                  name="ph:user-plus"
-                  class="w-6 h-6 text-gray-500 group-hover:text-green-600 mb-1"
-                />
+                <PhUserPlus class="w-6 h-6 text-gray-500 group-hover:text-green-600 mb-1" />
                 <span class="text-sm text-gray-500 group-hover:text-green-600"
                   >حساب جديد</span
                 >
@@ -381,6 +372,24 @@ import { ref, onMounted, onUnmounted } from "vue";
 import logo from "~/assets/logo.png";
 import { useRouter } from "vue-router";
 import user from "~/assets/user.png";
+import { 
+  PhMagnifyingGlass,
+  PhPlus,
+  PhUser,
+  PhCaretDown,
+  PhWallet,
+  PhMegaphone,
+  PhUsers,
+  PhHeart,
+  PhChatCircle,
+  PhGear,
+  PhSignOut,
+  PhBell,
+  PhList,
+  PhX,
+  PhSignIn,
+  PhUserPlus
+} from '@phosphor-icons/vue';
 
 const props = defineProps({
   isLoggedIn: {

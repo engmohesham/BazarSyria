@@ -11,12 +11,13 @@ export const API_ENDPOINTS = {
   UPDATE_PROFILE: '/user',
   FOLLOWERS: '/user/profile/followers',
   FOLLOWING: '/user/profile/followings',
-  FOLLOW: '/users/follow',
-  UNFOLLOW: '/users/unfollow',
+  FOLLOW: '/user',
+  UNFOLLOW: '/user',
   
   // Ads
-  ADS: '/advertisement',
-  USER_ADS: '/advertisement/all',
+  ADS: '/advertisement/all',
+  AD: '/advertisement',
+  USER_ADS: '/advertisement/my/ads',
   TOGGLE_AD: '/advertisement/toggle',
   
   // Categories

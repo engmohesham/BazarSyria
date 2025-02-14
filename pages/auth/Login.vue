@@ -1,4 +1,10 @@
 and<script setup>
+import { ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
+import { useServices } from '~/composables/useServices'
+import { onMounted, onUnmounted } from 'vue'
+import { PhWarning, PhCheckCircle } from '@phosphor-icons/vue'
+
 const router = useRouter()
 const { login } = useServices()
 const isOpen = ref(false)
@@ -7,6 +13,21 @@ const password = ref('')
 const error = ref('')
 const loading = ref(false)
 const success = ref('')
+const showNotification = ref(false)
+
+// Update the watch to watch local refs instead of props
+watch(
+  () => [error.value, success.value],
+  ([newError, newSuccess]) => {
+    if (newError || newSuccess) {
+      showNotification.value = true
+      setTimeout(() => {
+        showNotification.value = false
+      }, 1500)
+    }
+  },
+  { immediate: true }
+)
 
 const openModal = () => {
   isOpen.value = true
@@ -181,16 +202,21 @@ import logo from '~/assets/logo.png'
 
   <!-- Add this for popup messages -->
   <div 
-    v-if="error || success" 
+    v-if="showNotification" 
     class="fixed top-4 right-4 p-4 rounded-lg shadow-lg max-w-md z-50"
     :class="[error ? 'bg-red-100' : 'bg-green-100']"
   >
     <div class="flex items-center">
-      <Icon 
-        :name="error ? 'material-symbols:error' : 'material-symbols:check-circle'" 
-        class="w-6 h-6 mr-2"
-        :class="[error ? 'text-red-500' : 'text-green-500']"
-      />
+      <div v-if="error">
+        <PhWarning 
+          class="w-6 h-6 mr-2 text-red-500"
+        />
+      </div>
+      <div v-else>
+        <PhCheckCircle 
+          class="w-6 h-6 mr-2 text-green-500"
+        />
+      </div>
       <p :class="[error ? 'text-red-700' : 'text-green-700']">
         {{ error || success }}
       </p>

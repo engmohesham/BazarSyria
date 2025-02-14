@@ -3,14 +3,14 @@
     class="flex sticky lg:top-[155px] md:top-[127px] top-[110px] z-40 flex-col gap-4"
   >
     <!-- User Info -->
-    <div class="flex items-center gap-3">
+    <div v-if="userData" class="flex items-center gap-3">
       <div class="relative">
         <div
           class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center"
         >
           <img
-            src="https://www.google.com/url?sa=i&url=https%3A%2F%2Fstock.adobe.com%2Faz%2Fimages%2Fnon-rubber-stamp%2F67591673&psig=AOvVaw3pV8avN6u7LbVWGaEdzYNl&ust=1738204736757000&source=images&cd=vfe&opi=89978449&ved=0CBQQjRxqFwoTCOC-0a_zmYsDFQAAAAAdAAAAABAE"
-            alt="User Avatar"
+            :src="userData.avatar || 'https://via.placeholder.com/150'"
+            :alt="userData.name"
             class="w-full h-full rounded-full object-cover"
           />
         </div>
@@ -19,29 +19,39 @@
         ></div>
       </div>
       <div>
-        <h3 class="font-semibold">عمر بن خطاب</h3>
-        <p class="text-sm text-gray-500">عضو منذ 2019</p>
+        <h3 class="font-semibold">{{ userData.name }}</h3>
+        <p class="text-sm text-gray-500">عضو منذ {{ formatJoinDate(userData.createdAt) }}</p>
       </div>
-      <button class="bg-green-500 text-white px-2 py-1 rounded-md">
-        متابعة
+      <!-- Follow Button - Only show if not current user and user is logged in -->
+      <button
+        v-if="shouldShowButtons"
+        @click="handleFollow"
+        class="bg-green-500 text-white px-2 py-1 rounded-md hover:bg-green-600"
+      >
+        {{ isFollowing ? 'إلغاء المتابعة' : 'متابعة' }}
       </button>
     </div>
 
-    <!-- Action Buttons -->
-    <div class="flex flex-col gap-2">
+    <!-- Action Buttons - Only show if not current user and user is logged in -->
+    <div v-if="shouldShowButtons" class="flex flex-col gap-2">
       <button
+        @click="startChat"
         class="w-full py-2 px-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
       >
-        <Icon name="ph:phone" class="inline-block ml-2" />
+        <Icon name="ph:chat-circle" class="inline-block ml-2" />
         محادثة
       </button>
       <button
+        v-if="userData?.phone"
+        @click="makeCall"
         class="w-full py-2 px-4 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
       >
-        <Icon name="ph:percent" class="inline-block ml-2" />
+        <Icon name="ph:phone" class="inline-block ml-2" />
         مكالمة
       </button>
       <button
+        v-if="userData?.phone"
+        @click="openWhatsapp"
         class="w-full py-2 px-4 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
       >
         <Icon name="ph:whatsapp-logo" class="inline-block ml-2" />
@@ -55,11 +65,11 @@
       <ul class="text-gray-600 space-y-2">
         <li class="flex items-start gap-2">
           <Icon name="ph:info" class="w-5 h-5 mt-0.5 text-gray-400" />
-          <span>تأكد من فحص السيارة قبل شراء أي شيء.</span>
+          <span>تأكد من فحص المنتج قبل شراء أي شيء.</span>
         </li>
         <li class="flex items-start gap-2">
           <Icon name="ph:warning" class="w-5 h-5 mt-0.5 text-gray-400" />
-          <span>لا تدفع أي مبلغ قبل معاينة السيارة شخصياً.</span>
+          <span>لا تدفع أي مبلغ قبل معاينة المنتج شخصياً.</span>
         </li>
         <li class="flex items-start gap-2">
           <Icon name="ph:shield" class="w-5 h-5 mt-0.5 text-gray-400" />
@@ -79,6 +89,128 @@
 </template>
 
 <script setup>
+import { ref, computed, onMounted, watch } from 'vue';
+import { useServices } from '~/composables/useServices';
 import car from '~/assets/cars/car.jpg'
 
+const { getProfile, getUserById, followUser, unfollowUser, createChatRoom } = useServices();
+
+const props = defineProps({
+  creatorId: {
+    type: String,
+    required: true
+  }
+});
+
+const userData = ref(null);
+const currentUser = ref(null);
+const isLoading = ref(true);
+const isFollowing = ref(false);
+
+// Check if the profile is the current user's profile
+const isCurrentUser = computed(() => {
+  return currentUser.value?._id === props.creatorId;
+});
+
+// Computed property to determine if buttons should be shown
+const shouldShowButtons = computed(() => {
+  return !isCurrentUser.value && !isLoading.value && currentUser.value;
+});
+
+// Format join date
+const formatJoinDate = (date) => {
+  if (!date) return '';
+  return new Date(date).toLocaleDateString('ar-SY', {
+    year: 'numeric'
+  });
+};
+
+// Fetch user data
+const fetchUserData = async () => {
+  isLoading.value = true;
+  try {
+    // Get current user profile
+    const { data: profileData } = await getProfile();
+    currentUser.value = profileData.user;
+    console.log('Current User:', currentUser.value._id);
+
+    // Get creator profile
+    const { data: creatorData } = await getUserById(props.creatorId);
+    userData.value = creatorData.user;
+    console.log(userData.value);
+
+    // Check if current user is following the creator
+    isFollowing.value = currentUser.value?.following?.includes(props.creatorId);
+  } catch (error) {
+    console.error('Error fetching user data:', error);
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+// Handle follow/unfollow
+const handleFollow = async () => {
+  if (!currentUser.value) {
+    // Redirect to login if not logged in
+    return navigateTo('/auth/login');
+  }
+  
+  try {
+    if (isFollowing.value) {
+      await unfollowUser(props.creatorId);
+      isFollowing.value = false;
+    } else {
+      await followUser(props.creatorId);
+      isFollowing.value = true;
+    }
+  } catch (error) {
+    console.error('Error updating follow status:', error);
+  }
+};
+
+// Handle chat
+const startChat = async () => {
+  if (!currentUser.value) {
+    return navigateTo('/auth/login');
+  }
+
+  try {
+    // Create chat room with users array containing both IDs
+    const payload = {
+      users: [currentUser.value._id, props.creatorId]
+    };
+    console.log(currentUser.value._id);
+    const { data, error } = await createChatRoom(payload);
+    
+    if (error) {
+      console.error('Error creating chat:', error);
+      return;
+    }
+
+    // Navigate to chat room
+    navigateTo(`/account/chat`);
+  } catch (error) {
+    console.error('Error creating chat room:', error);
+  }
+};
+
+// Handle phone call
+const makeCall = () => {
+  if (!userData.value?.phone) return;
+  window.location.href = `tel:${userData.value.phone}`;
+};
+
+// Handle WhatsApp
+const openWhatsapp = () => {
+  if (!userData.value?.phone) return;
+  const phoneNumber = userData.value.phone.replace(/\D/g, ''); // Remove non-digits
+  window.open(`https://wa.me/${phoneNumber}`, '_blank');
+};
+
+// Watch for creatorId changes
+watch(() => props.creatorId, () => {
+  if (props.creatorId) {
+    fetchUserData();
+  }
+}, { immediate: true });
 </script>

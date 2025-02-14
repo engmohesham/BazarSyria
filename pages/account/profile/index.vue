@@ -1,62 +1,73 @@
 <script setup>
 import defaultAvatar from "~/assets/user.png";
 import defaultCover from "~/assets/cover.jpeg";
+import { ref, computed, onMounted, watchEffect } from 'vue';
 
 const router = useRouter();
 const { getProfile, updateProfile } = useServices();
 const { notification, showNotification } = useNotification();
 
-const {
-  data: userData,
-  error: profileError,
-  refresh,
-} = await useAsyncData(
-  "profile",
-  async () => {
+// State
+const profileData = ref(null);
+const isLoading = ref(true);
+const error = ref(null);
+
+// Fetch profile data
+const fetchProfileData = async () => {
+  isLoading.value = true;
+  try {
     const token = localStorage.getItem("session-token");
     if (!token) {
       router.push("/");
-      return null;
+      return;
     }
 
-    try {
-      const { data, error } = await getProfile();
-
-      if (error) {
-        throw new Error("فشل في تحميل بيانات الملف الشخصي");
-      }
-
-      return {
-        ads: [],
-        avatar: data.user.avatar || null,
-        coverImage: "",
-        createdAt: data.user.createdAt,
-        email: data.user.email || "",
-        followers: data.user.followers || [],
-        following: data.user.following || [],
-        joinDate: data.user.createdAt,
-        location: "",
-        memberId: data.user.memberId || "",
-        name: data.user.name || "",
-        phone: data.user.phone || "",
-        ratings: data.user.ratings || [],
-        verified: data.user.idVerificationStatus || "deactivated",
-        id: data.user._id || "",
-        emailVerified: data.user.emailVerified || false,
-        role: data.user.role || "user",
-        identificationVerified: data.user.identificationVerified || false,
-        gender: data.user.gender || "",
-      };
-    } catch (e) {
-      console.error("خطأ في تحميل البيانات:", e);
-      throw e;
+    const { data, error: apiError } = await getProfile();
+    
+    if (apiError) {
+      throw new Error("فشل في تحميل بيانات الملف الشخصي");
     }
-  },
-  {
-    server: false, // تنفيذ فقط على جانب العميل
-    lazy: true, // تحميل البيانات عند الحاجة
+
+    console.log('Profile Data Response:', data); // للتأكد من البيانات
+    profileData.value = data;
+
+  } catch (err) {
+    console.error("خطأ في تحميل البيانات:", err);
+    error.value = err;
+  } finally {
+    isLoading.value = false;
   }
-);
+};
+
+// Transform API data into component format with null checks
+const userData = computed(() => {
+  if (!profileData.value?.user) return null;
+  // localStorage.setItem("user", JSON.stringify(profileData.value.user));
+  
+  const user = profileData.value.user;
+  return {
+    ads: [],
+    avatar: user.avatar || null,
+    coverImage: "",
+    createdAt: user.createdAt,
+    email: user.email || "",
+    followers: user.followers || [],
+    following: user.following || [],
+    joinDate: user.createdAt,
+    location: "",
+    memberId: user.memberId || "",
+    name: user.name || "",
+    phone: user.phone || "",
+    ratings: user.ratings || [],
+    verified: user.idVerificationStatus || "deactivated",
+    id: user._id || "",
+    emailVerified: user.emailVerified || false,
+    role: user.role || "user",
+    identificationVerified: user.identificationVerified || false,
+    gender: user.gender || "",
+    bio: user.bio || "",
+  };
+});
 
 // Computed properties for images
 const avatarImage = computed(() => {
@@ -68,6 +79,81 @@ const coverImage = computed(() => {
   if (!userData.value?.coverImage) return defaultCover;
   return userData.value.coverImage;
 });
+
+// استخدام watchEffect لمراقبة التغييرات والتحميل الأولي
+watchEffect(() => {
+  if (process.client) { // Check if we're on client-side
+    fetchProfileData();
+  }
+});
+
+// إعادة تحميل البيانات عند التحميل الأولي
+onMounted(() => {
+  if (process.client) {
+    fetchProfileData();
+  }
+});
+
+// Update handleUpdateProfile function
+const handleUpdateProfile = async (e) => {
+  e.preventDefault();
+  try {
+    const updateData = {
+      id: userData.value.id,
+      name: userData.value.name,
+      email: userData.value.email,
+      phone: userData.value.phone,
+      location: userData.value.location,
+      bio: userData.value.bio,
+      gender: userData.value.gender,
+      birthDate: userData.value.birthDate,
+    };
+
+    if (userData.value.newAvatar instanceof File) {
+      updateData.avatar = userData.value.newAvatar;
+    }
+    if (userData.value.newCoverImage instanceof File) {
+      updateData.coverImage = userData.value.newCoverImage;
+    }
+
+    const { error, message } = await updateProfile(updateData);
+
+    if (error) {
+      throw new Error(error);
+    }
+
+    // Refresh the data immediately after successful update
+    await fetchProfileData();
+    
+    // Reset file upload states
+    userData.value.newAvatar = null;
+    userData.value.newCoverImage = null;
+
+    showNotification(message || "تم تحديث الملف الشخصي بنجاح", "success");
+  } catch (error) {
+    console.error("Error updating profile:", error);
+    showNotification("حدث خطأ أثناء تحديث الملف الشخصي", "error");
+  }
+};
+
+// File handlers
+const handleAvatarChange = (event) => {
+  const file = event.target.files[0];
+  if (file) {
+    userData.value.newAvatar = file;
+    const previewUrl = URL.createObjectURL(file);
+    userData.value.avatar = previewUrl;
+  }
+};
+
+const handleCoverImageChange = (event) => {
+  const file = event.target.files[0];
+  if (file) {
+    userData.value.newCoverImage = file;
+    const previewUrl = URL.createObjectURL(file);
+    userData.value.coverImage = previewUrl;
+  }
+};
 
 // Add these new refs for date handling
 const selectedDay = ref("");
@@ -114,64 +200,6 @@ watchEffect(() => {
     console.log("Current gender:", userData.value.gender); // For debugging
   }
 });
-
-// Update handleUpdateProfile function to ensure gender is included
-const handleUpdateProfile = async (e) => {
-  e.preventDefault();
-  try {
-    const updateData = {
-      id: userData.value.id,
-      name: userData.value.name,
-      email: userData.value.email,
-      phone: userData.value.phone,
-      location: userData.value.location,
-      bio: userData.value.bio,
-      gender: userData.value.gender, // Make sure gender is included
-      birthDate: userData.value.birthDate,
-    };
-
-    // Only add files if they've been changed
-    if (userData.value.newAvatar instanceof File) {
-      updateData.avatar = userData.value.newAvatar;
-    }
-    if (userData.value.newCoverImage instanceof File) {
-      updateData.coverImage = userData.value.newCoverImage;
-    }
-
-    const { error, message } = await updateProfile(updateData);
-
-    if (error) {
-      throw new Error(error);
-    }
-
-    showNotification(message || "تم تحديث الملف الشخصي بنجاح", "success");
-    await refresh();
-  } catch (error) {
-    console.error("Error updating profile:", error);
-    showNotification("حدث خطأ أثناء تحديث الملف الشخصي", "error");
-  }
-};
-
-// Add handlers for file uploads
-const handleAvatarChange = (event) => {
-  const file = event.target.files[0];
-  if (file) {
-    userData.value.newAvatar = file;
-    // Create preview URL
-    userData.value.avatar = URL.createObjectURL(file);
-  }
-};
-
-const handleCoverImageChange = (event) => {
-  const file = event.target.files[0];
-  if (file) {
-    userData.value.newCoverImage = file;
-    // Create preview URL
-    userData.value.coverImage = URL.createObjectURL(file);
-  }
-};
-
-console.log(userData.value);
 </script>
 
 <template>
@@ -216,12 +244,17 @@ console.log(userData.value);
       </div>
     </Transition>
 
-    <div v-if="$fetchState?.pending" class="text-center py-8">
+    <!-- Loading State -->
+    <div v-if="isLoading" class="text-center py-8">
       جاري التحميل...
     </div>
-    <div v-else-if="profileError" class="text-center py-8 text-red-600">
-      {{ profileError }}
+
+    <!-- Error State -->
+    <div v-else-if="error" class="text-center py-8 text-red-600">
+      {{ error.message }}
     </div>
+
+    <!-- Content -->
     <div v-else-if="userData">
       <!-- رأس الصفحة مع العنوان -->
       <div class="bg-white p-4 border-b">
@@ -538,6 +571,11 @@ console.log(userData.value);
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- Not Found State -->
+    <div v-else class="text-center py-8">
+      لم يتم العثور على الملف الشخصي
     </div>
   </div>
 </template>

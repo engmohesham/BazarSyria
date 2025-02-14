@@ -785,18 +785,11 @@ const cameraType = computed(() => {
     <!-- Camera UI -->
     <div v-if="showCamera" class="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4">
       <div class="w-full max-w-2xl">
-        <button @click="closeCamera" class="absolute top-4 right-4 p-2 bg-white rounded-full shadow-lg">
-          <PhX :size="24" class="text-gray-600" />
-        </button>
-        
-        <button
-          type="button"
-          @click="captureImage"
-          class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
-        >
-          <PhCamera :size="20" />
-          التقاط الصورة
-        </button>
+        <CameraCapture 
+          :type="cameraType"
+          @capture="handleCapture" 
+          @close="closeCamera" 
+        />
       </div>
     </div>
   </div>

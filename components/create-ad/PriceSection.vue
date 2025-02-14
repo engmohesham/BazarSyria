@@ -59,8 +59,8 @@
           <label class="flex items-center">
             <input 
               type="radio" 
-              :checked="modelValue.contactMethod === 'all'"
-              @change="handleContactMethodChange('all')"
+              :checked="modelValue.contactMethod === 'both'"
+              @change="handleContactMethodChange('both')"
               class="ml-2"
             />
             الجميع
@@ -133,15 +133,15 @@ const whatsappError = ref('')
 
 // Computed properties for visibility
 const showPhoneInputs = computed(() => {
-  return ['phone', 'whatsapp', 'all'].includes(props.modelValue.contactMethod)
+  return ['phone', 'whatsapp', 'both'].includes(props.modelValue.contactMethod)
 })
 
 const showRegularPhone = computed(() => {
-  return ['phone', 'all'].includes(props.modelValue.contactMethod)
+  return ['phone', 'both'].includes(props.modelValue.contactMethod)
 })
 
 const showWhatsApp = computed(() => {
-  return ['whatsapp', 'all'].includes(props.modelValue.contactMethod)
+  return ['whatsapp', 'both'].includes(props.modelValue.contactMethod)
 })
 
 // Handle phone input with validation
@@ -171,8 +171,8 @@ const handleContactMethodChange = (method) => {
   emit('update:modelValue', {
     ...props.modelValue,
     contactMethod: method,
-    phoneNumber: ['phone', 'all'].includes(method) ? props.modelValue.phoneNumber : '',
-    whatsappNumber: ['whatsapp', 'all'].includes(method) ? props.modelValue.whatsappNumber : ''
+    phoneNumber: ['phone', 'both'].includes(method) ? props.modelValue.phoneNumber : '',
+    whatsappNumber: ['whatsapp', 'both'].includes(method) ? props.modelValue.whatsappNumber : ''
   })
 }
 </script> 

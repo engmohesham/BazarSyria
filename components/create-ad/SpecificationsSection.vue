@@ -9,7 +9,8 @@
           الحالة *
         </label>
         <select
-          v-model="modelValue.condition"
+          :value="modelValue.specialProperties.find(p => p.property === 'Condition')?.value"
+          @input="updateSpecialProperty('Condition', $event.target.value)"
           class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-green-500"
           required
         >
@@ -30,12 +31,17 @@
           نوع الوقود *
         </label>
         <select
-          v-model="modelValue.fuelType"
+          :value="modelValue.specialProperties.find(p => p.property === 'Fuel Type')?.value"
+          @input="updateSpecialProperty('Fuel Type', $event.target.value)"
           class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-green-500"
           required
         >
           <option value="" disabled selected>اختر نوع الوقود</option>
-          <option v-for="type in fuelTypes" :key="type._id" :value="type._id">
+          <option
+            v-for="type in fuelTypes"
+            :key="type._id"
+            :value="type._id"
+          >
             {{ type.name }}
           </option>
         </select>
@@ -47,7 +53,8 @@
           ناقل الحركة *
         </label>
         <select
-          v-model="modelValue.transmission"
+          :value="modelValue.specialProperties.find(p => p.property === 'Transmission')?.value"
+          @input="updateSpecialProperty('Transmission', $event.target.value)"
           class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-green-500"
           required
         >
@@ -64,10 +71,11 @@
 
       <!-- Color -->
       <div v-if="hasSpecialProperty('Color')" class="space-y-2">
-        <label class="block text-sm font-medium text-gray-700"> اللون </label>
+        <label class="block text-sm font-medium text-gray-700">اللون</label>
         <input
           type="text"
-          v-model="modelValue.color"
+          :value="modelValue.specialProperties.find(p => p.property === 'Color')?.value"
+          @input="updateSpecialProperty('Color', $event.target.value)"
           class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-green-500"
           placeholder="ادخل لون السيارة"
         />
@@ -81,13 +89,15 @@
         <input
           v-if="prop.type === 'text'"
           type="text"
-          v-model="prop.value"
+          :value="modelValue.specialProperties.find(p => p.property === prop.property)?.value"
+          @input="updateSpecialProperty(prop.property, $event.target.value)"
           class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-green-500"
           :placeholder="`ادخل ${prop.property}`"
         />
         <select
           v-else-if="prop.type === 'select'"
-          v-model="prop.value"
+          :value="modelValue.specialProperties.find(p => p.property === prop.property)?.value"
+          @input="updateSpecialProperty(prop.property, $event.target.value)"
           class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-green-500"
         >
           <option value="" disabled selected>اختر {{ prop.property }}</option>
@@ -126,6 +136,8 @@ const props = defineProps({
   }
 });
 
+const emit = defineEmits(['update:modelValue']);
+
 const showSpecifications = computed(() => {
   return props.selectedCategory && props.selectedCategory.specialProperties?.length > 0;
 });
@@ -134,6 +146,28 @@ const hasSpecialProperty = (propertyName) => {
   return props.selectedCategory?.specialProperties?.some(
     prop => prop.property === propertyName
   );
+};
+
+const updateSpecialProperty = (property, value) => {
+  const updatedModelValue = { ...props.modelValue };
+  
+  // Find the property in specialProperties array
+  const propertyIndex = updatedModelValue.specialProperties.findIndex(
+    p => p.property === property
+  );
+
+  if (propertyIndex !== -1) {
+    // Update existing property
+    updatedModelValue.specialProperties[propertyIndex].value = value;
+  } else {
+    // Add new property
+    updatedModelValue.specialProperties.push({
+      property: property,
+      value: value
+    });
+  }
+
+  emit('update:modelValue', updatedModelValue);
 };
 
 const otherSpecialProperties = computed(() => {
