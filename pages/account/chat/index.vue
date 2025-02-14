@@ -111,7 +111,7 @@
               <div
                 class="bg-green-600 text-white rounded-2xl py-2 px-4 shadow-sm"
               >
-                <p class="text-sm whitespace-pre-wrap break-words">
+                <p class="text-sm whitespace-pre-wrap break-words text-wrap w-[200px] max-w-fit">
                   {{ message.content }}
                 </p>
               </div>
