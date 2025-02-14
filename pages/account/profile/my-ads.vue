@@ -10,46 +10,68 @@ import {
   PhPencilSimple, 
   PhTrash 
 } from '@phosphor-icons/vue';
-const { fetchUserAds, deleteAd } = useServices()
 
-// Remove the separate ads ref since we'll use the data directly from useAsyncData
-// const ads = ref([])
-const loading = ref(false)
+const router = useRouter();
+const { fetchUserAds, deleteAd } = useServices();
 
-// Update useAsyncData implementation
-const { data: ads, refresh, pending } = await useAsyncData(
-  'userAds',
-  async () => {
-    try {
-      const { data, error } = await fetchUserAds()
-      if (error) throw error
-      return data || []
-    } catch (error) {
-      console.error('Error fetching ads:', error)
-      return []
+// State
+const isLoading = ref(true);
+const error = ref(null);
+const ads = ref([]);
+
+// Fetch user ads data
+const fetchAdsData = async () => {
+  isLoading.value = true;
+  try {
+    const token = localStorage.getItem("session-token");
+    if (!token) {
+      router.push("/");
+      return;
     }
-  },
-  {
-    // Add these options to ensure proper reactivity
-    watch: true,
-    immediate: true
+
+    const { data, error: apiError } = await fetchUserAds();
+    
+    if (apiError) {
+      throw new Error("فشل في تحميل الإعلانات");
+    }
+
+    console.log('Ads Data Response:', data); // للتأكد من البيانات
+    ads.value = data || [];
+
+  } catch (err) {
+    console.error("خطأ في تحميل البيانات:", err);
+    error.value = err;
+  } finally {
+    isLoading.value = false;
   }
-)
+};
+
+// استخدام watchEffect لمراقبة التغييرات والتحميل الأولي
+watchEffect(() => {
+  if (process.client) {
+    fetchAdsData();
+  }
+});
+
+// إعادة تحميل البيانات عند التحميل الأولي
+onMounted(() => {
+  if (process.client) {
+    fetchAdsData();
+  }
+});
 
 const handleDelete = async (adId) => {
   if (confirm('هل أنت متأكد من حذف هذا الإعلان؟')) {
-    loading.value = true
     try {
-      const { error } = await deleteAd(adId)
-      if (error) throw error
-      await refresh()
+      const { error } = await deleteAd(adId);
+      if (error) throw error;
+      // تحديث القائمة بعد الحذف
+      await fetchAdsData();
     } catch (error) {
-      console.error('Error deleting ad:', error)
-    } finally {
-      loading.value = false
+      console.error('Error deleting ad:', error);
     }
   }
-}
+};
 </script>
 
 <template>
@@ -72,13 +94,18 @@ const handleDelete = async (adId) => {
         </div>
 
         <!-- Loading State -->
-        <div v-if="pending" class="flex justify-center items-center py-20">
+        <div v-if="isLoading" class="flex justify-center items-center py-20">
           <div class="animate-spin rounded-full h-12 w-12 border-4 border-green-500 border-t-transparent"></div>
+        </div>
+
+        <!-- Error State -->
+        <div v-else-if="error" class="text-center py-8 text-red-600">
+          {{ error.message }}
         </div>
 
         <!-- Empty State -->
         <div 
-          v-else-if="!ads?.length" 
+          v-else-if="!ads.length" 
           class="bg-white rounded-xl shadow-sm p-8 text-center"
         >
           <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
