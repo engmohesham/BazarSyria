@@ -13,7 +13,7 @@
       </div>
 
       <!-- Search Bar -->
-      <div class="hidden lg:block flex-1 w-full max-w-3xl mx-4 lg:mx-8">
+      <!-- <div class="hidden lg:block flex-1 w-full max-w-3xl mx-4 lg:mx-8">
         <div class="relative flex items-center">
           <button
             class="absolute left-0 top-1/2 -translate-y-1/2 w-12 h-full flex items-center justify-center bg-green-600 rounded-l-lg hover:bg-green-700 transition-colors"
@@ -27,7 +27,7 @@
             dir="rtl"
           />
         </div>
-      </div>
+      </div> -->
 
       <!-- Desktop Actions -->
       <div class="hidden lg:flex items-center gap-4">
@@ -239,7 +239,7 @@
 
           <!-- Search and Add Button -->
           <div class="space-y-4 mb-6">
-            <div class="relative flex items-center">
+            <!-- <div class="relative flex items-center">
               <button
                 class="absolute left-0 top-1/2 -translate-y-1/2 w-12 h-full flex items-center justify-center bg-green-600 rounded-l-lg hover:bg-green-700 transition-colors"
               >
@@ -251,7 +251,7 @@
                 class="w-full pl-14 pr-4 py-3 bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-green-500 transition-colors text-right"
                 dir="rtl"
               />
-            </div>
+            </div> -->
 
             <button
               v-if="isLoggedIn"

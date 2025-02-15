@@ -33,6 +33,7 @@ export const useServices = () => {
 
       if (data.value?.token) {
         localStorage.setItem("session-token", data.value.token);
+        localStorage.setItem("userId", data.value.id);
         isLoggedIn.value = true;
       }
       return { data: data.value, error: null, message: data.value.message };
@@ -525,6 +526,8 @@ export const useServices = () => {
           headers: getAuthHeaders(),
         }
       );
+
+      console.log(data);
 
       if (error.value) throw error.value;
       return { data: data.value, error: null };

@@ -1,6 +1,6 @@
 <template>
   <div class="bg-white rounded-lg p-6 shadow-sm">
-    <h2 class="text-xl mb-4">الفئة</h2>
+    <h2 class="text-xl mb-4">{{ selectedCategory?.name || 'الفئة' }}</h2>
     
     <!-- Category Selection -->
     <div class="mb-4">
@@ -22,8 +22,10 @@
     </div>
 
     <!-- Subcategory Selection -->
-    <div v-if="modelValue.category">
-      <label class="block text-gray-700 mb-2">اختر الفئة الفرعية</label>
+    <div v-if="modelValue.category && allSubCategories.length > 0">
+      <label class="block text-gray-700 mb-2">
+        {{ selectedCategory?.name || 'اختر الفئة الفرعية' }}
+      </label>
       <select
         v-model="modelValue.subCategory"
         class="w-full p-2 border rounded-lg"
@@ -39,11 +41,27 @@
         </option>
       </select>
     </div>
+
+    <!-- Trade Marks Display -->
+    <div v-if="selectedCategory?.tradeMarks?.length" class="mt-4">
+      <label class="block text-gray-700 mb-2">الماركات المتاحة:</label>
+      <div class="flex flex-wrap gap-2">
+        <span 
+          v-for="tradeMark in selectedCategory.tradeMarks" 
+          :key="tradeMark"
+          class="px-3 py-1 bg-gray-100 rounded-full text-sm"
+        >
+          {{ tradeMark }}
+        </span>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-defineProps({
+import { computed } from 'vue';
+
+const props = defineProps({
   modelValue: {
     type: Object,
     required: true
@@ -56,7 +74,11 @@ defineProps({
     type: Array,
     required: true
   }
-})
+});
 
-defineEmits(['update:modelValue'])
+const selectedCategory = computed(() => {
+  return props.categories.find(cat => cat._id === props.modelValue.category);
+});
+
+defineEmits(['update:modelValue']);
 </script> 

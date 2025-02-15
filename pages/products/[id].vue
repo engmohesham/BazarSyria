@@ -139,7 +139,7 @@
         <div class="md:col-span-1 relative">
           <UserProfile 
             v-if="productData.advertisement?.creator"
-            :creatorId="productData.advertisement.creator" 
+            :creatorId="userId" 
           />
         </div>
       </div>
@@ -194,6 +194,9 @@ const categories = ref([]);
 const subCategories = ref([]);
 const isLoading = ref(true);
 const error = ref(null);
+
+// Add this near the top of the script setup section
+const userId = ref(localStorage.getItem('userId'));
 
 // Fetch ad data
 const fetchAdData = async () => {

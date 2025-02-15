@@ -1,8 +1,8 @@
 <template>
-  <div v-if="showBrands" class="bg-white rounded-lg shadow-sm p-6">
+  <div v-if="showTradeMarks" class="bg-white rounded-lg shadow-sm p-6">
     <div>
       <label class="block text-sm font-medium text-gray-700 mb-2">
-        الماركة *
+        {{ selectedCategory?.name || 'الماركة' }} *
       </label>
       <select 
         :value="modelValue"
@@ -10,9 +10,13 @@
         class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-green-500"
         required
       >
-        <option value="" disabled selected>اختر الماركة</option>
-        <option v-for="brand in brands" :key="brand._id" :value="brand._id">
-          {{ brand.name }}
+        <option value="" disabled selected>اختر {{ selectedCategory?.name }}</option>
+        <option 
+          v-for="tradeMark in tradeMarks" 
+          :key="tradeMark" 
+          :value="tradeMark"
+        >
+          {{ tradeMark }}
         </option>
       </select>
     </div>
@@ -27,7 +31,7 @@ const props = defineProps({
     type: String,
     required: true
   },
-  brands: {
+  tradeMarks: {
     type: Array,
     default: () => []
   },
@@ -37,8 +41,8 @@ const props = defineProps({
   }
 });
 
-const showBrands = computed(() => {
-  return props.selectedCategory && props.selectedCategory.tradeMarks?.length > 0;
+const showTradeMarks = computed(() => {
+  return props.selectedCategory && props.tradeMarks?.length > 0;
 });
 
 defineEmits(['update:modelValue']);

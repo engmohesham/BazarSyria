@@ -61,6 +61,8 @@
 </template>
 
 <script setup>
+import { ref, computed, watch, onMounted } from 'vue'
+
 const props = defineProps({
   activeCategory: {
     type: String,
@@ -78,17 +80,33 @@ const emit = defineEmits(['update:category', 'update:subcategory'])
 const { data: categoriesData } = await useFetch('https://pzsyria.com/api/category/all')
 const categories = computed(() => categoriesData.value?.categories || [])
 
-// Fetch subcategories when active category changes
-const { data: subcategoriesData } = await useFetch(
-  computed(() => props.activeCategory === 'all' 
-    ? null 
-    : `https://pzsyria.com/api/subCategory/${props.activeCategory}/subcategories`
-  ),
-  { 
-    watch: [props.activeCategory],
-    immediate: false 
+const subcategoriesData = ref(null)
+
+const fetchData = async () => {
+  try {
+    if (props.activeCategory === 'all') {
+      const response = await fetch('https://pzsyria.com/api/advertisement/all')
+      const data = await response.json()
+      subcategoriesData.value = data
+    } else {
+      const response = await fetch(`https://pzsyria.com/api/subCategory/${props.activeCategory}/subcategories`)
+      const data = await response.json()
+      subcategoriesData.value = data
+    }
+  } catch (error) {
+    console.error('Error fetching data:', error)
   }
-)
+}
+
+// تنفيذ الدالة عند تحميل الصفحة
+onMounted(() => {
+  fetchData()
+})
+
+// مراقبة التغييرات في التصنيف النشط
+watch(() => props.activeCategory, () => {
+  fetchData()
+}, { immediate: true })
 
 // Get subcategories for active category
 const activeSubcategories = computed(() => {

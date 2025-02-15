@@ -1,110 +1,73 @@
 <template>
   <div v-if="showSpecifications" class="bg-white rounded-lg shadow-sm p-6">
-    <h3 class="font-medium text-lg mb-4">المواصفات</h3>
+    <h3 class="font-medium text-lg mb-4">{{ selectedCategory?.name || 'المواصفات' }}</h3>
 
     <div class="space-y-4">
-      <!-- Condition -->
-      <div v-if="hasSpecialProperty('Condition')">
-        <label class="block text-sm font-medium text-gray-700 mb-2">
-          الحالة *
-        </label>
-        <select
-          :value="modelValue.specialProperties.find(p => p.property === 'Condition')?.value"
-          @input="updateSpecialProperty('Condition', $event.target.value)"
-          class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-green-500"
-          required
-        >
-          <option value="" disabled selected>اختر الحالة</option>
-          <option
-            v-for="condition in conditions"
-            :key="condition._id"
-            :value="condition._id"
+      <div 
+        v-for="prop in selectedCategory?.specialProperties" 
+        :key="prop.property"
+        class="space-y-2"
+      >
+        <!-- Dropdown Type -->
+        <template v-if="prop.type === 'dropdown'">
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            {{ prop.property }} *
+          </label>
+          <select
+            :value="getPropertyValue(prop.property)"
+            @input="updateSpecialProperty(prop.property, $event.target.value)"
+            class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-green-500"
+            required
           >
-            {{ condition.name }}
-          </option>
-        </select>
-      </div>
+            <option value="" disabled selected>اختر {{ prop.property }}</option>
+            <option
+              v-for="value in prop.values"
+              :key="value"
+              :value="value"
+            >
+              {{ value }}
+            </option>
+          </select>
+        </template>
 
-      <!-- Fuel Type -->
-      <div v-if="hasSpecialProperty('Fuel Type')">
-        <label class="block text-sm font-medium text-gray-700 mb-2">
-          نوع الوقود *
-        </label>
-        <select
-          :value="modelValue.specialProperties.find(p => p.property === 'Fuel Type')?.value"
-          @input="updateSpecialProperty('Fuel Type', $event.target.value)"
-          class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-green-500"
-          required
-        >
-          <option value="" disabled selected>اختر نوع الوقود</option>
-          <option
-            v-for="type in fuelTypes"
-            :key="type._id"
-            :value="type._id"
-          >
-            {{ type.name }}
-          </option>
-        </select>
-      </div>
+        <!-- Radio Type -->
+        <template v-else-if="prop.type === 'radio'">
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            {{ prop.property }} *
+          </label>
+          <div class="space-y-2">
+            <label
+              v-for="value in prop.values"
+              :key="value"
+              class="flex items-center space-x-reverse space-x-2"
+            >
+              <input
+                type="radio"
+                :name="prop.property"
+                :value="value"
+                :checked="getPropertyValue(prop.property) === value"
+                @change="updateSpecialProperty(prop.property, value)"
+                class="text-green-600"
+                required
+              />
+              <span>{{ value }}</span>
+            </label>
+          </div>
+        </template>
 
-      <!-- Transmission -->
-      <div v-if="hasSpecialProperty('Transmission')">
-        <label class="block text-sm font-medium text-gray-700 mb-2">
-          ناقل الحركة *
-        </label>
-        <select
-          :value="modelValue.specialProperties.find(p => p.property === 'Transmission')?.value"
-          @input="updateSpecialProperty('Transmission', $event.target.value)"
-          class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-green-500"
-          required
-        >
-          <option value="" disabled selected>اختر نوع ناقل الحركة</option>
-          <option
-            v-for="trans in transmissions"
-            :key="trans._id"
-            :value="trans._id"
-          >
-            {{ trans.name }}
-          </option>
-        </select>
-      </div>
-
-      <!-- Color -->
-      <div v-if="hasSpecialProperty('Color')" class="space-y-2">
-        <label class="block text-sm font-medium text-gray-700">اللون</label>
-        <input
-          type="text"
-          :value="modelValue.specialProperties.find(p => p.property === 'Color')?.value"
-          @input="updateSpecialProperty('Color', $event.target.value)"
-          class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-green-500"
-          placeholder="ادخل لون السيارة"
-        />
-      </div>
-
-      <!-- Dynamic Special Properties -->
-      <div v-for="prop in otherSpecialProperties" :key="prop.property">
-        <label class="block text-sm font-medium text-gray-700 mb-2">
-          {{ prop.property }}
-        </label>
-        <input
-          v-if="prop.type === 'text'"
-          type="text"
-          :value="modelValue.specialProperties.find(p => p.property === prop.property)?.value"
-          @input="updateSpecialProperty(prop.property, $event.target.value)"
-          class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-green-500"
-          :placeholder="`ادخل ${prop.property}`"
-        />
-        <select
-          v-else-if="prop.type === 'select'"
-          :value="modelValue.specialProperties.find(p => p.property === prop.property)?.value"
-          @input="updateSpecialProperty(prop.property, $event.target.value)"
-          class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-green-500"
-        >
-          <option value="" disabled selected>اختر {{ prop.property }}</option>
-          <option v-for="value in prop.values" :key="value" :value="value">
-            {{ value }}
-          </option>
-        </select>
+        <!-- Text Type -->
+        <template v-else-if="prop.type === 'text'">
+          <label class="block text-sm font-medium text-gray-700">
+            {{ prop.property }}
+          </label>
+          <input
+            type="text"
+            :value="getPropertyValue(prop.property)"
+            @input="updateSpecialProperty(prop.property, $event.target.value)"
+            class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-green-500"
+            :placeholder="`ادخل ${prop.property}`"
+          />
+        </template>
       </div>
     </div>
   </div>
@@ -118,18 +81,6 @@ const props = defineProps({
     type: Object,
     required: true,
   },
-  conditions: {
-    type: Array,
-    default: () => [],
-  },
-  fuelTypes: {
-    type: Array,
-    default: () => [],
-  },
-  transmissions: {
-    type: Array,
-    default: () => [],
-  },
   selectedCategory: {
     type: Object,
     default: null
@@ -142,25 +93,21 @@ const showSpecifications = computed(() => {
   return props.selectedCategory && props.selectedCategory.specialProperties?.length > 0;
 });
 
-const hasSpecialProperty = (propertyName) => {
-  return props.selectedCategory?.specialProperties?.some(
-    prop => prop.property === propertyName
-  );
+const getPropertyValue = (propertyName) => {
+  return props.modelValue.specialProperties.find(
+    p => p.property === propertyName
+  )?.value || '';
 };
 
 const updateSpecialProperty = (property, value) => {
   const updatedModelValue = { ...props.modelValue };
-  
-  // Find the property in specialProperties array
   const propertyIndex = updatedModelValue.specialProperties.findIndex(
     p => p.property === property
   );
 
   if (propertyIndex !== -1) {
-    // Update existing property
     updatedModelValue.specialProperties[propertyIndex].value = value;
   } else {
-    // Add new property
     updatedModelValue.specialProperties.push({
       property: property,
       value: value
@@ -169,12 +116,4 @@ const updateSpecialProperty = (property, value) => {
 
   emit('update:modelValue', updatedModelValue);
 };
-
-const otherSpecialProperties = computed(() => {
-  if (!props.selectedCategory?.specialProperties) return [];
-  
-  return props.selectedCategory.specialProperties.filter(
-    prop => !['Condition', 'Fuel Type', 'Transmission', 'Color'].includes(prop.property)
-  );
-});
 </script>

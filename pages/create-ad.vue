@@ -35,8 +35,8 @@
             />
 
             <BrandSection
-              v-model="formData.brand"
-              :brands="brands"
+              v-model="formData.tradeMark"
+              :trade-marks="tradeMarks"
               :selected-category="selectedCategory"
             />
 
@@ -107,7 +107,7 @@ const {
 const formData = ref({
   category: '',
   subCategory: '',
-  brand: '',
+  tradeMark: '',
   specialProperties: [],
   advTitle: '',
   advDescription: '',
@@ -127,7 +127,7 @@ const formData = ref({
 
 const categories = ref([])
 const subCategories = ref([])
-const brands = ref([])
+const tradeMarks = ref([])
 // const cities = ref([])
 const regions = ref([])
 const conditions = ref([])
@@ -180,61 +180,27 @@ onMounted(() => {
   }
 })
 
-// تعديل watch للفئة لتعبئة جميع البيانات المطلوبة
+// تعديل watch للفئة
 watch(() => formData.value.category, async (newCategoryId) => {
   if (newCategoryId) {
     try {
-      // Fetch subcategories
       const { data } = await getSubCategories(newCategoryId)
       allSubCategories.value = data
       
-      // Find selected category
       const selectedCategory = categories.value.find(cat => cat._id === newCategoryId)
       if (selectedCategory) {
-        // Reset subcategory when category changes
-        formData.value.subCategory = ''
+        // Reset tradeMark when category changes
+        formData.value.tradeMark = ''
 
-        // تعبئة العلامات التجارية
+        // تعيين قائمة الماركات مباشرة من tradeMarks
         if (selectedCategory.tradeMarks) {
-          brands.value = selectedCategory.tradeMarks.map(brand => ({
-            _id: brand,
-            name: brand
-          }))
+          tradeMarks.value = selectedCategory.tradeMarks
         }
 
-        // تعبئة الخصائص الخاصة والقوائم المنسدلة
+        // تعيين الخصائص الخاصة
         if (selectedCategory.specialProperties) {
-          // تعبئة أنواع الوقود
-          const fuelTypeProp = selectedCategory.specialProperties.find(prop => prop.property === "Fuel Type")
-          if (fuelTypeProp) {
-            fuelTypes.value = fuelTypeProp.values.map(value => ({
-              _id: value,
-              name: value
-            }))
-          }
-
-          // تعبئة أنواع ناقل الحركة
-          const transmissionProp = selectedCategory.specialProperties.find(prop => prop.property === "Transmission")
-          if (transmissionProp) {
-            transmissions.value = transmissionProp.values.map(value => ({
-              _id: value,
-              name: value
-            }))
-          }
-
-          // تعبئة حالة السيارة
-          const conditionProp = selectedCategory.specialProperties.find(prop => prop.property === "Condition")
-          if (conditionProp) {
-            conditions.value = conditionProp.values.map(value => ({
-              _id: value,
-              name: value
-            }))
-          }
-
-          // تعبئة الخصائص الخاصة في النموذج
           formData.value.specialProperties = selectedCategory.specialProperties.map(prop => ({
             property: prop.property,
-            type: prop.type,
             value: ''
           }))
         }
@@ -243,13 +209,9 @@ watch(() => formData.value.category, async (newCategoryId) => {
       console.error('Error fetching category data:', error)
     }
   } else {
-    // Reset when no category is selected
     allSubCategories.value = []
     formData.value.subCategory = ''
-    brands.value = []
-    fuelTypes.value = []
-    transmissions.value = []
-    conditions.value = []
+    tradeMarks.value = []
     formData.value.specialProperties = []
   }
 })
@@ -315,7 +277,7 @@ const handleSubmit = async () => {
     formDataToSend.append('advDescription', formData.value.advDescription)
     formDataToSend.append('price', formData.value.price)
     formDataToSend.append('contact', formData.value.contactMethod)
-    formDataToSend.append('brand', formData.value.brand)
+    formDataToSend.append('tradeMark', formData.value.tradeMark)
     
     // إضافة أرقام الاتصال
     if (['phone', 'both'].includes(formData.value.contactMethod)) {

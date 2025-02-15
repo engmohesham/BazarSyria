@@ -45,7 +45,7 @@
               </div>
               <div class="flex items-center gap-2">
                 <PhUser class="w-4 h-4" />
-                <span>عضو {{ product.creator }}</span>
+                <span>عضو {{ product.creator.name }}</span>
               </div>
             </div>
           </div>
