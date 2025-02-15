@@ -24,7 +24,8 @@
           class="w-full h-full object-cover rounded-lg border border-gray-200" 
         />
         <button 
-          @click="removeImage(index)"
+          type="button"
+          @click.prevent="removeImage(index)"
           class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"
         >
           <Icon name="ph:x" class="w-4 h-4" />
@@ -60,13 +61,23 @@ const handleImageUpload = (event) => {
     return
   }
   
-  Array.from(files).forEach(file => {
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      const newGallery = [...props.modelValue, e.target.result]
-      emit('update:modelValue', newGallery)
-    }
-    reader.readAsDataURL(file)
+  // Create a temporary array to hold all images
+  const newGallery = [...props.modelValue]
+  
+  // Process all files at once
+  const promises = Array.from(files).map(file => {
+    return new Promise((resolve) => {
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        resolve(e.target.result)
+      }
+      reader.readAsDataURL(file)
+    })
+  })
+
+  // Update gallery only once all images are processed
+  Promise.all(promises).then(results => {
+    emit('update:modelValue', [...newGallery, ...results])
   })
 }
 

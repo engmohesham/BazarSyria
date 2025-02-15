@@ -510,7 +510,7 @@ const handleClickOutside = (event) => {
 const handleLogout = async () => {
   try {
     // Remove token from localStorage
-    localStorage.removeItem("session-token");
+    localStorage.clear();
     
     // Dispatch invalid token event
     window.dispatchEvent(new CustomEvent('invalid-token'));
