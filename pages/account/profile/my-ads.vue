@@ -182,7 +182,7 @@ const handleDelete = async (adId) => {
             <!-- Actions - Outside of the NuxtLink to prevent navigation when clicking buttons -->
             <div class="flex items-center justify-between p-5 border-t border-gray-100">
               <NuxtLink 
-                :to="`/edit-ad/${ad._id}`"
+                :to="`/products/edit/${ad._id}`"
                 class="flex items-center text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
               >
                 <PhPencilSimple class="w-4 h-4 ml-1" />

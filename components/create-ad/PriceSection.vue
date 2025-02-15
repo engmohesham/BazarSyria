@@ -82,7 +82,7 @@
               type="tel"
               class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-green-500"
               placeholder="ادخل رقم الهاتف"
-              maxlength="10"
+              maxlength="11"
               required
             />
           </div>
@@ -103,7 +103,7 @@
               type="tel"
               class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-green-500"
               placeholder="ادخل رقم الواتساب"
-              maxlength="10"
+              maxlength="15"
               required
             />
           </div>

@@ -85,35 +85,35 @@
                 class="flex items-center gap-2 hover:text-green-600 transition-colors"
               >
                 <img
-                  :src="profile?.avatar ? profile?.avatar : user"
+                  :src="userAvatar"
                   alt="User"
-                  class="w-8 h-8 rounded-full border-2 border-gray-100"
+                  class="w-8 h-8 rounded-full object-cover border border-gray-200"
                 />
-
-                <PhCaretDown class="w-4 h-4" />
+                <span class="text-gray-700">{{ userName }}</span>
+                <PhCaretDown
+                  class="w-4 h-4 text-gray-500"
+                  :class="{ 'transform rotate-180': isProfileDropdownOpen }"
+                />
               </button>
               <!-- Profile Dropdown Menu -->
               <div
                 v-show="isProfileDropdownOpen"
-                class="absolute top-full -left-20 mt-2 z-50 w-64 bg-white rounded-md shadow-lg py-2"
+                class="absolute left-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 z-50"
               >
                 <!-- User Info -->
-                <div class="px-4 py-2 border-b border-gray-100">
-                  <div
-                    class="flex items-center gap-3 mb-2 cursor-pointer"
-                    @click="navigateTo('/account')"
-                  >
-                    <img
-                      :src="profile?.avatar ? profile?.avatar : user"
-                      alt="User"
-                      class="w-10 h-10 rounded-full border-2 border-gray-100"
-                    />
-
-                    <div class="text-right">
-                      <p class="font-medium">محمد العامري</p>
-                      <p class="text-sm text-gray-500">أهلاً بك</p>
-                    </div>
+                <div
+                  @click="navigateTo('/account')"
+                  class="flex items-center justify-end gap-3 px-4 py-3 border-b border-gray-100 cursor-pointer"
+                >
+                  <div class="text-right">
+                    <p class="font-medium">{{ userName }}</p>
+                    <p class="text-sm text-gray-500">عرض الملف الشخصي</p>
                   </div>
+                  <img
+                    :src="userAvatar"
+                    alt="User"
+                    class="w-10 h-10 rounded-full object-cover border border-gray-200"
+                  />
                 </div>
 
                 <!-- Menu Items -->
@@ -279,14 +279,13 @@
               @click="navigateTo('/account')"
             >
               <div class="text-right flex-1">
-                <p class="font-medium text-lg">محمد العامري</p>
-
+                <p class="font-medium text-lg">{{ userName }}</p>
                 <p class="text-sm text-gray-500">أهلاً بك</p>
               </div>
               <img
-                :src="profile?.avatar ? profile?.avatar : user"
+                :src="userAvatar"
                 alt="User"
-                class="w-12 h-12 rounded-full border-2 border-gray-100"
+                class="w-12 h-12 rounded-full object-cover border-2 border-gray-100"
               />
             </div>
 
@@ -368,7 +367,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref, onMounted, onUnmounted, computed, watch } from "vue";
 import logo from "~/assets/logo.png";
 import { useRouter } from "vue-router";
 import user from "~/assets/user.png";
@@ -390,6 +389,8 @@ import {
   PhSignIn,
   PhUserPlus
 } from '@phosphor-icons/vue';
+import { useServices } from "~/composables/useServices";
+import { API_BASE_URL } from "~/utils/config";
 
 const props = defineProps({
   isLoggedIn: {
@@ -408,8 +409,47 @@ const dropdownRef = ref(null);
 const router = useRouter();
 const isProfileDropdownOpen = ref(false);
 const { getProfile } = useServices();
-const { data: profile, error: profileError } = getProfile();
-const loginModalRef = ref(null);
+const profileData = ref(null);
+
+// Fetch profile data
+const fetchProfileData = async () => {
+  try {
+    const { data, error } = await getProfile();
+    if (error) {
+      console.error("Error fetching profile:", error);
+      return;
+    }
+    profileData.value = data;
+  } catch (err) {
+    console.error("Error in fetchProfileData:", err);
+  }
+};
+
+// Add computed properties for user data
+const userName = computed(() => {
+  return profileData.value?.user?.name || 'المستخدم';
+});
+
+const userAvatar = computed(() => {
+  if (profileData.value?.user?.avatar) {
+    return `${profileData.value.user.avatar}`;
+  }
+  return user; // default avatar
+});
+
+// Fetch profile on mount
+onMounted(() => {
+  fetchProfileData();
+});
+
+// Listen for profile updates
+onMounted(() => {
+  window.addEventListener('profile-updated', fetchProfileData);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('profile-updated', fetchProfileData);
+});
 
 const toggleDropdown = () => {
   isDropdownOpen.value = !isDropdownOpen.value;
@@ -529,5 +569,13 @@ const navigateTo = (route) => {
 .dropdown-container {
   position: relative;
   display: inline-block;
+}
+
+.dropdown-container img {
+  transition: all 0.2s ease-in-out;
+}
+
+.dropdown-container img:hover {
+  transform: scale(1.05);
 }
 </style>

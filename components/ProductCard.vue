@@ -6,51 +6,46 @@
       <div class="flex flex-col md:flex-row">
         <div class="md:w-1/3 relative">
           <img
-            :src="product.image"
-            :alt="product.name"
+            :src="product.gallery?.[0] || 'https://via.placeholder.com/300'"
+            :alt="product.advTitle"
             class="w-full h-48 md:h-full object-cover"
           />
           <button
             class="absolute top-3 right-3 p-2 flex justify-center items-center rounded-full bg-white shadow-md hover:bg-gray-100 transition-colors"
           >
-            <Icon name="ph:heart" class="w-5 h-5 text-gray-600" />
+            <PhHeart class="w-5 h-5 text-gray-600" />
           </button>
         </div>
         <div class="md:w-2/3 p-4">
           <div class="flex justify-between items-start mb-3">
             <h3 class="text-2xl font-bold text-green-600">
-              {{ product.price }}
+              {{ product.price }} ل.س
             </h3>
             <div class="flex gap-2">
               <button
-                class="px-3 py-1.5 text-xs font-medium bg-green-100 text-green-600 rounded-lg hover:bg-green-200 transition-colors"
-              >
-                المحادثة
-              </button>
-              <button
                 class="px-3 py-1.5 text-xs font-medium bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
               >
-                مخالفة
+                ابلاغ
               </button>
             </div>
           </div>
-          <h4 class="text-xl font-semibold mb-3">{{ product.name }}</h4>
+          <h4 class="text-xl font-semibold mb-3">{{ product.advTitle }}</h4>
           <div class="space-y-3 text-sm text-gray-600">
             <div class="flex items-center gap-2">
-              <span class="font-medium">{{ product.details }}</span>
+              <span class="font-medium">{{ product.advDescription }}</span>
             </div>
             <div class="flex items-center gap-2">
-              <Icon name="ph:map-pin" class="w-4 h-4" />
-              <span>{{ product.location }}</span>
+              <PhMapPin class="w-4 h-4" />
+              <span>{{ formatLocation(product.location) }}</span>
             </div>
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2">
-                <Icon name="ph:clock" class="w-4 h-4" />
+                <PhClock class="w-4 h-4" />
                 <span>{{ formatDate(product.createdAt) }}</span>
               </div>
               <div class="flex items-center gap-2">
-                <Icon name="ph:user" class="w-4 h-4" />
-                <span>عضو {{ product.user }}</span>
+                <PhUser class="w-4 h-4" />
+                <span>عضو {{ product.creator }}</span>
               </div>
             </div>
           </div>
@@ -60,24 +55,48 @@
   </NuxtLink>
 </template>
 
-<script setup lang="ts">
-interface Product {
-  _id: string;
-  categoryId: string;
-  createdAt: string;
-  description: string;
-  modifiedAt: string;
-  name: string;
-  subCategoryId: string;
-  __v: number;
-}
+<script setup>
+import { 
+  PhHeart,
+  PhMapPin,
+  PhClock,
+  PhUser
+} from '@phosphor-icons/vue';
 
-const props = defineProps<{
-  product: Product;
-}>();
+const props = defineProps({
+  product: {
+    type: Object,
+    required: true,
+    default: () => ({
+      _id: '',
+      advTitle: '',
+      advDescription: '',
+      category: '',
+      contact: 'chat',
+      createdAt: '',
+      creator: '',
+      gallery: [],
+      location: {
+        lat: '',
+        long: ''
+      },
+      modifiedAt: '',
+      price: 0,
+      specialProperties: [],
+      subCategory: '',
+      __v: 0
+    })
+  }
+});
 
-// Format date for display
-const formatDate = (date: string) => {
+// تنسيق التاريخ
+const formatDate = (date) => {
   return new Date(date).toLocaleDateString("ar-SA");
+};
+
+// تنسيق الموقع
+const formatLocation = (location) => {
+  if (!location) return '';
+  return `${location.lat}, ${location.long}`;
 };
 </script>

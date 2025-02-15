@@ -50,11 +50,11 @@ export const getAuthHeaders = () => {
     const token = localStorage.getItem('session-token')
     return {
       'Authorization': token ? `Bearer ${token}` : '',
-      'Content-Type': 'application/json'
+      // 'Content-Type': 'application/json'
     }
   }
   return {
-    'Content-Type': 'application/json'
+    // 'Content-Type': 'application/json'
   }
 }
 

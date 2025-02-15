@@ -293,7 +293,8 @@ const productData = computed(() => {
     gallery: ad.gallery || [],
     categoryId: ad.category || null,
     subCategoryId: ad.subCategory || null,
-    advertisement: ad
+    advertisement: ad,
+    creator: ad.creator
   };
 });
 

@@ -48,7 +48,7 @@
                 class="text-sm truncate mt-1"
                 :class="chat.unreadCount > 0 ? 'text-gray-900 font-medium' : 'text-gray-500'"
               >
-                {{ chat.lastMessage }}
+                {{ chat.lastMessageContent || 'click to start chat' }}
               </p>
             </div>
           </div>
@@ -83,7 +83,7 @@
             />
             <div class="text-right">
               <h3 class="font-semibold">{{ getChatName(selectedChat) }}</h3>
-              <p class="text-xs text-gray-500">آخر ظهور اليوم 5:07م</p>
+              <!-- <p class="text-xs text-gray-500">آخر ظهور اليوم 5:07م</p> -->
             </div>
           </div>
         </div>
@@ -455,14 +455,20 @@ const initializeSocket = () => {
     });
 
     // تسجيل معالج استقبال الرسائل
-    socket.value.on("receiveMessage", (message) => {
+    socket.value.on("receiveMessage", async (message) => {
       console.log("🚀 Socket Message Received:", message);
 
       // تحديث عدد الرسائل غير المقروءة
       updateUnreadCount(message.chatId);
 
       if (message?.chatId === selectedChat.value?._id) {
-        refreshMessages();
+        await Promise.all([
+          refreshMessages(),
+          refreshChats()
+        ]);
+      } else {
+        // إذا كانت الرسالة لمحادثة أخرى، نحدث فقط قائمة المحادثات
+        await refreshChats();
       }
     });
   } catch (error) {
@@ -495,21 +501,80 @@ const sendNewMessage = async () => {
   const messageContent = newMessage.value;
 
   try {
-    // إرسال الرسالة مباشرة بدون إضافة رسالة مؤقتة
+    // إرسال الرسالة مباشرة
     socket.value.emit("sendMessage", {
       message: messageContent,
       chatId: selectedChat.value._id,
       senderId: currentUserId,
     });
-
+    
     newMessage.value = "";
 
-    // تحديث الرسائل بعد الإرسال
-    setTimeout(async () => {
-      await refreshMessages();
-    }, 1000);
+    // تحديث المحادثات والرسائل
+    await Promise.all([
+      refreshMessages(),
+      refreshChats(),
+      selectChat(selectedChat.value)
+    ]);
+
   } catch (err) {
     console.error("Error in sendNewMessage:", err);
+  }
+};
+
+// إضافة دالة تحديث المحادثات
+const refreshChats = async () => {
+  try {
+    const { data: chatsData, error: chatsError } = await getUserChats();
+    if (chatsData && !chatsError) {
+      chats.value = chatsData;
+    }
+  } catch (err) {
+    console.error('Error refreshing chats:', err);
+  }
+};
+
+// تحديث دالة تحديث الرسائل
+const refreshMessages = async () => {
+  if (!selectedChat.value?._id) return;
+
+  try {
+    const { data, error } = await getChatMessages(selectedChat.value._id);
+
+    if (error) {
+      throw error;
+    }
+
+    if (data) {
+      const validMessages = data.map((msg) => ({
+        ...msg,
+        createdAt: isValidDate(msg.createdAt)
+          ? msg.createdAt
+          : new Date().toISOString(),
+      }));
+
+      messages.value = validMessages.sort(
+        (a, b) =>
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      );
+
+      // تحديث آخر رسالة في المحادثة
+      const updatedChats = chats.value.map(chat => {
+        if (chat._id === selectedChat.value._id) {
+          return {
+            ...chat,
+            lastMessage: validMessages[validMessages.length - 1]
+          };
+        }
+        return chat;
+      });
+      chats.value = updatedChats;
+
+      await nextTick();
+      scrollToBottom();
+    }
+  } catch (err) {
+    console.error("Error in refreshMessages:", err);
   }
 };
 
@@ -519,23 +584,11 @@ const selectChat = async (chat) => {
   messages.value = [];
 
   try {
-    // تحديث حالة القراءة عند فتح المحادثة
     await markChatAsRead(chat._id);
-    
-    // تحديث عدد الرسائل غير المقروءة في القائمة
-    const updatedChats = chats.value.map((c) => {
-      if (c._id === chat._id) {
-        return { ...c, unreadCount: 0 };
-      }
-      return c;
-    });
-    chats.value = updatedChats;
-
-    // جلب الرسائل
-    const { data } = await getChatMessages(chat._id);
-    if (data) {
-      messages.value = data;
-    }
+    await Promise.all([
+      refreshMessages(),
+      refreshChats()
+    ]);
 
     if (socket.value?.connected) {
       socket.value.emit("joinChat", {
@@ -605,42 +658,6 @@ onUnmounted(() => {
     socket.value.disconnect();
   }
 });
-
-// تحديث دالة تحديث الرسائل من السيرفر
-const refreshMessages = async () => {
-  if (!selectedChat.value?._id) return;
-
-  try {
-    const { data, error } = await getChatMessages(selectedChat.value._id);
-
-    if (error) {
-      throw error;
-    }
-
-    if (data) {
-      const validMessages = data.map((msg) => ({
-        ...msg,
-        createdAt: isValidDate(msg.createdAt)
-          ? msg.createdAt
-          : new Date().toISOString(),
-      }));
-
-      const pendingMessages = messages.value.filter((m) => m.pending);
-
-      messages.value = [...validMessages, ...pendingMessages].sort(
-        (a, b) =>
-          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-      );
-
-      localStorage.setItem(
-        `chat_${selectedChat.value._id}`,
-        JSON.stringify(messages.value)
-      );
-    }
-  } catch (err) {
-    console.error("Error in refreshMessages:", err);
-  }
-};
 
 // دالة جلب المستخدمين المتاحين
 const fetchAvailableUsers = async () => {

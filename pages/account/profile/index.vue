@@ -1,7 +1,8 @@
 <script setup>
 import defaultAvatar from "~/assets/user.png";
 import defaultCover from "~/assets/cover.jpeg";
-import { ref, computed, onMounted, watchEffect } from 'vue';
+import { ref, computed, onMounted, watchEffect, onBeforeUnmount } from 'vue';
+import { PhCamera } from '@phosphor-icons/vue';
 
 const router = useRouter();
 const { getProfile, updateProfile } = useServices();
@@ -45,6 +46,7 @@ const userData = computed(() => {
   // localStorage.setItem("user", JSON.stringify(profileData.value.user));
   
   const user = profileData.value.user;
+  console.log(user)
   return {
     ads: [],
     avatar: user.avatar || null,
@@ -65,14 +67,16 @@ const userData = computed(() => {
     role: user.role || "user",
     identificationVerified: user.identificationVerified || false,
     gender: user.gender || "",
+    birthdate: user.birthdate || "",
     bio: user.bio || "",
   };
 });
 
 // Computed properties for images
 const avatarImage = computed(() => {
-  if (!userData.value?.avatar) return defaultAvatar;
-  return `${API_BASE_URL}/${userData.value.avatar}`;
+  if (userData.value?.avatarPreview) return userData.value.avatarPreview;
+  if (userData.value?.avatar) return `${userData.value.avatar}`;
+  return defaultAvatar;
 });
 
 const coverImage = computed(() => {
@@ -94,64 +98,99 @@ onMounted(() => {
   }
 });
 
-// Update handleUpdateProfile function
-const handleUpdateProfile = async (e) => {
-  e.preventDefault();
-  try {
-    const updateData = {
-      id: userData.value.id,
-      name: userData.value.name,
-      email: userData.value.email,
-      phone: userData.value.phone,
-      location: userData.value.location,
-      bio: userData.value.bio,
-      gender: userData.value.gender,
-      birthDate: userData.value.birthDate,
+// File handlers
+const handleAvatarChange = (event) => {
+  const file = event.target.files[0];
+  if (file) {
+    // Check file type
+    if (!file.type.startsWith('image/')) {
+      showNotification('يرجى اختيار ملف صورة صالح', 'error');
+      return;
+    }
+    
+    // Check file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      showNotification('حجم الصورة يجب أن لا يتجاوز 5 ميجابايت', 'error');
+      return;
+    }
+
+    // Create preview URL and update avatar
+    const previewUrl = URL.createObjectURL(file);
+    userData.value = {
+      ...userData.value,
+      newAvatar: file,
+      avatarPreview: previewUrl
     };
 
-    if (userData.value.newAvatar instanceof File) {
-      updateData.avatar = userData.value.newAvatar;
-    }
-    if (userData.value.newCoverImage instanceof File) {
-      updateData.coverImage = userData.value.newCoverImage;
-    }
+    // Auto submit avatar change
+    handleAvatarSubmit(file);
+  }
+};
 
-    const { error, message } = await updateProfile(updateData);
+// Separate function for avatar submission
+const handleAvatarSubmit = async (file) => {
+  try {
+    const formData = new FormData();
+    formData.append('id', userData.value.id);
+    formData.append('avatar', file);
+
+    const { error, message } = await updateProfile(formData);
 
     if (error) {
       throw new Error(error);
     }
 
-    // Refresh the data immediately after successful update
+    // Refresh profile data
     await fetchProfileData();
     
-    // Reset file upload states
-    userData.value.newAvatar = null;
-    userData.value.newCoverImage = null;
+    // Reset file upload state
+    if (userData.value.avatarPreview) {
+      URL.revokeObjectURL(userData.value.avatarPreview);
+    }
+    userData.value = {
+      ...userData.value,
+      newAvatar: null,
+      avatarPreview: null
+    };
 
+    showNotification(message || "تم تحديث الصورة الشخصية بنجاح", "success");
+  } catch (error) {
+    console.error("Error updating avatar:", error);
+    showNotification("حدث خطأ أثناء تحديث الصورة الشخصية", "error");
+  }
+};
+
+// Update handleUpdateProfile to not include avatar
+const handleUpdateProfile = async (e) => {
+  e.preventDefault();
+  try {
+    const formData = new FormData();
+    
+    // Only append non-empty values
+    if (userData.value.name) formData.append('name', userData.value.name);
+    if (userData.value.email) formData.append('email', userData.value.email);
+    if (userData.value.phone) formData.append('phone', userData.value.phone);
+    if (userData.value.location) formData.append('location', userData.value.location);
+    if (userData.value.bio) formData.append('bio', userData.value.bio);
+    if (userData.value.gender) formData.append('gender', userData.value.gender);
+    if (userData.value.birthdate) formData.append('birthdate', userData.value.birthdate);
+    
+    // Always send the ID
+    formData.append('id', userData.value.id);
+
+    const { error, message } = await updateProfile(formData);
+
+    if (error) {
+      throw new Error(error);
+    }
+
+    // Refresh profile data
+    await fetchProfileData();
+    
     showNotification(message || "تم تحديث الملف الشخصي بنجاح", "success");
   } catch (error) {
     console.error("Error updating profile:", error);
     showNotification("حدث خطأ أثناء تحديث الملف الشخصي", "error");
-  }
-};
-
-// File handlers
-const handleAvatarChange = (event) => {
-  const file = event.target.files[0];
-  if (file) {
-    userData.value.newAvatar = file;
-    const previewUrl = URL.createObjectURL(file);
-    userData.value.avatar = previewUrl;
-  }
-};
-
-const handleCoverImageChange = (event) => {
-  const file = event.target.files[0];
-  if (file) {
-    userData.value.newCoverImage = file;
-    const previewUrl = URL.createObjectURL(file);
-    userData.value.coverImage = previewUrl;
   }
 };
 
@@ -172,14 +211,14 @@ watch([selectedDay, selectedMonth, selectedYear], ([day, month, year]) => {
     // Format date as YYYY-MM-DD
     const formattedMonth = month.toString().padStart(2, "0");
     const formattedDay = day.toString().padStart(2, "0");
-    userData.value.birthDate = `${year}-${formattedMonth}-${formattedDay}`;
+    userData.value.birthdate = `${year}-${formattedMonth}-${formattedDay}`;
   }
 });
 
 // Initialize date selections when userData is loaded
 watchEffect(() => {
-  if (userData.value?.birthDate) {
-    const date = new Date(userData.value.birthDate);
+  if (userData.value?.birthdate) {
+    const date = new Date(userData.value.birthdate);
     selectedDay.value = date.getDate();
     selectedMonth.value = date.getMonth() + 1;
     selectedYear.value = date.getFullYear();
@@ -198,6 +237,13 @@ watchEffect(() => {
     // API returns "male" or "female" directly, so we can use it as is
     userData.value.gender = userData.value.gender || "";
     console.log("Current gender:", userData.value.gender); // For debugging
+  }
+});
+
+// Clean up URLs on component unmount
+onBeforeUnmount(() => {
+  if (userData.value?.avatarPreview) {
+    URL.revokeObjectURL(userData.value.avatarPreview);
   }
 });
 </script>
@@ -286,11 +332,32 @@ watchEffect(() => {
           >
             <div class="flex flex-col items-center">
               <!-- الصورة الشخصية -->
-              <img
-                :src="avatarImage"
-                class="w-32 h-32 rounded-full border-4 border-white object-cover"
-                alt="الصورة الشخصية"
-              />
+              <div class="mb-6 flex flex-col items-center">
+                <div class="relative group">
+                  <img
+                    :src="avatarImage"
+                    class="w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg"
+                    alt="الصورة الشخصية"
+                  />
+                  <!-- Upload Button Overlay -->
+                  <label
+                    class="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity"
+                    title="تغيير الصورة الشخصية"
+                  >
+                    <input
+                      type="file"
+                      accept="image/*"
+                      class="hidden"
+                      @change="handleAvatarChange"
+                    />
+                    <div class="text-white flex flex-col items-center">
+                      <PhCamera class="w-6 h-6 mb-1" />
+                      <span class="text-xs">تغيير الصورة</span>
+                    </div>
+                  </label>
+                </div>
+                <p class="text-sm text-gray-500 mt-2">اضغط على الصورة لتغييرها</p>
+              </div>
 
               <!-- اسم المستخدم والتقييم -->
               <div class="mt-4 text-center">
@@ -298,8 +365,15 @@ watchEffect(() => {
                 <p class="text-gray-600 mt-1">
                   رقم العضوية {{ userData.memberId }}
                 </p>
+                <p class="text-gray-600 mt-1">
+                  تاريخ الانشاء {{ new Date(userData.createdAt).toLocaleDateString('ar-SY', {
+                    year: 'numeric',
+                    month: 'numeric',
+                    day: 'numeric'
+                  }) }}
+                </p>
                 <!-- نجوم التقييم -->
-                <div class="flex justify-center mt-2">
+                <!-- <div class="flex justify-center mt-2">
                   <div class="flex items-center gap-1">
                     <Icon
                       v-for="i in 5"
@@ -309,7 +383,7 @@ watchEffect(() => {
                       :class="i <= 3 ? 'text-yellow-400' : 'text-gray-300'"
                     />
                   </div>
-                </div>
+                </div> -->
               </div>
             </div>
           </div>
@@ -383,6 +457,24 @@ watchEffect(() => {
               </div>
             </div>
 
+            <div class="mt-6 space-y-4">
+              <div v-if="userData.bio">
+                <label class="text-sm text-gray-500">نبذة عني</label>
+                <p>{{ userData.bio }}</p>
+              </div>
+            </div>
+
+            <div class="mt-6 space-y-4">
+              <div v-if="userData.location">
+                <label class="text-sm text-gray-500">الموقع</label>
+                <p>{{ userData.location }}</p>
+              </div>
+              <div v-if="userData.birthdate">
+                <label class="text-sm text-gray-500">تاريخ الميلاد</label>
+                <p>{{ userData.birthdate }}</p>
+              </div>
+            </div>
+
             <!-- حالة التوثيق -->
             <div class="mt-4">
               <div class="flex items-center gap-2">
@@ -412,7 +504,35 @@ watchEffect(() => {
             </div>
 
             <!-- نموذج تحديث المعلومات -->
-            <form class="mt-8 space-y-6">
+            <form @submit="handleUpdateProfile" class="max-w-2xl mx-auto mt-8 bg-white rounded-lg shadow p-6">
+              <!-- Avatar Upload Section -->
+              <div class="mb-6 flex flex-col items-center">
+                <div class="relative group">
+                  <img
+                    :src="avatarImage"
+                    class="w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg"
+                    alt="الصورة الشخصية"
+                  />
+                  <!-- Upload Button Overlay -->
+                  <label
+                    class="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity"
+                    title="تغيير الصورة الشخصية"
+                  >
+                    <input
+                      type="file"
+                      accept="image/*"
+                      class="hidden"
+                      @change="handleAvatarChange"
+                    />
+                    <div class="text-white flex flex-col items-center">
+                      <PhCamera class="w-6 h-6 mb-1" />
+                      <span class="text-xs">تغيير الصورة</span>
+                    </div>
+                  </label>
+                </div>
+                <p class="text-sm text-gray-500 mt-2">اضغط على الصورة لتغييرها</p>
+              </div>
+
               <!-- الاسم -->
               <div>
                 <label class="block text-sm font-medium text-gray-700"
@@ -525,43 +645,10 @@ watchEffect(() => {
                 ></textarea>
               </div>
 
-              <!-- Add file inputs for avatar and cover image -->
-              <div class="relative">
-                <input
-                  type="file"
-                  accept="image/*"
-                  @change="handleAvatarChange"
-                  class="hidden"
-                  ref="avatarInput"
-                />
-                <button
-                  @click="$refs.avatarInput.click()"
-                  class="absolute bottom-0 right-0"
-                >
-                  <PhCamera :size="20" class="text-gray-600" />
-                </button>
-              </div>
-
-              <div class="relative">
-                <input
-                  type="file"
-                  accept="image/*"
-                  @change="handleCoverImageChange"
-                  class="hidden"
-                  ref="coverInput"
-                />
-                <button
-                  @click="$refs.coverInput.click()"
-                  class="absolute top-4 right-4"
-                >
-                  <PhCamera :size="20" class="text-gray-600" />
-                </button>
-              </div>
-
               <!-- زر الحفظ -->
               <div>
                 <button
-                  @click="handleUpdateProfile"
+                  type="submit"
                   class="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition-colors"
                 >
                   حفظ التغييرات
@@ -637,5 +724,9 @@ select {
 select:focus {
   border-color: #10b981;
   box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+}
+
+.group:hover .opacity-0 {
+  opacity: 1;
 }
 </style>

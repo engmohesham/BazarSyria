@@ -222,7 +222,7 @@ export const useServices = () => {
       const { data, error } = await useFetch(
         `${API_BASE_URL}${API_ENDPOINTS.AD}/${adId}`,
         {
-          method: "PUT",
+          method: "PATCH",
           body: adData,
           headers: getAuthHeaders(),
         }
@@ -521,67 +521,36 @@ export const useServices = () => {
     }
   };
 
-  const updateProfile = async (profileData: {
-    name?: string;
-    email?: string;
-    phone?: string;
-    location?: string;
-    avatar?: File;
-    coverImage?: File;
-    bio?: string;
-    gender?: 'male' | 'female';
-    birthDate?: string;
-    id: string;
-  }) => {
+  const updateProfile = async (formData: FormData) => {
     try {
-      if (!profileData.id) {
-        throw new Error('User ID is required for profile update');
-      }
-
-      const formData = new FormData();
-
-      // Add all non-file fields
-      Object.entries(profileData).forEach(([key, value]) => {
-        if (value !== undefined && value !== null && !(value instanceof File)) {
-          formData.append(key, value.toString());
+      const userId = formData.get('id');
+      // Remove empty fields from FormData
+      const cleanFormData = new FormData();
+      for (const [key, value] of formData.entries()) {
+        if (value !== null && value !== undefined && value !== '') {
+          cleanFormData.append(key, value);
         }
-      });
-
-      // Add file fields if present
-      if (profileData.avatar instanceof File) {
-        formData.append('avatar', profileData.avatar);
-      }
-      if (profileData.coverImage instanceof File) {
-        formData.append('coverImage', profileData.coverImage);
       }
 
       const { data, error } = await useFetch(
-        `${API_BASE_URL}${API_ENDPOINTS.UPDATE_PROFILE}/${profileData.id}/update`,
+        `${API_BASE_URL}${API_ENDPOINTS.UPDATE_PROFILE}/${userId}/update`,
         {
           method: "PATCH",
-          body: formData,
+          body: cleanFormData,
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("session-token")}`,
-          },
+            ...getAuthHeaders(),
+          }
         }
       );
 
-      if (error.value) {
-        console.error("Profile update error:", error.value);
-        throw error.value;
-      }
-
-      return {
-        data: data.value,
-        error: null,
-        message: "تم تحديث الملف الشخصي بنجاح",
-      };
+      if (error.value) throw error.value;
+      return { data: data.value, error: null, message: "تم تحديث الملف الشخصي بنجاح" };
     } catch (err) {
       console.error("Error updating profile:", err);
-      return {
-        data: null,
-        error: err,
-        message: "حدث خطأ أثناء تحديث الملف الشخصي",
+      return { 
+        data: null, 
+        error: err, 
+        message: "حدث خطأ أثناء تحديث الملف الشخصي" 
       };
     }
   };
@@ -594,11 +563,66 @@ export const useServices = () => {
           headers: getAuthHeaders(),
         }
       );
+      console.log(data.value);
 
       if (error.value) throw error.value;
       return { data: data.value, error: null };
     } catch (err) {
       console.error('Error fetching user:', err);
+      return { data: null, error: err };
+    }
+  };
+
+  const getUserProfile = async (userId: string) => {
+    try {
+      const { data, error } = await useFetch(
+        `${API_BASE_URL}/user/${userId}`,
+        {
+          headers: getAuthHeaders(),
+        }
+      );
+
+      if (error.value) throw error.value;
+      return { 
+        data: {
+          ...data.value,
+          advertisements: data.value?.advertisements || [] 
+        }, 
+        error: null 
+      };
+    } catch (err) {
+      console.error('Error fetching user profile:', err);
+      return { data: null, error: err };
+    }
+  };
+
+  const reportUser = async (payload: { 
+    reportedUser: string;
+    reason: string;
+    attachment?: File;
+  }) => {
+    try {
+      const formData = new FormData();
+      formData.append('reportedUser', payload.reportedUser);
+      formData.append('reason', payload.reason);
+      
+      if (payload.attachment) {
+        formData.append('attachment', payload.attachment);
+      }
+
+      const { data, error } = await useFetch(
+        `${API_BASE_URL}/reports/create`,
+        {
+          method: 'POST',
+          body: formData,
+          headers: getAuthHeaders(),
+        }
+      );
+
+      if (error.value) throw error.value;
+      return { data: data.value, error: null };
+    } catch (err) {
+      console.error('Error reporting user:', err);
       return { data: null, error: err };
     }
   };
@@ -648,5 +672,7 @@ export const useServices = () => {
     sendMessage,
 
     getUserById,
+    getUserProfile,
+    reportUser,
   };
 };
