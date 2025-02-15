@@ -1,4 +1,6 @@
 <script setup>
+import { ref, watchEffect } from 'vue'
+
 definePageMeta({
   layout: 'default',
   middleware: ["auth"]
@@ -7,18 +9,20 @@ definePageMeta({
 const loading = ref(true)
 const followers = ref([])
 const error = ref(null)
+const route = useRoute()
 
 const { getFollowers, followUser, unfollowUser } = useServices()
 
 const fetchFollowers = async () => {
   loading.value = true
+  error.value = null
+  
   try {
     const { data, error: apiError } = await getFollowers()
     if (apiError) throw apiError
     
-    // تأكد من تنسيق البيانات الصحيح
+    console.log('Followers data:', data) // للتحقق من البيانات
     followers.value = data?.followers || []
-    console.log('Followers data:', followers.value) // للتحقق من البيانات
   } catch (err) {
     error.value = 'فشل في تحميل قائمة المتابعين'
     console.error('Error fetching followers:', err)
@@ -31,7 +35,7 @@ const handleFollow = async (userId) => {
   try {
     const { error: apiError } = await followUser(userId)
     if (apiError) throw apiError
-    await fetchFollowers() // تحديث القائمة بعد المتابعة
+    await fetchFollowers()
   } catch (err) {
     console.error('Error following user:', err)
   }
@@ -41,15 +45,18 @@ const handleUnfollow = async (userId) => {
   try {
     const { error: apiError } = await unfollowUser(userId)
     if (apiError) throw apiError
-    await fetchFollowers() // تحديث القائمة بعد إلغاء المتابعة
+    await fetchFollowers()
   } catch (err) {
     console.error('Error unfollowing user:', err)
   }
 }
 
-// جلب البيانات عند تحميل الصفحة
-onMounted(() => {
-  fetchFollowers()
+// استخدام watchEffect لمراقبة التغييرات وتحميل البيانات
+watchEffect(() => {
+  if (process.client) {
+    console.log('Fetching followers data...')
+    fetchFollowers()
+  }
 })
 </script>
 
@@ -73,6 +80,11 @@ onMounted(() => {
         <!-- Error State -->
         <div v-else-if="error" class="text-center py-8 text-red-600">
           {{ error }}
+        </div>
+
+        <!-- Empty State -->
+        <div v-else-if="!followers.length" class="text-center py-8 text-gray-500">
+          لا يوجد متابعين حالياً
         </div>
 
         <!-- Followers List -->

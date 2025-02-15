@@ -29,7 +29,7 @@ const fetchProfileData = async () => {
       throw new Error("فشل في تحميل بيانات الملف الشخصي");
     }
 
-    console.log('Profile Data Response:', data); // للتأكد من البيانات
+    // console.log('Profile Data Response:', data); // للتأكد من البيانات
     profileData.value = data;
 
   } catch (err) {
@@ -46,7 +46,7 @@ const userData = computed(() => {
   // localStorage.setItem("user", JSON.stringify(profileData.value.user));
   
   const user = profileData.value.user;
-  console.log(user)
+  // console.log(user)
   return {
     ads: [],
     avatar: user.avatar || null,
@@ -236,7 +236,7 @@ watchEffect(() => {
   if (userData.value) {
     // API returns "male" or "female" directly, so we can use it as is
     userData.value.gender = userData.value.gender || "";
-    console.log("Current gender:", userData.value.gender); // For debugging
+    // console.log("Current gender:", userData.value.gender); // For debugging
   }
 });
 

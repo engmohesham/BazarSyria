@@ -35,7 +35,7 @@ const fetchAdsData = async () => {
       throw new Error("فشل في تحميل الإعلانات");
     }
 
-    console.log('Ads Data Response:', data); // للتأكد من البيانات
+    // console.log('Ads Data Response:', data); // للتأكد من البيانات
     ads.value = data || [];
 
   } catch (err) {

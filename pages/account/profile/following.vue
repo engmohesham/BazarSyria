@@ -1,4 +1,6 @@
 <script setup>
+import { ref, watchEffect } from 'vue'
+
 definePageMeta({
   layout: 'default',
   middleware: ["auth"]
@@ -7,17 +9,19 @@ definePageMeta({
 const loading = ref(true)
 const following = ref([])
 const error = ref(null)
+const route = useRoute()
 
 const { getFollowing, unfollowUser } = useServices()
 
 const fetchFollowing = async () => {
   loading.value = true
+  error.value = null
+  
   try {
     const { data, error: apiError } = await getFollowing()
     if (apiError) throw apiError
     
     following.value = data?.following || []
-    console.log('Following data:', following.value)
   } catch (err) {
     error.value = 'فشل في تحميل قائمة المتابَعين'
     console.error('Error fetching following:', err)
@@ -36,8 +40,12 @@ const handleUnfollow = async (userId) => {
   }
 }
 
-onMounted(() => {
-  fetchFollowing()
+// استخدام watchEffect لمراقبة التغييرات وتحميل البيانات
+watchEffect(() => {
+  if (process.client) {
+    console.log('Fetching following data...')
+    fetchFollowing()
+  }
 })
 </script>
 
@@ -61,6 +69,11 @@ onMounted(() => {
         <!-- Error State -->
         <div v-else-if="error" class="text-center py-8 text-red-600">
           {{ error }}
+        </div>
+
+        <!-- Empty State -->
+        <div v-else-if="!following.length" class="text-center py-8 text-gray-500">
+          لا يوجد متابَعين حالياً
         </div>
 
         <!-- Following List -->

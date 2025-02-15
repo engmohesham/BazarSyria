@@ -25,7 +25,7 @@ const props = defineProps({
   }
 });
 
-console.log(props.type);
+// console.log(props.type);
 
 onMounted(async () => {
   if (video.value && canvas.value) {

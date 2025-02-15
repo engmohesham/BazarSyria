@@ -357,7 +357,7 @@ const handleSubmit = async () => {
 
     // طباعة البيانات للتحقق
     for (let pair of formDataToSend.entries()) {
-      console.log(pair[0] + ': ' + pair[1])
+      // console.log(pair[0] + ': ' + pair[1])
     }
 
     const { error: createError } = await createAd(formDataToSend)

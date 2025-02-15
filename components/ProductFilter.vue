@@ -199,7 +199,7 @@ watch([activeCategory, activeSubcategory], () => {
 // Filter products
 const currentData = computed(() => {
   if (!products.value?.advertisements) return [];
-  console.log(products.value.advertisements)
+  // console.log(products.value.advertisements)
   return products.value.advertisements;
 });
 </script>

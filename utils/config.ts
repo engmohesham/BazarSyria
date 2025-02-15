@@ -22,6 +22,7 @@ export const API_ENDPOINTS = {
   
   // Categories
   CATEGORIES: '/category/all',
+  CATEGORY: '/category', // /{categoryId}
   SUBCATEGORIES: '/subCategory', // /{categoryId}/subcategories
   
   // Brands

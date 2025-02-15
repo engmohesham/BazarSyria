@@ -168,13 +168,13 @@ const fetchUserData = async () => {
     // Get current user profile
     const { data: profileData } = await getProfile();
     currentUser.value = profileData.user;
-    console.log('Current User:', currentUser.value._id);
+    // console.log('Current User:', currentUser.value._id);
 
     // Get creator profile
     const { data: creatorData } = await getUserById(props.creatorId);
-    console.log(creatorData);
+    // console.log(creatorData);
     userData.value = creatorData.user;
-    console.log(userData.value);
+    // console.log(userData.value);
 
     // Check if current user is following the creator
     isFollowing.value = currentUser.value?.following?.includes(props.creatorId);
@@ -216,7 +216,7 @@ const startChat = async () => {
     const payload = {
       users: [currentUser.value._id, props.creatorId]
     };
-    console.log(currentUser.value._id);
+    // console.log(currentUser.value._id);
     const { data, error } = await createChatRoom(payload);
     
     if (error) {

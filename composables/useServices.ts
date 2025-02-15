@@ -55,7 +55,7 @@ export const useServices = () => {
           body: userData,
         }
       );
-      console.log(data.value.message);
+      // console.log(data.value.message);
 
       if (error.value) throw error.value;
       return { data: data.value, error: null, message: data.value.message };
@@ -284,6 +284,40 @@ export const useServices = () => {
     } catch (err) {
       console.error("Error fetching categories:", err);
       return { data: [], error: err };
+    }
+  };
+
+  const getCategoryById = async (categoryId: string) => {
+    try {
+      const { data, error } = await useFetch(
+        `${API_BASE_URL}${API_ENDPOINTS.CATEGORY}/${categoryId}`,
+        {
+          headers: getAuthHeaders(),
+        }
+      );
+
+      if (error.value) throw error.value;
+      return { data: data.value, error: null };
+    } catch (err) {
+      console.error("Error fetching category:", err);
+      return { data: null, error: err };
+    }
+  };
+
+  const getSubCategoryById = async (subCategoryId: string) => {
+    try {
+      const { data, error } = await useFetch(
+        `${API_BASE_URL}${API_ENDPOINTS.SUBCATEGORIES}/${subCategoryId}`,
+        {
+          headers: getAuthHeaders(),
+        }
+      );
+
+      if (error.value) throw error.value;
+      return { data: data.value, error: null };
+    } catch (err) {
+      console.error("Error fetching subcategory:", err);
+      return { data: null, error: err };
     }
   };
 
@@ -563,7 +597,7 @@ export const useServices = () => {
           headers: getAuthHeaders(),
         }
       );
-      console.log(data.value);
+      // console.log(data.value);
 
       if (error.value) throw error.value;
       return { data: data.value, error: null };
@@ -657,6 +691,8 @@ export const useServices = () => {
 
     // New Methods
     getCategories,
+    getCategoryById,
+    getSubCategoryById,
     getSubCategories,
     // getBrands,
     getCities,

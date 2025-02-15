@@ -493,7 +493,7 @@ onUnmounted(() => {
 // Mobile menu handlers
 const toggleMobileMenu = () => {
   isMobileMenuOpen.value = !isMobileMenuOpen.value;
-  console.log(isMobileMenuOpen.value);
+  // console.log(isMobileMenuOpen.value);
 };
 
 const handleClickOutside = (event) => {

@@ -10,23 +10,33 @@
         
         <!-- القسم الرئيسي -->
         <template v-if="mainNav">
-          <NuxtLink 
+          <!-- <NuxtLink 
             :to="`/categories/${mainNav}`"
             class="hover:text-green-600"
           >
             {{ categoryName }}
-          </NuxtLink>
+          </NuxtLink> -->
+          <button 
+            class="hover:text-green-600 cursor-default"
+          >
+            {{ categoryName }}
+          </button>
         </template>
         
         <!-- القسم الفرعي -->
         <template v-if="subNav">
           <span class="text-gray-400">/</span>
-          <NuxtLink 
+          <!-- <NuxtLink 
             :to="`/categories/${mainNav}/${subNav}`"
             class="hover:text-green-600"
           >
             {{ subCategoryName }}
-          </NuxtLink>
+          </NuxtLink> -->
+          <button 
+            class="hover:text-green-600 cursor-default"
+          >
+            {{ subCategoryName }}
+          </button>
         </template>
         
         <!-- الصفحة الحالية -->
@@ -40,7 +50,7 @@
 </template>
 
 <script setup>
-import { ref, watchEffect } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 const { getCategoryById, getSubCategoryById } = useServices();
 
 const props = defineProps({
@@ -94,13 +104,24 @@ const fetchSubCategoryName = async () => {
   }
 };
 
-// Watch for changes in props and fetch data
-watchEffect(() => {
-  if (props.mainNav) {
+// جلب البيانات عند التحميل
+onMounted(() => {
+  if (process.client) {
     fetchCategoryName();
-  }
-  if (props.subNav) {
     fetchSubCategoryName();
   }
 });
+
+// مراقبة التغييرات في الـ props
+watch(() => props.mainNav, () => {
+  if (process.client) {
+    fetchCategoryName();
+  }
+}, { immediate: true });
+
+watch(() => props.subNav, () => {
+  if (process.client) {
+    fetchSubCategoryName();
+  }
+}, { immediate: true });
 </script>

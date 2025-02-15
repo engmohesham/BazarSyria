@@ -202,7 +202,7 @@ const fetchAdData = async () => {
     const { data, error: apiError } = await getAdById(route.params.id);
     if (apiError) throw apiError;
     
-    console.log('Ad Data Response:', data); // للتأكد من البيانات
+    // console.log('Ad Data Response:', data); // للتأكد من البيانات
     adData.value = data;
     
     // Fetch categories and subcategories if we have the ad data

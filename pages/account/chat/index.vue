@@ -360,7 +360,7 @@ onMounted(async () => {
   const { data: chatsData, error: chatsError } = await getUserChats();
   if (chatsData && !chatsError) {
     chats.value = chatsData;
-    console.log(chats.value);
+    // console.log(chats.value);
 
   }
 
@@ -434,7 +434,7 @@ const initializeSocket = () => {
     });
 
     socket.value.on("connect", () => {
-      console.log("Connected to socket server");
+      // console.log("Connected to socket server");
       isConnected.value = true;
     });
 
@@ -456,7 +456,8 @@ const initializeSocket = () => {
 
     // تسجيل معالج استقبال الرسائل
     socket.value.on("receiveMessage", async (message) => {
-      console.log("🚀 Socket Message Received:", message);
+      // console.log("🚀 Socket Message Received:", message);
+      console.log("🚀 Socket Message Received:");
 
       // تحديث عدد الرسائل غير المقروءة
       updateUnreadCount(message.chatId);

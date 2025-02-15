@@ -87,9 +87,9 @@ const handleRegister = async () => {
     formData.append('avatar', null);
 
     // Log form data for debugging (remove in production)
-    for (let [key, value] of formData.entries()) {
-      console.log(`${key}: ${value}`);
-    }
+    // for (let [key, value] of formData.entries()) {
+    //   console.log(`${key}: ${value}`);
+    // }
 
     const { error: apiError, message } = await register(formData);
 
