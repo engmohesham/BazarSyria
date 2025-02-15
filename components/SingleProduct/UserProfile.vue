@@ -16,6 +16,13 @@
             class="w-full h-full rounded-full object-cover"
           />
         </div>
+        <div
+          v-if="userData?.identificationVerified"
+          class="absolute -top-1 -right-1 bg-white p-1 rounded-full shadow-sm"
+          title="حساب موثق"
+        >
+          <PhSealCheck class="w-4 h-4 text-blue-500" weight="fill" />
+        </div>
         <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
       </div>
       <div class="flex-1">
@@ -37,6 +44,13 @@
             :alt="userData?.name"
             class="w-full h-full rounded-full object-cover"
           />
+        </div>
+        <div
+          v-if="userData?.identificationVerified"
+          class="absolute -top-1 -right-1 bg-white p-1 rounded-full shadow-sm"
+          title="حساب موثق"
+        >
+          <PhSealCheck class="w-4 h-4 text-blue-500" weight="fill" />
         </div>
         <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
       </div>
@@ -132,7 +146,8 @@ import {
   PhWhatsappLogo,
   PhInfo,
   PhWarning,
-  PhShieldCheck
+  PhShieldCheck,
+  PhSealCheck
 } from '@phosphor-icons/vue';
 
 const { getProfile, getUserById, followUser, unfollowUser, createChatRoom } = useServices();
@@ -140,6 +155,10 @@ const { getProfile, getUserById, followUser, unfollowUser, createChatRoom } = us
 const props = defineProps({
   creatorId: {
     type: String,
+    required: true
+  },
+  advertisementData: {
+    type: Object,
     required: true
   },
   isCurrentUser: {
@@ -249,8 +268,8 @@ const makeCall = () => {
 
 // Handle WhatsApp
 const openWhatsapp = () => {
-  if (!userData.value?.phone) return;
-  const phoneNumber = userData.value.phone.replace(/\D/g, ''); // Remove non-digits
+  if (!props.advertisementData.whatsappNumber) return;
+  const phoneNumber = props.advertisementData.whatsappNumber.replace(/\D/g, ''); // Remove non-digits
   window.open(`https://wa.me/${phoneNumber}`, '_blank');
 };
 
@@ -260,4 +279,10 @@ watch(() => props.creatorId, () => {
     fetchUserData();
   }
 }, { immediate: true });
+
+// يمكنك الآن استخدام props.advertisementData للوصول إلى بيانات الإعلان
+const adTitle = computed(() => props.advertisementData.advTitle);
+const adPrice = computed(() => props.advertisementData.price);
+const adLocation = computed(() => props.advertisementData.location);
+const adCreatedAt = computed(() => props.advertisementData.createdAt);
 </script>

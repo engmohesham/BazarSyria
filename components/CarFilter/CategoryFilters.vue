@@ -90,7 +90,7 @@ const subcategoriesData = ref(null)
 const fetchSubCategories = async () => {
   try {
     if (props.activeCategory !== 'all') {
-      const response = await fetch(`https://pzsyria.com/api/subCategory/${props.activeCategory}/subcategories`)
+      const response = await fetch(`https://pzsyria.com/api/subCategory/${props.activeCategory}/subCategories`)
       const data = await response.json()
       subcategoriesData.value = data
     } else {
@@ -100,11 +100,6 @@ const fetchSubCategories = async () => {
     console.error('Error fetching subcategories:', error)
     subcategoriesData.value = null
   }
-}
-
-// معالجة خطأ تحميل الصورة
-const handleImageError = (event) => {
-  event.target.src = '/images/default-subcategory.png'
 }
 
 // تنفيذ الدالة عند تحميل المكون

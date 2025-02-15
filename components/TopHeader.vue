@@ -411,9 +411,16 @@ const isProfileDropdownOpen = ref(false);
 const { getProfile } = useServices();
 const profileData = ref(null);
 
-// Fetch profile data
+// تحديث دالة جلب البيانات
 const fetchProfileData = async () => {
   try {
+    // التحقق من وجود التوكن
+    const token = localStorage.getItem('session-token');
+    if (!token) {
+      profileData.value = null;
+      return;
+    }
+
     const { data, error } = await getProfile();
     if (error) {
       console.error("Error fetching profile:", error);
@@ -425,7 +432,41 @@ const fetchProfileData = async () => {
   }
 };
 
-// Add computed properties for user data
+// مراقبة حالة تسجيل الدخول
+watch(() => props.isLoggedIn, (newValue) => {
+  if (newValue) {
+    fetchProfileData();
+  } else {
+    profileData.value = null;
+  }
+}, { immediate: true });
+
+// استدعاء البيانات عند تحميل الصفحة
+onMounted(() => {
+  // التحقق من وجود التوكن وجلب البيانات
+  const token = localStorage.getItem('session-token');
+  if (token) {
+    fetchProfileData();
+  }
+
+  // إضافة مستمع لتحديث البيانات
+  window.addEventListener('profile-updated', fetchProfileData);
+  
+  // إضافة مستمع لتغيير التوكن
+  window.addEventListener('token-changed', fetchProfileData);
+  
+  // إضافة مستمع لتحديث الصفحة
+  window.addEventListener('load', fetchProfileData);
+});
+
+// تنظيف المستمعين
+onUnmounted(() => {
+  window.removeEventListener('profile-updated', fetchProfileData);
+  window.removeEventListener('token-changed', fetchProfileData);
+  window.removeEventListener('load', fetchProfileData);
+});
+
+// Computed properties
 const userName = computed(() => {
   return profileData.value?.user?.name || 'المستخدم';
 });
@@ -434,21 +475,7 @@ const userAvatar = computed(() => {
   if (profileData.value?.user?.avatar) {
     return `${profileData.value.user.avatar}`;
   }
-  return user; // default avatar
-});
-
-// Fetch profile on mount
-onMounted(() => {
-  fetchProfileData();
-});
-
-// Listen for profile updates
-onMounted(() => {
-  window.addEventListener('profile-updated', fetchProfileData);
-});
-
-onUnmounted(() => {
-  window.removeEventListener('profile-updated', fetchProfileData);
+  return user;
 });
 
 const toggleDropdown = () => {

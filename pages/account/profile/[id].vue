@@ -50,12 +50,12 @@ const userData = computed(() => {
 
 const avatarImage = computed(() => {
   if (!userData.value?.avatar) return defaultAvatar;
-  return `${API_BASE_URL}/${userData.value.avatar}`;
+  return `${userData.value.avatar}`;
 });
 
 const coverImage = computed(() => {
   if (!userData.value?.coverImage) return defaultCover;
-  return `${API_BASE_URL}/${userData.value.coverImage}`;
+  return `${userData.value.coverImage}`;
 });
 
 // Handle report submission
@@ -137,7 +137,7 @@ watchEffect(() => {
                 <h1 class="text-2xl font-bold">{{ userData.name }}</h1>
                 <!-- Verification Badge -->
                 <div
-                  v-if="userData.verified"
+                  v-if="userData.identificationVerified"
                   class="bg-white p-1 rounded-full"
                   title="حساب موثق"
                 >

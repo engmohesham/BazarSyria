@@ -339,7 +339,7 @@ const fetchProducts = async () => {
     } else {
       let url = `https://pzsyria.com/api/advertisement/certain/categories?category=${activeCategory.value}`;
       if (activeSubcategory.value) {
-        url += `&subcategory=${activeSubcategory.value}`;
+        url += `&subCategory=${activeSubcategory.value}`;
       }
       response = await fetch(url);
     }

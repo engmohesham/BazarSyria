@@ -167,7 +167,8 @@
           <div :class="{ 'filter blur-sm': !userId }">
             <UserProfile 
               v-if="productData.advertisement?.creator"
-              :creatorId="userId" 
+              :creatorId="productData.advertisement.creator"
+              :advertisementData="productData.advertisement"
             />
           </div>
         </div>
