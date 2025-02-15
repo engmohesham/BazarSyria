@@ -1,12 +1,10 @@
 <template>
-  <div
-    class="flex sticky lg:top-[155px] md:top-[127px] top-[110px] z-40 flex-col gap-4"
-  >
+  <div class="flex flex-col gap-4 bg-white rounded-lg shadow-lg overflow-hidden px-3">
     <!-- User Info with Profile Link -->
     <NuxtLink 
       v-if="userData && !isCurrentUser"
       :to="`/account/profile/${userData._id}`"
-      class="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg transition-colors"
+      class="flex items-center gap-3 p-4 hover:bg-gray-50 transition-colors"
     >
       <div class="relative">
         <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
@@ -35,7 +33,7 @@
 
     <button 
       v-else
-      class="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg transition-colors"
+      class="flex items-center gap-3 p-4 hover:bg-gray-50 transition-colors"
     >
       <div class="relative">
         <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
@@ -286,3 +284,22 @@ const adPrice = computed(() => props.advertisementData.price);
 const adLocation = computed(() => props.advertisementData.location);
 const adCreatedAt = computed(() => props.advertisementData.createdAt);
 </script>
+
+<style scoped>
+/* Remove the sticky class from here since it's now in the parent */
+.user-profile {
+  background: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+}
+
+/* Add smooth transition for hover effects */
+.hover\:bg-gray-50 {
+  transition: background-color 0.2s ease-in-out;
+}
+
+/* Ensure content stays within bounds */
+.overflow-hidden {
+  overflow: hidden;
+}
+</style>

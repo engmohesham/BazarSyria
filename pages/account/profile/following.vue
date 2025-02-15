@@ -86,15 +86,17 @@ watchEffect(() => {
             <div class="flex items-center justify-between">
               <!-- User Info -->
               <div class="flex items-center gap-4">
-                <img 
-                  :src="user.avatar || 'https://via.placeholder.com/40'"
-                  class="w-12 h-12 rounded-full object-cover"
-                  :alt="user.name"
-                />
-                <div>
-                  <h3 class="font-medium">{{ user.name }}</h3>
-                  <p class="text-sm text-gray-500">{{ user.location }}</p>
-                </div>
+                <NuxtLink :to="`/account/profile/${user._id}`" class="flex items-center gap-4">
+                  <img 
+                    :src="user.avatar || 'https://via.placeholder.com/40'"
+                    class="w-12 h-12 rounded-full object-cover"
+                    :alt="user.name"
+                  />
+                  <div>
+                    <h3 class="font-medium">{{ user.name }}</h3>
+                    <p class="text-sm text-gray-500">{{ user.location }}</p>
+                  </div>
+                </NuxtLink>
               </div>
 
               <!-- Unfollow Button -->

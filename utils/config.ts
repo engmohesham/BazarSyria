@@ -43,6 +43,7 @@ export const API_ENDPOINTS = {
 
   VERIFICATION: '/verification',
 
+  SLIDES: '/slides',
 }
 
 // تحديث دالة getAuthHeaders لتكون متوافقة مع SSR

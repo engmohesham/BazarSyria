@@ -11,9 +11,16 @@
             class="w-full h-48 md:h-full object-cover"
           />
           <button
+            v-if="isUserLoggedIn"
+            @click.prevent="handleFavoriteClick"
             class="absolute top-3 right-3 p-2 flex justify-center items-center rounded-full bg-white shadow-md hover:bg-gray-100 transition-colors"
+            :class="{ 'text-red-500': isInFavorites }"
           >
-            <PhHeart class="w-5 h-5 text-gray-600" />
+            <PhHeart 
+              class="w-5 h-5" 
+              :weight="isInFavorites ? 'fill' : 'regular'"
+              :class="isInFavorites ? 'text-red-500' : 'text-gray-600'"
+            />
           </button>
         </div>
         <div class="md:w-2/3 p-4">
@@ -56,12 +63,23 @@
 </template>
 
 <script setup>
+import { ref, onMounted, computed } from 'vue';
 import { 
   PhHeart,
   PhMapPin,
   PhClock,
   PhUser
 } from '@phosphor-icons/vue';
+import { useServices } from '~/composables/useServices';
+import { useNotification } from '~/composables/useNotification';
+
+const { addToFavorites, removeFromFavorites, getFavoriteAds } = useServices();
+const { showNotification } = useNotification();
+
+// التحقق من حالة تسجيل الدخول
+const isUserLoggedIn = computed(() => {
+  return !!localStorage.getItem('session-token');
+});
 
 const props = defineProps({
   product: {
@@ -89,6 +107,67 @@ const props = defineProps({
   }
 });
 
+// قائمة الإعلانات المفضلة
+const favoriteAdsIds = ref(new Set());
+const isInFavorites = computed(() => {
+  return favoriteAdsIds.value.has(props.product._id);
+});
+
+// جلب قائمة الإعلانات المفضلة
+const fetchFavoriteAds = async () => {
+  if (!isUserLoggedIn.value) return;
+  
+  try {
+    const { data, error } = await getFavoriteAds();
+    if (!error && data) {
+      // تخزين معرفات الإعلانات المفضلة في مجموعة للبحث السريع
+      favoriteAdsIds.value = new Set(data.map(ad => ad._id));
+    }
+  } catch (err) {
+    console.error('Error fetching favorite ads:', err);
+  }
+};
+
+onMounted(() => {
+  if (isUserLoggedIn.value) {
+    fetchFavoriteAds();
+  }
+});
+
+const handleFavoriteClick = async (event) => {
+  event.preventDefault();
+  
+  if (!isUserLoggedIn.value) {
+    window.dispatchEvent(new CustomEvent('open-login-modal'));
+    return;
+  }
+
+  try {
+    const { error } = isInFavorites.value
+      ? await removeFromFavorites(props.product._id)
+      : await addToFavorites(props.product._id);
+
+    if (error) {
+      throw error;
+    }
+
+    // تحديث حالة المفضلة محلياً
+    if (isInFavorites.value) {
+      favoriteAdsIds.value.delete(props.product._id);
+    } else {
+      favoriteAdsIds.value.add(props.product._id);
+    }
+
+    showNotification(
+      isInFavorites.value ? 'تمت الإضافة إلى المفضلة' : 'تمت الإزالة من المفضلة',
+      'success'
+    );
+  } catch (err) {
+    console.error('Error toggling favorite:', err);
+    showNotification('حدث خطأ أثناء تحديث المفضلة', 'error');
+  }
+};
+
 // تنسيق التاريخ
 const formatDate = (date) => {
   return new Date(date).toLocaleDateString("ar-SA");
@@ -100,3 +179,15 @@ const formatLocation = (location) => {
   return `${location.lat}, ${location.long}`;
 };
 </script>
+
+<style scoped>
+/* تأثيرات انتقالية سلسة */
+.transition-colors {
+  transition: all 0.2s ease-in-out;
+}
+
+/* تأثير النقر على زر المفضلة */
+button:active {
+  transform: scale(0.95);
+}
+</style>

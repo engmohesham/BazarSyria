@@ -102,15 +102,11 @@
             <div class="space-y-4">
               <div>
                 <span class="text-gray-600">رقم الإعلان:</span>
-                <span class="font-medium">{{ route.params.id }}</span>
+                <span class="font-medium">{{ route.params.editId }}</span>
               </div>
               <div>
                 <span class="text-gray-600">تاريخ النشر:</span>
-                <span class="font-medium">{{ new Date(productData.advertisement?.createdAt).toLocaleDateString('ar-SY', {
-                  year: 'numeric',
-                  month: 'numeric',
-                  day: 'numeric'
-                }) }}</span>
+                <span class="font-medium">{{ formatDate(productData.advertisement?.createdAt) }}</span>
               </div>
             </div>
           </div>
@@ -125,6 +121,7 @@ import { ref, computed, watchEffect } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { PhTrash, PhPlus } from '@phosphor-icons/vue';
 import { API_BASE_URL } from '~/utils/config';
+import imageCompression from 'browser-image-compression';
 
 const route = useRoute();
 const router = useRouter();
@@ -142,6 +139,54 @@ const title = ref('');
 const description = ref('');
 const gallery = ref([]);
 
+// More aggressive compression options
+const compressionOptions = {
+  maxSizeMB: 0.5, // Reduced to 500KB max
+  maxWidthOrHeight: 1280, // Reduced to 1280px
+  useWebWorker: true,
+  quality: 0.7 // Added quality control
+};
+
+// Enhanced compression helper
+const compressImage = async (file) => {
+  try {
+    // Check if file is already small enough
+    if (file.size <= 500 * 1024) { // 500KB
+      return file;
+    }
+    
+    const compressedFile = await imageCompression(file, compressionOptions);
+    
+    // Double-check size and compress again if still too large
+    if (compressedFile.size > 500 * 1024) {
+      const moreCompressedOptions = {
+        ...compressionOptions,
+        maxSizeMB: 0.3,
+        quality: 0.6
+      };
+      return await imageCompression(compressedFile, moreCompressedOptions);
+    }
+    
+    return compressedFile;
+  } catch (error) {
+    console.error('Error compressing image:', error);
+    return file;
+  }
+};
+
+// Helper to convert URL to File
+const urlToFile = async (url) => {
+  try {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    const filename = url.split('/').pop() || 'image.jpg';
+    return new File([blob], filename, { type: blob.type });
+  } catch (error) {
+    console.error('Error converting URL to file:', error);
+    throw error;
+  }
+};
+
 // Fetch ad data
 const fetchAdData = async () => {
   isLoading.value = true;
@@ -154,11 +199,11 @@ const fetchAdData = async () => {
     if (data && data.advertisement) {
       adData.value = data;
       
-      // تعديل طريقة معالجة الصور
+      // تهيئة البيانات مع الصور القديمة
       title.value = data.advertisement.advTitle || '';
       description.value = data.advertisement.advDescription || '';
       gallery.value = (data.advertisement.gallery || []).map(img => ({
-        path: `${img}`,
+        path: img,
         isNew: false
       }));
     }
@@ -187,8 +232,8 @@ definePageMeta({
   }
 });
 
-// Handle image upload
-const handleImageAdd = (event) => {
+// Modified image addition handler
+const handleImageAdd = async (event) => {
   const files = Array.from(event.target.files);
   const validFiles = files.filter(file => file.type.startsWith('image/'));
   
@@ -197,14 +242,25 @@ const handleImageAdd = (event) => {
     return;
   }
   
-  // إضافة الصور الجديدة مع الصور القديمة
-  const newImages = validFiles.map(file => ({
-    file,
-    preview: URL.createObjectURL(file),
-    isNew: true
-  }));
+  // Show loading state
+  isSubmitting.value = true;
   
-  gallery.value = [...gallery.value, ...newImages];
+  try {
+    // Process images one at a time to prevent memory issues
+    for (const file of validFiles) {
+      const compressedFile = await compressImage(file);
+      gallery.value.push({
+        file: compressedFile,
+        preview: URL.createObjectURL(compressedFile),
+        isNew: true
+      });
+    }
+  } catch (error) {
+    console.error('Error processing images:', error);
+    showNotification('حدث خطأ أثناء معالجة الصور', 'error');
+  } finally {
+    isSubmitting.value = false;
+  }
 };
 
 // Remove image
@@ -227,12 +283,22 @@ const handleUpdateAd = async () => {
     formData.append('advTitle', title.value);
     formData.append('advDescription', description.value);
 
-    // إرسال الصور الجديدة فقط مع بدء الترقيم من 1
-    gallery.value
-      .filter(img => img.isNew)
-      .forEach((img, index) => {
-        formData.append(`gallery[${index + 1}]`, img.file);
-      });
+    // Process all images (both current and new)
+    const imagePromises = gallery.value.map(async (image) => {
+      if (image.isNew && image.file) {
+        // Compress new images
+        const compressedFile = await compressImage(image.file);
+        formData.append('gallery', compressedFile);
+      } else if (image.path) {
+        // Convert current image URLs to files and compress
+        const file = await urlToFile(image.path);
+        const compressedFile = await compressImage(file);
+        formData.append('gallery', compressedFile);
+      }
+    });
+
+    // Wait for all image processing to complete
+    await Promise.all(imagePromises);
 
     const { error: updateError } = await updateAd(route.params.id, formData);
     
@@ -267,7 +333,7 @@ const formatDate = (dateString) => {
   if (!dateString) return '';
   return new Date(dateString).toLocaleDateString('ar-SY', {
     year: 'numeric',
-    month: 'numeric',
+    month: 'long',
     day: 'numeric'
   });
 };

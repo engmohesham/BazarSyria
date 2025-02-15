@@ -6,7 +6,7 @@
         @open-register="$emit('open-register')"
         :isLoggedIn="isLoggedIn" 
       />
-      <Navigation />
+      <!-- <Navigation /> -->
     </div>
   </header>
 </template>

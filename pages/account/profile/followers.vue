@@ -97,15 +97,17 @@ watchEffect(() => {
             <div class="flex items-center justify-between">
               <!-- User Info -->
               <div class="flex items-center gap-4">
-                <img 
-                  :src="follower.avatar || 'https://via.placeholder.com/40'"
-                  class="w-12 h-12 rounded-full object-cover"
-                  :alt="follower.name"
-                />
-                <div>
-                  <h3 class="font-medium">{{ follower.name }}</h3>
-                  <p class="text-sm text-gray-500">{{ follower.location }}</p>
-                </div>
+                <NuxtLink :to="`/account/profile/${follower._id}`" class="flex items-center gap-4">
+                  <img 
+                    :src="follower.avatar || 'https://via.placeholder.com/40'"
+                    class="w-12 h-12 rounded-full object-cover"
+                    :alt="follower.name"
+                  />
+                  <div>
+                    <h3 class="font-medium">{{ follower.name }}</h3>
+                    <p class="text-sm text-gray-500">{{ follower.location }}</p>
+                  </div>
+                </NuxtLink>
               </div>
 
               <!-- Follow/Unfollow Button -->

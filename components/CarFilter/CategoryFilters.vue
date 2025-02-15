@@ -1,5 +1,5 @@
 <template>
-  <div class="sticky top-[137px] z-50 bg-white">
+  <div class="sticky top-[80px] lg:top-[70px] z-50 bg-white">
     <!-- Main Categories -->
     <div class="bg-gray-50 border-b border-gray-100">
       <div class="container mx-auto px-4">

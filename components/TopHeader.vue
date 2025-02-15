@@ -548,6 +548,7 @@ const handleLogout = async () => {
 
     // Redirect to home page
     router.push("/");
+    window.location.reload();
   } catch (error) {
     console.error("Error during logout:", error);
   }

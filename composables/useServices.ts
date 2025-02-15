@@ -218,13 +218,13 @@ export const useServices = () => {
     }
   };
 
-  const updateAd = async (adId: string, adData: any) => {
+  const updateAd = async (adId: string, formData: FormData) => {
     try {
       const { data, error } = await useFetch(
         `${API_BASE_URL}${API_ENDPOINTS.AD}/${adId}`,
         {
           method: "PATCH",
-          body: adData,
+          body: formData,
           headers: getAuthHeaders(),
         }
       );
@@ -232,7 +232,7 @@ export const useServices = () => {
       if (error.value) throw error.value;
       return { data: data.value, error: null };
     } catch (err) {
-      console.error("Error updating ad:", err);
+      console.error('Error updating ad:', err);
       return { data: null, error: err };
     }
   };
@@ -664,6 +664,80 @@ export const useServices = () => {
     }
   };
 
+  // Slides Methods
+  const getSlides = async () => {
+    try {
+      const { data, error } = await useFetch(
+        `${API_BASE_URL}${API_ENDPOINTS.SLIDES}`,
+        {
+          headers: getAuthHeaders(),
+        }
+      );
+
+      if (error.value) throw error.value;
+      return { data: data.value?.slides || [], error: null };
+    } catch (err) {
+      console.error("Error fetching slides:", err);
+      return { data: [], error: err };
+    }
+  };
+
+  // Add to favorites
+  const addToFavorites = async (productId: string) => {
+    try {
+      const { data, error } = await useFetch(
+        `${API_BASE_URL}/advertisement/${productId}/addToFavorites`,
+        {
+          method: 'POST',
+          headers: getAuthHeaders(),
+        }
+      );
+
+      if (error.value) throw error.value;
+      return { data: data.value, error: null };
+    } catch (err) {
+      console.error('Error adding to favorites:', err);
+      return { data: null, error: err };
+    }
+  };
+
+  // Remove from favorites
+  const removeFromFavorites = async (productId: string) => {
+    try {
+      const { data, error } = await useFetch(
+        `${API_BASE_URL}/advertisement/${productId}/removeFromFavorites`,
+        {
+          method: 'POST',
+          headers: getAuthHeaders(),
+        }
+      );
+
+      if (error.value) throw error.value;
+      return { data: data.value, error: null };
+    } catch (err) {
+      console.error('Error removing from favorites:', err);
+      return { data: null, error: err };
+    }
+  };
+
+  // Get favorite ads
+  const getFavoriteAds = async () => {
+    try {
+      const { data, error } = await useFetch(
+        `${API_BASE_URL}/advertisement/my/favAds`,
+        {
+          headers: getAuthHeaders(),
+        }
+      );
+
+      if (error.value) throw error.value;
+      return { data: data.value?.advertisements || [], error: null };
+    } catch (err) {
+      console.error('Error fetching favorite ads:', err);
+      return { data: [], error: err };
+    }
+  };
+
   return {
     // State
     isLoggedIn,
@@ -713,5 +787,13 @@ export const useServices = () => {
     getUserById,
     getUserProfile,
     reportUser,
+
+    // Slides Method
+    getSlides,
+
+    // New Methods
+    addToFavorites,
+    removeFromFavorites,
+    getFavoriteAds,
   };
 };

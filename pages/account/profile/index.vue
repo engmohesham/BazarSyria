@@ -1,17 +1,21 @@
 <script setup>
 import defaultAvatar from "~/assets/user.png";
 import defaultCover from "~/assets/cover.jpeg";
-import { ref, computed, onMounted, watchEffect, onBeforeUnmount } from 'vue';
-import { PhCamera } from '@phosphor-icons/vue';
+import { ref, computed, onMounted, watchEffect, onBeforeUnmount, watch } from 'vue';
+import { PhCamera, PhSealCheck } from '@phosphor-icons/vue';
+import { useServices } from '~/composables/useServices';
 
 const router = useRouter();
-const { getProfile, updateProfile } = useServices();
+const { getProfile, updateProfile, getFavoriteAds } = useServices();
 const { notification, showNotification } = useNotification();
 
 // State
 const profileData = ref(null);
 const isLoading = ref(true);
 const error = ref(null);
+const activeTab = ref('ads');
+const userAds = ref([]);
+const favoriteAds = ref([]);
 
 // Fetch profile data
 const fetchProfileData = async () => {
@@ -246,6 +250,25 @@ onBeforeUnmount(() => {
     URL.revokeObjectURL(userData.value.avatarPreview);
   }
 });
+
+// Fetch user's favorite ads
+const fetchFavoriteAds = async () => {
+  const { data, error } = await getFavoriteAds();
+  if (!error) {
+    favoriteAds.value = data;
+  }
+};
+
+// Watch for tab changes
+watch(activeTab, (newTab) => {
+  if (newTab === 'favorites') {
+    fetchFavoriteAds();
+  }
+});
+
+onMounted(() => {
+  fetchFavoriteAds();
+});
 </script>
 
 <template>
@@ -361,7 +384,17 @@ onBeforeUnmount(() => {
 
               <!-- اسم المستخدم والتقييم -->
               <div class="mt-4 text-center">
-                <h2 class="text-xl font-bold">{{ userData.name }}</h2>
+                <div class="flex items-center justify-center gap-2">
+                  <h2 class="text-xl font-bold">{{ userData.name }}</h2>
+                  <!-- إضافة علامة التوثيق -->
+                  <div
+                    v-if="userData.identificationVerified"
+                    class="bg-white p-1 rounded-full shadow-sm"
+                    title="حساب موثق"
+                  >
+                    <PhSealCheck class="w-6 h-6 text-blue-500" weight="fill" />
+                  </div>
+                </div>
                 <p class="text-gray-600 mt-1">
                   رقم العضوية {{ userData.memberId }}
                 </p>
@@ -372,18 +405,6 @@ onBeforeUnmount(() => {
                     day: 'numeric'
                   }) }}
                 </p>
-                <!-- نجوم التقييم -->
-                <!-- <div class="flex justify-center mt-2">
-                  <div class="flex items-center gap-1">
-                    <Icon
-                      v-for="i in 5"
-                      :key="i"
-                      :name="i <= 3 ? 'ph:star-fill' : 'ph:star'"
-                      class="w-5 h-5"
-                      :class="i <= 3 ? 'text-yellow-400' : 'text-gray-300'"
-                    />
-                  </div>
-                </div> -->
               </div>
             </div>
           </div>
@@ -655,6 +676,62 @@ onBeforeUnmount(() => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabs Section -->
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div class="bg-white rounded-lg shadow">
+          <!-- Tabs Navigation -->
+          <div class="border-b border-gray-200">
+            <nav class="flex -mb-px">
+              <button
+                @click="activeTab = 'ads'"
+                class="px-6 py-4 text-sm font-medium"
+                :class="activeTab === 'ads' ? 
+                  'border-b-2 border-green-500 text-green-600' : 
+                  'text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+              >
+                إعلاناتي
+              </button>
+              <button
+                @click="activeTab = 'favorites'"
+                class="px-6 py-4 text-sm font-medium"
+                :class="activeTab === 'favorites' ? 
+                  'border-b-2 border-green-500 text-green-600' : 
+                  'text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+              >
+                المفضلة
+              </button>
+            </nav>
+          </div>
+
+          <!-- Tabs Content -->
+          <div class="p-4">
+            <!-- My Ads Tab -->
+            <div v-if="activeTab === 'ads'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <ProductCard 
+                v-for="ad in userAds" 
+                :key="ad._id" 
+                :product="ad"
+              />
+              <div v-if="!userAds.length" class="col-span-full text-center py-8 text-gray-500">
+                لا توجد إعلانات
+              </div>
+            </div>
+
+            <!-- Favorites Tab -->
+            <div v-if="activeTab === 'favorites'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <ProductCard 
+                v-for="ad in favoriteAds" 
+                :key="ad._id" 
+                :product="ad"
+              />
+              <div v-if="!favoriteAds.length" class="col-span-full text-center py-8 text-gray-500">
+                لا توجد إعلانات مفضلة
+              </div>
+            </div>
           </div>
         </div>
       </div>

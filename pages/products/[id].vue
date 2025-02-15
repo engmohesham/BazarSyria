@@ -133,43 +133,45 @@
         </div>
         
         <!-- User Profile Section with Blur -->
-        <div class="md:col-span-1 relative">
-          <!-- Blur Overlay for User Section -->
-          <div 
-            v-if="!userId" 
-            class="absolute inset-0 bg-white/60 backdrop-blur-sm z-10 flex flex-col items-center justify-center rounded-lg"
-          >
-            <div class="text-center p-6">
-              <h3 class="text-lg font-bold text-gray-800 mb-3">
-                معلومات البائع
-              </h3>
-              <p class="text-gray-600 mb-4">
-                سجل دخول للتواصل مع البائع
-              </p>
-              <div class="flex gap-3 justify-center">
-                <button
-                  @click="handleLoginClick"
-                  class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
-                >
-                  تسجيل الدخول
-                </button>
-                <button
-                  @click="handleRegisterClick"
-                  class="px-4 py-2 border border-green-600 text-green-600 rounded-lg hover:bg-green-50 transition-colors text-sm"
-                >
-                  إنشاء حساب
-                </button>
+        <div class="md:col-span-1">
+          <div class="sticky top-[127px]">
+            <!-- Blur Overlay for User Section -->
+            <div 
+              v-if="!userId" 
+              class="absolute inset-0 bg-white/60 backdrop-blur-sm z-10 flex flex-col items-center justify-center rounded-lg"
+            >
+              <div class="text-center p-6">
+                <h3 class="text-lg font-bold text-gray-800 mb-3">
+                  معلومات البائع
+                </h3>
+                <p class="text-gray-600 mb-4">
+                  سجل دخول للتواصل مع البائع
+                </p>
+                <div class="flex gap-3 justify-center">
+                  <button
+                    @click="handleLoginClick"
+                    class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
+                  >
+                    تسجيل الدخول
+                  </button>
+                  <button
+                    @click="handleRegisterClick"
+                    class="px-4 py-2 border border-green-600 text-green-600 rounded-lg hover:bg-green-50 transition-colors text-sm"
+                  >
+                    إنشاء حساب
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
 
-          <!-- User Profile Component -->
-          <div :class="{ 'filter blur-sm': !userId }">
-            <UserProfile 
-              v-if="productData.advertisement?.creator"
-              :creatorId="productData.advertisement.creator"
-              :advertisementData="productData.advertisement"
-            />
+            <!-- User Profile Component -->
+            <div :class="{ 'filter blur-sm': !userId }">
+              <UserProfile 
+                v-if="productData.advertisement?.creator"
+                :creatorId="productData.advertisement.creator"
+                :advertisementData="productData.advertisement"
+              />
+            </div>
           </div>
         </div>
       </div>
