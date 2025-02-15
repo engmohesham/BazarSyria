@@ -15,7 +15,6 @@ const isLoading = ref(true);
 const error = ref(null);
 const activeTab = ref('ads');
 const userAds = ref([]);
-const favoriteAds = ref([]);
 
 // Fetch profile data
 const fetchProfileData = async () => {
@@ -251,23 +250,11 @@ onBeforeUnmount(() => {
   }
 });
 
-// Fetch user's favorite ads
-const fetchFavoriteAds = async () => {
-  const { data, error } = await getFavoriteAds();
-  if (!error) {
-    favoriteAds.value = data;
-  }
-};
-
 // Watch for tab changes
 watch(activeTab, (newTab) => {
-  if (newTab === 'favorites') {
-    fetchFavoriteAds();
+  if (newTab === 'ads') {
+    fetchProfileData();
   }
-});
-
-onMounted(() => {
-  fetchFavoriteAds();
 });
 </script>
 
@@ -681,36 +668,18 @@ onMounted(() => {
       </div>
 
       <!-- Tabs Section -->
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <!-- <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div class="bg-white rounded-lg shadow">
-          <!-- Tabs Navigation -->
           <div class="border-b border-gray-200">
             <nav class="flex -mb-px">
-              <button
-                @click="activeTab = 'ads'"
-                class="px-6 py-4 text-sm font-medium"
-                :class="activeTab === 'ads' ? 
-                  'border-b-2 border-green-500 text-green-600' : 
-                  'text-gray-500 hover:text-gray-700 hover:border-gray-300'"
-              >
+              <div class="px-6 py-4 text-sm font-medium border-b-2 border-green-500 text-green-600">
                 إعلاناتي
-              </button>
-              <button
-                @click="activeTab = 'favorites'"
-                class="px-6 py-4 text-sm font-medium"
-                :class="activeTab === 'favorites' ? 
-                  'border-b-2 border-green-500 text-green-600' : 
-                  'text-gray-500 hover:text-gray-700 hover:border-gray-300'"
-              >
-                المفضلة
-              </button>
+              </div>
             </nav>
           </div>
 
-          <!-- Tabs Content -->
           <div class="p-4">
-            <!-- My Ads Tab -->
-            <div v-if="activeTab === 'ads'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <ProductCard 
                 v-for="ad in userAds" 
                 :key="ad._id" 
@@ -720,21 +689,9 @@ onMounted(() => {
                 لا توجد إعلانات
               </div>
             </div>
-
-            <!-- Favorites Tab -->
-            <div v-if="activeTab === 'favorites'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <ProductCard 
-                v-for="ad in favoriteAds" 
-                :key="ad._id" 
-                :product="ad"
-              />
-              <div v-if="!favoriteAds.length" class="col-span-full text-center py-8 text-gray-500">
-                لا توجد إعلانات مفضلة
-              </div>
-            </div>
           </div>
         </div>
-      </div>
+      </div> -->
     </div>
 
     <!-- Not Found State -->

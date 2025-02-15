@@ -4,7 +4,8 @@ import {
   PhPlusCircle,
   PhList,
   PhChatCircleDots,
-  PhGear
+  PhGear,
+  PhHeart
 } from "@phosphor-icons/vue";
 
 const router = useRouter()
@@ -68,6 +69,17 @@ const handleLogout = async () => {
           <div>
             <h3 class="font-medium">إعلاناتي</h3>
             <p class="text-sm text-gray-500">إدارة إعلاناتك النشطة</p>
+          </div>
+        </NuxtLink>
+
+        <NuxtLink 
+          to="/account/favorites"
+          class="flex items-center gap-4 p-6 bg-white rounded-lg shadow hover:shadow-md transition-shadow"
+        >
+          <PhHeart :size="32" class="text-green-600" />
+          <div>
+            <h3 class="font-medium">المفضلة</h3>
+            <p class="text-sm text-gray-500">عرض الإعلانات المفضلة</p>
           </div>
         </NuxtLink>
 

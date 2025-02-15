@@ -7,7 +7,8 @@ import {
   PhX,
   PhCamera,
   PhXCircle,
-  PhCheckCircle
+  PhCheckCircle,
+  PhArrowRight
 } from "@phosphor-icons/vue";
 
 definePageMeta({
@@ -351,10 +352,10 @@ const cameraType = computed(() => {
         <div class="flex items-center justify-between mb-6">
           <h1 class="text-2xl font-bold">{{ pageDetails.title }}</h1>
           <button
-            @click="router.back()"
+            @click="$router.back()"
             class="text-gray-600 hover:text-gray-800"
           >
-            <PhArrowLeft :size="24" />
+            <PhArrowRight :size="24" />
           </button>
         </div>
 
