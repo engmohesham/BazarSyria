@@ -1,7 +1,7 @@
 <template>
-  <div>
+  <div class="sticky top-[137px] z-50 bg-white">
     <!-- Main Categories -->
-    <div class="bg-gray-50 border-b border-gray-100 sticky lg:top-[135px] md:top-[127px] top-[110px] z-40">
+    <div class="bg-gray-50 border-b border-gray-100">
       <div class="container mx-auto px-4">
         <div class="overflow-x-auto" dir="rtl">
           <div class="flex space-x-reverse space-x-1 py-2 min-w-max">
@@ -35,23 +35,49 @@
       </div>
     </div>
 
-    <!-- Subcategories -->
-    <div v-if="activeSubcategories.length" class="bg-white py-2">
+    <!-- Subcategories with Icons -->
+    <div v-if="activeSubcategories.length" class="bg-white border-b border-gray-100">
       <div class="container mx-auto px-4">
         <div class="overflow-x-auto" dir="rtl">
-          <div class="flex space-x-reverse space-x-1 py-2 min-w-max">
+          <div class="flex space-x-reverse space-x-4 py-2 min-w-max">
             <button
               v-for="subcategory in activeSubcategories"
               :key="subcategory._id"
               @click="handleSubcategoryClick(subcategory)"
               :class="[
-                'px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors',
+                'flex flex-col items-center px-4 py-2 rounded-lg transition-colors',
                 subcategory._id === activeSubcategory
-                  ? 'bg-green-600 text-white'
-                  : 'text-gray-700 hover:bg-gray-100'
+                  ? 'text-green-600'
+                  : 'text-gray-700 hover:text-green-500'
               ]"
             >
-              {{ subcategory.name }}
+              <!-- Icon with Fallback -->
+              <div class="w-16 h-16 mb-2 rounded-lg bg-gray-50 flex items-center justify-center">
+                <div 
+                  class="w-12 h-12 rounded-full flex items-center justify-center"
+                  :style="{ backgroundColor: getSubcategoryColor(subcategory.name) }"
+                >
+                  <span v-if="!subcategory.icon" class="text-xl font-bold text-white">
+                    {{ getSubcategoryInitials(subcategory.name) }}
+                  </span>
+                  <Icon 
+                    v-else
+                    name="ph:car-simple" 
+                    class="w-8 h-8 text-white"
+                  />
+                </div>
+              </div>
+              <!-- Name -->
+              <span class="text-sm font-medium whitespace-nowrap">
+                {{ subcategory.name }}
+              </span>
+              <!-- Description -->
+              <span 
+                v-if="subcategory.description" 
+                class="text-xs text-gray-500 mt-1 text-center max-w-[120px]"
+              >
+                {{ subcategory.description }}
+              </span>
             </button>
           </div>
         </div>
@@ -82,44 +108,124 @@ const categories = computed(() => categoriesData.value?.categories || [])
 
 const subcategoriesData = ref(null)
 
-const fetchData = async () => {
+// تحديث دالة جلب البيانات
+const fetchSubCategories = async () => {
   try {
-    if (props.activeCategory === 'all') {
-      const response = await fetch('https://pzsyria.com/api/advertisement/all')
-      const data = await response.json()
-      subcategoriesData.value = data
-    } else {
+    if (props.activeCategory !== 'all') {
       const response = await fetch(`https://pzsyria.com/api/subCategory/${props.activeCategory}/subcategories`)
       const data = await response.json()
       subcategoriesData.value = data
+    } else {
+      subcategoriesData.value = null
     }
   } catch (error) {
-    console.error('Error fetching data:', error)
+    console.error('Error fetching subcategories:', error)
+    subcategoriesData.value = null
   }
 }
 
-// تنفيذ الدالة عند تحميل الصفحة
+// معالجة خطأ تحميل الصورة
+const handleImageError = (event) => {
+  event.target.src = '/images/default-subcategory.png'
+}
+
+// تنفيذ الدالة عند تحميل المكون
 onMounted(() => {
-  fetchData()
+  if (props.activeCategory !== 'all') {
+    fetchSubCategories()
+  }
 })
 
 // مراقبة التغييرات في التصنيف النشط
 watch(() => props.activeCategory, () => {
-  fetchData()
-}, { immediate: true })
+  if (props.activeCategory !== 'all') {
+    fetchSubCategories()
+  } else {
+    subcategoriesData.value = null
+  }
+})
 
-// Get subcategories for active category
+// الحصول على التصنيفات الفرعية للتصنيف النشط
 const activeSubcategories = computed(() => {
-  if (props.activeCategory === 'all') return []
-  return subcategoriesData.value?.subcategories || []
+  if (!subcategoriesData.value?.subCategories) return []
+  return subcategoriesData.value.subCategories
 })
 
 const handleCategoryClick = (category) => {
   emit('update:category', category._id)
-  emit('update:subcategory', '') // Reset subcategory when changing category
+  emit('update:subcategory', '') // إعادة تعيين التصنيف الفرعي عند تغيير التصنيف
 }
 
 const handleSubcategoryClick = (subcategory) => {
   emit('update:subcategory', subcategory._id)
 }
+
+// دالة للحصول على الأحرف الأولى
+const getSubcategoryInitials = (name) => {
+  return name
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase())
+    .join('')
+    .slice(0, 2);
+};
+
+// دالة لتوليد لون ثابت لكل قسم فرعي
+const getSubcategoryColor = (name) => {
+  const colors = [
+    '#2563eb', // أزرق
+    '#059669', // أخضر
+    '#dc2626', // أحمر
+    '#7c3aed', // بنفسجي
+    '#ea580c', // برتقالي
+    '#0891b2', // سماوي
+    '#be185d', // وردي
+    '#854d0e', // بني
+    '#475569', // رمادي
+    '#111827'  // أسود
+  ];
+  
+  const index = name.split('').reduce((acc, char) => {
+    return acc + char.charCodeAt(0);
+  }, 0) % colors.length;
+  
+  return colors[index];
+};
 </script>
+
+<style scoped>
+/* إضافة ظل خفيف للقسم الثابت */
+.sticky {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* تحسين التأثير البصري عند التمرير */
+.sticky::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(0, 0, 0, 0.05), transparent);
+}
+
+/* باقي الأنماط الموجودة */
+.subcategory-button {
+  transition: all 0.2s ease-in-out;
+}
+
+.subcategory-button:hover {
+  transform: translateY(-2px);
+}
+
+.subcategory-icon {
+  transition: background-color 0.3s ease;
+}
+
+.description-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+</style>

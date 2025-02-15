@@ -27,7 +27,7 @@
               </div>
             </FilterSection>
 
-            <FilterSection
+            <!-- <FilterSection
               v-if="tradeMarks.length > 0"
               :title="categoryData?.category?.name || 'الماركة'"
             >
@@ -46,14 +46,14 @@
                   <span>{{ brand }}</span>
                 </label>
               </div>
-            </FilterSection>
+            </FilterSection> -->
 
             <FilterSection title="نطاق السعر">
               <PriceRangeFilter v-model="priceRange" />
             </FilterSection>
 
             <!-- Category-specific filters -->
-            <template>
+            <!-- <template>
               <FilterSection title="الماركة">
                 <div class="space-y-2">
                   <label
@@ -82,7 +82,7 @@
                   </label>
                 </div>
               </FilterSection>
-            </template>
+            </template> -->
 
             <template v-if="activeCategory === 'jobs'">
               <FilterSection title="نوع الوظيفة">
@@ -199,16 +199,16 @@
             </template>
 
             <!-- قسم الماركات -->
-            <template v-if="activeCategory !== 'all' && manufacturers.length > 0">
+            <template v-if="activeCategory !== 'all' && categoryData?.category?.tradeMarks?.length > 0">
               <FilterSection title="الماركة">
                 <div class="grid grid-cols-2 gap-3">
                   <div
-                    v-for="manufacturer in manufacturers"
-                    :key="manufacturer.id"
-                    @click="handleTradeMarkChange(manufacturer.name)"
+                    v-for="(tradeMark, index) in categoryData.category.tradeMarks"
+                    :key="index"
+                    @click="handleTradeMarkChange(tradeMark)"
                     class="relative cursor-pointer rounded-lg border-2 transition-all duration-200"
                     :class="[
-                      selectedTradeMarks.includes(manufacturer.name)
+                      selectedTradeMarks.includes(tradeMark)
                         ? 'border-green-500 bg-green-50'
                         : 'border-gray-200 hover:border-green-200'
                     ]"
@@ -216,18 +216,16 @@
                     <div class="p-3 flex flex-col items-center space-y-2">
                       <!-- صورة الماركة -->
                       <img 
-                        :src="manufacturer.img_url"
-                        :alt="manufacturer.name"
+                        :src="getTradeMarkImage(tradeMark)"
+                        :alt="tradeMark"
                         class="w-12 h-12 object-contain"
-                        @error="handleImageError($event, manufacturer.name)"
+                        @error="handleImageError"
                       />
                       <!-- اسم الماركة -->
-                      <span class="text-sm text-gray-700 text-center capitalize">
-                        {{ manufacturer.name.replace('-', ' ') }}
-                      </span>
+                      <span class="text-sm text-gray-700 text-center">{{ tradeMark }}</span>
                       <!-- علامة الاختيار -->
                       <div 
-                        v-if="selectedTradeMarks.includes(manufacturer.name)"
+                        v-if="selectedTradeMarks.includes(tradeMark)"
                         class="absolute top-2 right-2 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center"
                       >
                         <Icon 
@@ -274,6 +272,17 @@ import {
   filterOptions,
 } from "@/data/mockData";
 import ProductCard from "./ProductCard.vue";
+// استيراد الصور من مجلد assets
+import toyotaLogo from '~/assets/trademarks/toyota.png';
+import hondaLogo from '~/assets/trademarks/honda.png';
+import bmwLogo from '~/assets/trademarks/bmw.png';
+import mercedesLogo from '~/assets/trademarks/mercedes.png';
+import audiLogo from '~/assets/trademarks/audi.png';
+import volkswagenLogo from '~/assets/trademarks/volkswagen.png';
+import nissanLogo from '~/assets/trademarks/nissan.png';
+import hyundaiLogo from '~/assets/trademarks/hyundai.png';
+import kiaLogo from '~/assets/trademarks/kia.png';
+import mazdaLogo from '~/assets/trademarks/mazda.png';
 
 const activeCategory = ref("all");
 const activeSubcategory = ref("");
@@ -304,40 +313,18 @@ const selectedProperties = ref({});
 // إضافة متغير للماركات المحددة
 const selectedTradeMarks = ref([]);
 
-// إضافة كائن لروابط صور الماركات
+// كائن يحتوي على الصور المحلية للماركات
 const tradeMarkImages = {
-  'Toyota': 'https://www.carlogos.org/car-logos/toyota-logo-2020-europe.png',
-  'Honda': 'https://www.carlogos.org/car-logos/honda-logo-2000-full.png',
-  'BMW': 'https://www.carlogos.org/car-logos/bmw-logo-2020-gray.png',
-  'Mercedes': 'https://www.carlogos.org/car-logos/mercedes-benz-logo-2011-full.png',
-  'Audi': 'https://www.carlogos.org/car-logos/audi-logo-2016-full.png',
-  'Volkswagen': 'https://www.carlogos.org/car-logos/volkswagen-logo-2019-full.png',
-  'Nissan': 'https://www.carlogos.org/car-logos/nissan-logo-2020-black.png',
-  'Hyundai': 'https://www.carlogos.org/car-logos/hyundai-logo-2011-full.png',
-  'Kia': 'https://www.carlogos.org/car-logos/kia-logo-2021-full.png',
-  'Mazda': 'https://www.carlogos.org/car-logos/mazda-logo-2018-full.png',
-  // يمكنك إضافة المزيد من الماركات هنا
-};
-
-const manufacturers = ref([]);
-const isLoadingManufacturers = ref(false);
-const manufacturersError = ref(null);
-
-// دالة لجلب بيانات الشركات المصنعة
-const fetchManufacturers = async () => {
-  isLoadingManufacturers.value = true;
-  manufacturersError.value = null;
-  
-  try {
-    const response = await fetch('https://private-anon-941ad1d9f5-carsapi1.apiary-mock.com/manufacturers');
-    const data = await response.json();
-    manufacturers.value = data;
-  } catch (err) {
-    console.error('Failed to fetch manufacturers:', err);
-    manufacturersError.value = 'فشل في تحميل بيانات الشركات المصنعة';
-  } finally {
-    isLoadingManufacturers.value = false;
-  }
+  'Toyota': toyotaLogo,
+  'Honda': hondaLogo,
+  'BMW': bmwLogo,
+  'Mercedes': mercedesLogo,
+  'Audi': audiLogo,
+  'Volkswagen': volkswagenLogo,
+  'Nissan': nissanLogo,
+  'Hyundai': hyundaiLogo,
+  'Kia': kiaLogo,
+  'Mazda': mazdaLogo
 };
 
 // تعديل دالة جلب المنتجات لتشمل بيانات القسم والماركات
@@ -380,7 +367,6 @@ const fetchProducts = async () => {
 // تنفيذ الطلب عند تحميل المكون
 onMounted(() => {
   fetchProducts();
-  fetchManufacturers();
 });
 
 // مراقبة التغييرات في التصنيف والتصنيف الفرعي
@@ -463,7 +449,7 @@ const currentData = computed(() => {
   // تطبيق فلترة الماركات
   if (selectedTradeMarks.value.length > 0) {
     filteredData = filteredData.filter(item =>
-      selectedTradeMarks.value.includes(item.tradeMark?.toLowerCase())
+      selectedTradeMarks.value.includes(item.tradeMark)
     );
   }
 
@@ -529,11 +515,11 @@ const handlePropertyChange = (property, value) => {
   }
 };
 
-// دالة معالجة تغيير الماركة
-const handleTradeMarkChange = (manufacturerName) => {
-  const index = selectedTradeMarks.value.indexOf(manufacturerName);
+// إضافة دالة معالجة تغيير الماركة
+const handleTradeMarkChange = (tradeMark) => {
+  const index = selectedTradeMarks.value.indexOf(tradeMark);
   if (index === -1) {
-    selectedTradeMarks.value.push(manufacturerName);
+    selectedTradeMarks.value.push(tradeMark);
   } else {
     selectedTradeMarks.value.splice(index, 1);
   }
@@ -543,32 +529,21 @@ const handleTradeMarkChange = (manufacturerName) => {
 watch(() => activeCategory.value, () => {
   selectedTradeMarks.value = []; // إعادة تعيين الماركات المحددة عند تغيير الفئة
   fetchProducts();
-  if (activeCategory.value === 'cars') {
-    fetchManufacturers();
-  }
 });
 
 // دالة للحصول على صورة الماركة
 const getTradeMarkImage = (tradeMark) => {
-  // البحث عن الصورة في الكائن
-  const imageUrl = tradeMarkImages[tradeMark];
-  if (imageUrl) {
-    return imageUrl;
-  }
-  // إذا لم يتم العثور على الصورة، ابحث عن صورة عامة من جوجل
-  return `https://logo.clearbit.com/${tradeMark.toLowerCase()}.com`;
+  const normalizedTradeMark = tradeMark.toLowerCase();
+  // البحث عن الصورة في الكائن بغض النظر عن حالة الأحرف
+  const imageKey = Object.keys(tradeMarkImages).find(
+    key => key.toLowerCase() === normalizedTradeMark
+  );
+  return imageKey ? tradeMarkImages[imageKey] : defaultLogo;
 };
 
 // دالة معالجة خطأ تحميل الصورة
-const handleImageError = (event, manufacturerName) => {
-  // محاولة استخدام صورة بديلة
-  event.target.src = `https://logo.clearbit.com/${manufacturerName.toLowerCase()}.com`;
-  
-  // إذا فشلت الصورة البديلة
-  event.target.onerror = () => {
-    event.target.src = '/images/default-car-logo.png';
-    event.target.onerror = null;
-  };
+const handleImageError = (event) => {
+  event.target.src = defaultLogo;
 };
 </script>
 
@@ -591,17 +566,5 @@ const handleImageError = (event, manufacturerName) => {
   max-width: 100%;
   height: auto;
   object-fit: contain;
-}
-
-.capitalize {
-  text-transform: capitalize;
-}
-
-.manufacturer-logo {
-  transition: transform 0.2s ease;
-}
-
-.manufacturer-logo:hover {
-  transform: scale(1.05);
 }
 </style>

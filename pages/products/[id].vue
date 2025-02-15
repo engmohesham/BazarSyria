@@ -197,6 +197,7 @@ const error = ref(null);
 
 // Add this near the top of the script setup section
 const userId = ref(localStorage.getItem('userId'));
+console.log(userId.value)
 
 // Fetch ad data
 const fetchAdData = async () => {
