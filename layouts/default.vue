@@ -47,9 +47,15 @@ onMounted(() => {
 
   window.addEventListener('invalid-token', handleInvalidToken)
   
-  // Clean up event listener
+  // إضافة مستمعي الأحداث للتسجيل
+  window.addEventListener('open-login-modal', openLogin);
+  window.addEventListener('open-register-modal', openRegister);
+
+  // تنظيف المستمعين
   onUnmounted(() => {
     window.removeEventListener('invalid-token', handleInvalidToken)
+    window.removeEventListener('open-login-modal', openLogin);
+    window.removeEventListener('open-register-modal', openRegister);
   })
 })
 

@@ -14,21 +14,20 @@
         :subNav="productData.subCategoryId"
         :current="productData.name"
       />
+      
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <!-- Main Content -->
+        <!-- Main Content (Not Blurred) -->
         <div class="md:col-span-2">
           <div
             v-if="productData"
             class="bg-white rounded-lg shadow-lg overflow-hidden"
           >
-            <!-- Image Gallery Component -->
+            <!-- Product content remains visible -->
             <ProductGallery
               :mainImage="productData.image"
               :gallery="productData.gallery"
               :title="productData.name"
             />
-
-            <!-- Product Header Component -->
             <ProductHeader
               :title="productData.name"
               :price="productData.price"
@@ -36,9 +35,6 @@
               :timeAgo="productData.timeAgo"
               :adNumber="productData.advertisement?._id"
             />
-
-            <!-- Product Specifications Component -->
-            <!-- <ProductSpecifications :specifications="specifications" /> -->
             <!-- المواصفات البارزة -->
             <div 
               v-if="productData.advertisement?.specialProperties?.length" 
@@ -135,12 +131,45 @@
             </div>
           </div>
         </div>
-        <!-- Left Sidebar -->
+        
+        <!-- User Profile Section with Blur -->
         <div class="md:col-span-1 relative">
-          <UserProfile 
-            v-if="productData.advertisement?.creator"
-            :creatorId="userId" 
-          />
+          <!-- Blur Overlay for User Section -->
+          <div 
+            v-if="!userId" 
+            class="absolute inset-0 bg-white/60 backdrop-blur-sm z-10 flex flex-col items-center justify-center rounded-lg"
+          >
+            <div class="text-center p-6">
+              <h3 class="text-lg font-bold text-gray-800 mb-3">
+                معلومات البائع
+              </h3>
+              <p class="text-gray-600 mb-4">
+                سجل دخول للتواصل مع البائع
+              </p>
+              <div class="flex gap-3 justify-center">
+                <button
+                  @click="handleLoginClick"
+                  class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
+                >
+                  تسجيل الدخول
+                </button>
+                <button
+                  @click="handleRegisterClick"
+                  class="px-4 py-2 border border-green-600 text-green-600 rounded-lg hover:bg-green-50 transition-colors text-sm"
+                >
+                  إنشاء حساب
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- User Profile Component -->
+          <div :class="{ 'filter blur-sm': !userId }">
+            <UserProfile 
+              v-if="productData.advertisement?.creator"
+              :creatorId="userId" 
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -195,9 +224,13 @@ const subCategories = ref([]);
 const isLoading = ref(true);
 const error = ref(null);
 
-// Add this near the top of the script setup section
-const userId = ref(localStorage.getItem('userId'));
-console.log(userId.value)
+// تأكد من أن localStorage متاح فقط في جانب العميل
+const userId = ref(null);
+
+onMounted(() => {
+  // التحقق من localStorage فقط بعد تحميل المكون
+  userId.value = localStorage.getItem('userId');
+});
 
 // Fetch ad data
 const fetchAdData = async () => {
@@ -347,4 +380,38 @@ onMounted(() => {
   }
 });
 
+// إضافة emit events
+const emit = defineEmits(['open-login', 'open-register']);
+
+// تحديث أزرار تسجيل الدخول
+const handleLoginClick = () => {
+  window.dispatchEvent(new CustomEvent('open-login-modal'));
+};
+
+const handleRegisterClick = () => {
+  window.dispatchEvent(new CustomEvent('open-register-modal'));
+};
 </script>
+
+<style scoped>
+/* تأثيرات انتقالية سلسة */
+.backdrop-blur-sm {
+  transition: all 0.3s ease-in-out;
+}
+
+/* تحسين مظهر الأزرار */
+button {
+  transition: all 0.2s ease-in-out;
+}
+
+button:active {
+  transform: scale(0.98);
+}
+
+/* تحسين مظهر قسم المستخدم */
+.user-section {
+  position: relative;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+</style>

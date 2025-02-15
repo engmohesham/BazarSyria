@@ -35,48 +35,26 @@
       </div>
     </div>
 
-    <!-- Subcategories with Icons -->
+    <!-- Subcategories with New Design -->
     <div v-if="activeSubcategories.length" class="bg-white border-b border-gray-100">
       <div class="container mx-auto px-4">
-        <div class="overflow-x-auto" dir="rtl">
-          <div class="flex space-x-reverse space-x-4 py-2 min-w-max">
+        <div class="overflow-x-auto scrollbar-hide" dir="rtl">
+          <div class="flex space-x-reverse space-x-6 py-3 min-w-max">
             <button
               v-for="subcategory in activeSubcategories"
               :key="subcategory._id"
               @click="handleSubcategoryClick(subcategory)"
-              :class="[
-                'flex flex-col items-center px-4 py-2 rounded-lg transition-colors',
-                subcategory._id === activeSubcategory
-                  ? 'text-green-600'
-                  : 'text-gray-700 hover:text-green-500'
-              ]"
+              class="group whitespace-nowrap px-2"
             >
-              <!-- Icon with Fallback -->
-              <div class="w-16 h-16 mb-2 rounded-lg bg-gray-50 flex items-center justify-center">
-                <div 
-                  class="w-12 h-12 rounded-full flex items-center justify-center"
-                  :style="{ backgroundColor: getSubcategoryColor(subcategory.name) }"
-                >
-                  <span v-if="!subcategory.icon" class="text-xl font-bold text-white">
-                    {{ getSubcategoryInitials(subcategory.name) }}
-                  </span>
-                  <Icon 
-                    v-else
-                    name="ph:car-simple" 
-                    class="w-8 h-8 text-white"
-                  />
-                </div>
-              </div>
-              <!-- Name -->
-              <span class="text-sm font-medium whitespace-nowrap">
-                {{ subcategory.name }}
-              </span>
-              <!-- Description -->
               <span 
-                v-if="subcategory.description" 
-                class="text-xs text-gray-500 mt-1 text-center max-w-[120px]"
+                class="text-sm transition-colors"
+                :class="[
+                  subcategory._id === activeSubcategory
+                    ? 'text-green-600 font-semibold'
+                    : 'text-gray-700 hover:text-green-600'
+                ]"
               >
-                {{ subcategory.description }}
+                {{ subcategory.name }}
               </span>
             </button>
           </div>
@@ -193,9 +171,28 @@ const getSubcategoryColor = (name) => {
 </script>
 
 <style scoped>
-/* إضافة ظل خفيف للقسم الثابت */
 .sticky {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* تخصيص شريط التمرير */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;     /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari and Opera */
+}
+
+/* تأثير التحويم */
+.group:hover span {
+  color: #059669;
+}
+
+/* تأثير النقر */
+.group:active {
+  transform: scale(0.98);
 }
 
 /* تحسين التأثير البصري عند التمرير */
@@ -209,23 +206,10 @@ const getSubcategoryColor = (name) => {
   background: linear-gradient(to right, transparent, rgba(0, 0, 0, 0.05), transparent);
 }
 
-/* باقي الأنماط الموجودة */
-.subcategory-button {
-  transition: all 0.2s ease-in-out;
-}
-
-.subcategory-button:hover {
-  transform: translateY(-2px);
-}
-
-.subcategory-icon {
-  transition: background-color 0.3s ease;
-}
-
-.description-text {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+/* تنسيق المسافات */
+.space-x-reverse > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-x-reverse: 1;
+  margin-right: calc(1.5rem * var(--tw-space-x-reverse));
+  margin-left: calc(1.5rem * calc(1 - var(--tw-space-x-reverse)));
 }
 </style>
