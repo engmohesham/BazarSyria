@@ -2,6 +2,7 @@
   <div dir="rtl">
     <NuxtLayout>
       <NuxtPage />
+      <Notification />
     </NuxtLayout>
   </div>
 </template>

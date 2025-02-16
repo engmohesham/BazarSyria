@@ -10,6 +10,9 @@ const error = ref("");
 const success = ref("");
 const currentUser = ref(null);
 const isLoading = ref(true);
+const email = ref("");
+const resetPasswordEmail = ref("");
+const resetPasswordSuccess = ref(false);
 
 const { updateSettings, updatePassword, updateVerification, getProfile } = useServices();
 const router = useRouter();
@@ -29,6 +32,7 @@ const fetchProfileData = async () => {
       currentUser.value = data.user;
       // تحديث طريقة التواصل المختارة
       selectedMethod.value = data.user.contactMethod || "الثاني";
+      email.value = data.user.email || "";
     }
   } catch (err) {
     console.error("Error fetching profile data:", err);
@@ -121,6 +125,48 @@ const handleVerification = (type) => {
   }
 };
 
+// دالة إعادة تعيين كلمة المرور
+const handleResetPassword = async () => {
+  error.value = "";
+  success.value = "";
+  
+  try {
+    const token = localStorage.getItem('session-token');
+    if (!token) {
+      throw new Error('لم يتم العثور على جلسة تسجيل الدخول');
+    }
+
+    const response = await fetch(`https://pzsyria.com/api/auth/password/reset/${token}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        email: email.value,
+        password: newPassword.value,
+        confirmPassword: confirmPassword.value
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'حدث خطأ في إعادة تعيين كلمة المرور');
+    }
+
+    success.value = "تم تغيير كلمة المرور بنجاح";
+    resetPasswordSuccess.value = true;
+    
+    // إعادة تعيين حقول كلمة المرور
+    newPassword.value = "";
+    confirmPassword.value = "";
+  } catch (err) {
+    console.error('Reset password error:', err);
+    error.value = err.message || "فشل في تغيير كلمة المرور";
+  }
+};
+
 // استخدام watchEffect لمراقبة التغييرات والتحميل الأولي
 watchEffect(() => {
   if (process.client) {
@@ -164,7 +210,7 @@ onMounted(() => {
           </div>
 
           <!-- طريقة التواصل -->
-          <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+          <!-- <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
             <h2 class="text-lg font-semibold mb-4">طريقة التواصل</h2>
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
               <button
@@ -186,12 +232,31 @@ onMounted(() => {
                 {{ method }}
               </button>
             </div>
+          </div> -->
+
+          <!-- إضافة قسم البريد الإلكتروني -->
+          <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+            <h2 class="text-lg font-semibold mb-4">البريد الإلكتروني</h2>
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">
+                  البريد الإلكتروني
+                </label>
+                <input
+                  v-model="email"
+                  type="email"
+                  class="w-full border rounded-lg py-2 px-3"
+                  placeholder="أدخل بريدك الإلكتروني"
+                  :disabled="true"
+                />
+              </div>
+            </div>
           </div>
 
           <!-- إنشاء كلمة مرور -->
           <div class="bg-white rounded-lg shadow-sm p-6">
-            <h2 class="text-lg font-semibold mb-4">إنشاء كلمة مرور</h2>
-            <form @submit.prevent="handlePasswordChange" class="space-y-4">
+            <h2 class="text-lg font-semibold mb-4">تغيير كلمة المرور</h2>
+            <form @submit.prevent="handleResetPassword" class="space-y-4">
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">
                   كلمة مرور جديدة
@@ -227,8 +292,9 @@ onMounted(() => {
               <button
                 type="submit"
                 class="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700"
+                :disabled="!newPassword || !confirmPassword"
               >
-                حفظ التغييرات
+                تغيير كلمة المرور
               </button>
             </form>
           </div>

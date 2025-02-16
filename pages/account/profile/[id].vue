@@ -9,6 +9,10 @@ const router = useRouter();
 const { getUserProfile, getUserAds, reportUser } = useServices();
 const { notification, showNotification } = useNotification();
 
+definePageMeta({
+  middleware: ["auth"]
+});
+
 // State
 const profileData = ref(null);
 const isLoading = ref(true);
@@ -19,11 +23,21 @@ const reportReason = ref("");
 const reportAttachment = ref(null);
 const isSubmitting = ref(false);
 
+// Add new refs for success popup
+const showSuccessPopup = ref(false);
+const successMessage = ref('');
+
 // Fetch user profile data
 const fetchProfileData = async () => {
   isLoading.value = true;
   try {
     const { data, error: apiError } = await getUserProfile(route.params.id);
+
+    const token = localStorage.getItem("session-token");
+    if (!token) {
+      router.push("/");
+      return;
+    }
 
     if (apiError) {
       throw new Error("فشل في تحميل بيانات الملف الشخصي");
@@ -75,10 +89,18 @@ const handleReport = async () => {
 
     if (error) throw error;
 
-    showNotification('تم إرسال البلاغ بنجاح', 'success');
     showReportModal.value = false;
+    successMessage.value = 'تم إرسال البلاغ بنجاح. سيتم مراجعته من قبل فريق الإدارة.';
+    showSuccessPopup.value = true;
+    
+    // Reset form
     reportReason.value = '';
     reportAttachment.value = null;
+    
+    // Hide success popup after 3 seconds
+    setTimeout(() => {
+      showSuccessPopup.value = false;
+    }, 3000);
   } catch (err) {
     showNotification('حدث خطأ أثناء إرسال البلاغ', 'error');
   } finally {
@@ -323,5 +345,57 @@ watchEffect(() => {
         </div>
       </div>
     </div>
+
+    <!-- Success Popup -->
+    <Transition
+      enter-active-class="transition duration-200 ease-out"
+      enter-from-class="transform scale-95 opacity-0"
+      enter-to-class="transform scale-100 opacity-100"
+      leave-active-class="transition duration-200 ease-in"
+      leave-from-class="transform scale-100 opacity-100"
+      leave-to-class="transform scale-95 opacity-0"
+    >
+      <div
+        v-if="showSuccessPopup"
+        class="fixed inset-0 flex items-center justify-center z-50"
+      >
+        <div class="fixed inset-0 bg-black/50" @click="showSuccessPopup = false"></div>
+        <div class="relative bg-white rounded-lg p-6 shadow-xl max-w-md w-full mx-4">
+          <div class="flex items-center justify-center mb-4">
+            <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
+              <svg
+                class="w-6 h-6 text-green-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
+            </div>
+          </div>
+          <h3 class="text-xl font-semibold text-center mb-2">تم الإبلاغ بنجاح</h3>
+          <p class="text-gray-600 text-center">{{ successMessage }}</p>
+          <div class="mt-6 text-center">
+            <button
+              @click="showSuccessPopup = false"
+              class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            >
+              حسناً
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
   </div>
 </template>
+
+<style scoped>
+.fixed {
+  direction: rtl;
+}
+</style>

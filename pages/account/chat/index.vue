@@ -10,11 +10,11 @@
       <div class="p-4 border-b">
         <div class="flex items-center gap-5">
           <button @click="goBack" class="text-gray-600">
-            <Icon name="heroicons:arrow-right" class="w-5 h-5" />
+            <PhArrowRight class="w-5 h-5" />
           </button>
           <h2 class="font-semibold text-lg">المحادثات</h2>
           <!-- <button @click="showNewChatModal = true">
-            <Icon name="heroicons:plus" class="w-5 h-5" />
+            <PhPlus class="w-5 h-5" />
           </button> -->
         </div>
       </div>
@@ -22,8 +22,12 @@
         <div
           v-for="chat in chats"
           :key="chat._id"
-          class="p-4 border-b hover:bg-gray-50 cursor-pointer relative"
-          :class="{ 'bg-gray-50': selectedChat?._id === chat._id }"
+          class="p-4 border-b hover:bg-gray-50 cursor-pointer relative transition-all duration-200"
+          :class="{
+            'bg-gray-50': selectedChat?._id === chat._id,
+            'bg-green-50': chat.unreadCount > 0 && selectedChat?._id !== chat._id,
+            'hover:bg-green-100': chat.unreadCount > 0
+          }"
           @click="selectChat(chat)"
         >
           <div class="flex items-center gap-3">
@@ -32,23 +36,34 @@
               <!-- مؤشر الرسائل غير المقروءة -->
               <div
                 v-if="chat.unreadCount > 0"
-                class="absolute -top-1 -right-1 bg-green-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
+                class="absolute -top-1 -right-1 bg-green-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs animate-pulse"
               >
                 {{ chat.unreadCount }}
               </div>
             </div>
             <div class="flex-1">
               <div class="flex justify-between items-start">
-                <h3 class="font-medium">{{ getChatName(chat) }}</h3>
-                <span class="text-xs text-gray-500">{{
-                  formatTime(chat.lastMessageTime)
-                }}</span>
+                <h3 
+                  class="font-medium"
+                  :class="{ 'text-green-700 font-semibold': chat.unreadCount > 0 }"
+                >
+                  {{ getChatName(chat) }}
+                </h3>
+                <span 
+                  class="text-xs"
+                  :class="chat.unreadCount > 0 ? 'text-green-600' : 'text-gray-500'"
+                >
+                  {{ formatTime(chat.lastMessageTime) }}
+                </span>
               </div>
               <p 
                 class="text-sm truncate mt-1"
-                :class="chat.unreadCount > 0 ? 'text-gray-900 font-medium' : 'text-gray-500'"
+                :class="{
+                  'text-gray-900 font-medium': chat.unreadCount > 0,
+                  'text-gray-500': !chat.unreadCount
+                }"
               >
-                {{ chat.lastMessageContent || 'click to start chat' }}
+                {{ chat.lastMessageContent || 'انقر للبدء بالمحادثة' }}
               </p>
             </div>
           </div>
@@ -72,7 +87,7 @@
             @click="closeChat" 
             class="text-gray-600 md:hidden"
           >
-            <Icon name="heroicons:arrow-right" class="w-5 h-5" />
+            <PhArrowRight class="w-5 h-5" />
           </button>
           <div class="flex items-center gap-2">
             <img
@@ -88,9 +103,9 @@
           </div>
         </div>
         <div class="flex items-center gap-4">
-          <button><Icon name="heroicons:arrow-path" class="w-5 h-5" /></button>
+          <button><PhArrowClockwise class="w-5 h-5" /></button>
           <button>
-            <Icon name="heroicons:ellipsis-vertical" class="w-5 h-5" />
+            <PhDotsThreeVertical class="w-5 h-5" />
           </button>
         </div>
       </div>
@@ -119,7 +134,7 @@
                 <span class="text-xs text-gray-500 ml-1">{{
                   formatTime(message.createdAt)
                 }}</span>
-                <Icon name="heroicons:check" class="w-3 h-3 text-gray-400" />
+                <PhCheck class="w-3 h-3 text-gray-400" />
               </div>
             </div>
           </div>
@@ -145,14 +160,6 @@
       <!-- Message Input -->
       <div class="bg-white p-3 border-t">
         <div class="flex items-center gap-3">
-          <div class="flex items-center gap-2">
-            <button class="text-gray-400">
-              <Icon name="heroicons:photo" class="w-6 h-6" />
-            </button>
-            <button class="text-gray-400">
-              <Icon name="heroicons:paper-clip" class="w-6 h-6" />
-            </button>
-          </div>
           <input
             v-model="newMessage"
             type="text"
@@ -165,7 +172,7 @@
             class="bg-green-600 text-white rounded-full p-2 flex justify-center items-center cursor hover:bg-green-800 ease-linear duration-150"
             :disabled="!newMessage.trim()"
           >
-            <Icon name="heroicons:paper-airplane" class="w-5 h-5" />
+            <PhPaperPlaneRight class="w-5 h-5" />
           </button>
         </div>
       </div>
@@ -177,10 +184,7 @@
       class="hidden md:flex flex-1 items-center justify-center bg-gray-50"
     >
       <div class="text-center text-gray-500">
-        <Icon
-          name="heroicons:chat-bubble-left-right"
-          class="w-16 h-16 mx-auto mb-4"
-        />
+        <PhChatCircle class="w-16 h-16 mx-auto mb-4" />
         <p class="text-lg">اختر محادثة للبدء</p>
       </div>
     </div>
@@ -188,13 +192,13 @@
     <!-- New Chat Modal -->
     <div
       v-if="showNewChatModal"
-      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 w-full"
     >
       <div class="bg-white rounded-lg p-6 w-full max-w-md mx-auto">
         <div class="flex justify-between items-center mb-4">
           <h3 class="text-lg font-semibold">محادثة جديدة</h3>
           <button @click="showNewChatModal = false">
-            <Icon name="heroicons:x-mark" class="w-5 h-5" />
+            <PhXCircle class="w-5 h-5" />
           </button>
         </div>
         <div class="mb-4">
@@ -249,6 +253,18 @@ import io from "socket.io-client";
 import { useServices } from "@/composables/useServices";
 import { useRouter } from "vue-router";
 import user from "@/assets/user.png";
+import {
+  PhArrowRight,
+  PhPlus,
+  PhCheck,
+  PhPaperPlaneRight,
+  PhCamera,
+  PhPaperclip,
+  PhArrowClockwise,
+  PhDotsThreeVertical,
+  PhChatCircle,
+  PhXCircle
+} from '@phosphor-icons/vue';
 
 const {
   getProfile,
@@ -456,20 +472,29 @@ const initializeSocket = () => {
 
     // تسجيل معالج استقبال الرسائل
     socket.value.on("receiveMessage", async (message) => {
-      // console.log("🚀 Socket Message Received:", message);
-      console.log("🚀 Socket Message Received:");
+      console.log("🚀 Socket Message Received:", message);
 
-      // تحديث عدد الرسائل غير المقروءة
-      updateUnreadCount(message.chatId);
+      // تحديث عدد الرسائل غير المقروءة وآخر رسالة
+      const chatToUpdate = chats.value.find(chat => chat._id === message.chatId);
+      if (chatToUpdate) {
+        chatToUpdate.lastMessageContent = message.content;
+        chatToUpdate.lastMessageTime = new Date().toISOString();
+        
+        if (message.chatId !== selectedChat.value?._id) {
+          chatToUpdate.unreadCount = (chatToUpdate.unreadCount || 0) + 1;
+        }
+      }
 
-      if (message?.chatId === selectedChat.value?._id) {
-        await Promise.all([
-          refreshMessages(),
-          refreshChats()
-        ]);
-      } else {
-        // إذا كانت الرسالة لمحادثة أخرى، نحدث فقط قائمة المحادثات
-        await refreshChats();
+      // إعادة ترتيب المحادثات
+      chats.value.sort((a, b) => {
+        if (a.unreadCount && !b.unreadCount) return -1;
+        if (!a.unreadCount && b.unreadCount) return 1;
+        return new Date(b.lastMessageTime || b.updatedAt) - new Date(a.lastMessageTime || a.updatedAt);
+      });
+
+      // تحديث الرسائل إذا كانت المحادثة مفتوحة
+      if (message.chatId === selectedChat.value?._id) {
+        await refreshMessages();
       }
     });
   } catch (error) {
@@ -502,33 +527,76 @@ const sendNewMessage = async () => {
   const messageContent = newMessage.value;
 
   try {
-    // إرسال الرسالة مباشرة
+    // تحديث المحادثة مباشرة مع الرسالة الجديدة
+    const chatToUpdate = chats.value.find(chat => chat._id === selectedChat.value._id);
+    if (chatToUpdate) {
+      chatToUpdate.lastMessageContent = messageContent;
+      chatToUpdate.lastMessageTime = new Date().toISOString();
+    }
+
+    // إعادة ترتيب المحادثات
+    chats.value.sort((a, b) => {
+      return new Date(b.lastMessageTime || b.updatedAt) - new Date(a.lastMessageTime || a.updatedAt);
+    });
+
+    // إضافة الرسالة مؤقتاً للعرض
+    const tempMessage = {
+      _id: Date.now().toString(),
+      content: messageContent,
+      sender: { _id: currentUserId },
+      createdAt: new Date().toISOString(),
+      chatId: selectedChat.value._id,
+      pending: true
+    };
+
+    messages.value.push(tempMessage);
+    newMessage.value = "";
+    scrollToBottom();
+
+    // إرسال الرسالة عبر Socket
     socket.value.emit("sendMessage", {
       message: messageContent,
       chatId: selectedChat.value._id,
       senderId: currentUserId,
     });
     
-    newMessage.value = "";
-
-    // تحديث المحادثات والرسائل
-    await Promise.all([
-      refreshMessages(),
-      refreshChats(),
-      selectChat(selectedChat.value)
-    ]);
+    await refreshMessages();
 
   } catch (err) {
     console.error("Error in sendNewMessage:", err);
   }
 };
 
-// إضافة دالة تحديث المحادثات
+// تحديث دالة تحديث المحادثات
 const refreshChats = async () => {
   try {
     const { data: chatsData, error: chatsError } = await getUserChats();
     if (chatsData && !chatsError) {
-      chats.value = chatsData;
+      // حفظ حالة الرسائل غير المقروءة والرسائل الأخيرة للمحادثات الحالية
+      const currentStates = {};
+      chats.value.forEach(chat => {
+        currentStates[chat._id] = {
+          unreadCount: chat.unreadCount || 0,
+          lastMessageContent: chat.lastMessageContent,
+          lastMessageTime: chat.lastMessageTime
+        };
+      });
+
+      // دمج البيانات الجديدة مع الحالة الحالية
+      chats.value = chatsData.map(chat => ({
+        ...chat,
+        unreadCount: chat._id !== selectedChat.value?._id ? 
+          (currentStates[chat._id]?.unreadCount || chat.unreadCount || 0) : 0,
+        lastMessageContent: chat.lastMessageContent || currentStates[chat._id]?.lastMessageContent,
+        lastMessageTime: chat.lastMessageTime || currentStates[chat._id]?.lastMessageTime || chat.updatedAt
+      }));
+
+      // ترتيب المحادثات
+      chats.value.sort((a, b) => {
+        if (a.unreadCount && !b.unreadCount) return -1;
+        if (!a.unreadCount && b.unreadCount) return 1;
+        return new Date(b.lastMessageTime || b.updatedAt) - new Date(a.lastMessageTime || a.updatedAt);
+      });
     }
   } catch (err) {
     console.error('Error refreshing chats:', err);
@@ -581,15 +649,12 @@ const refreshMessages = async () => {
 
 // تحديث دالة اختيار المحادثة
 const selectChat = async (chat) => {
-  selectedChat.value = chat;
-  messages.value = [];
-
   try {
-    await markChatAsRead(chat._id);
-    await Promise.all([
-      refreshMessages(),
-      refreshChats()
-    ]);
+    // نحفظ المحادثة المحددة قبل تحديث الرسائل
+    selectedChat.value = chat;
+    messages.value = [];
+
+    await refreshMessages();
 
     if (socket.value?.connected) {
       socket.value.emit("joinChat", {
@@ -597,37 +662,63 @@ const selectChat = async (chat) => {
         userId: currentUserId.value
       });
     }
+
+    // نضع علامة مقروء فقط عندما يتم النقر على المحادثة يدوياً
+    if (chat.unreadCount > 0) {
+      markChatAsRead(chat._id);
+    }
   } catch (err) {
     console.error('Error in selectChat:', err);
   }
 };
 
-// دالة تحديث عدد الرسائل غير المقروءة
+// تحديث دالة تحديث عدد الرسائل غير المقروءة
 const updateUnreadCount = (chatId) => {
   const updatedChats = chats.value.map((chat) => {
     if (chat._id === chatId && chat._id !== selectedChat.value?._id) {
+      const newUnreadCount = (chat.unreadCount || 0) + 1;
       return {
         ...chat,
-        unreadCount: (chat.unreadCount || 0) + 1
+        unreadCount: newUnreadCount,
+        lastMessageTime: new Date().toISOString()
       };
     }
     return chat;
   });
-  chats.value = updatedChats;
+  
+  chats.value = updatedChats.sort((a, b) => {
+    if (a.unreadCount && !b.unreadCount) return -1;
+    if (!a.unreadCount && b.unreadCount) return 1;
+    return new Date(b.lastMessageTime || b.updatedAt) - new Date(a.lastMessageTime || a.updatedAt);
+  });
 };
 
-// دالة وضع علامة "مقروء" على المحادثة
-const markChatAsRead = async (chatId) => {
+// تحديث دالة وضع علامة "مقروء" على المحادثة - frontend only
+const markChatAsRead = (chatId) => {
   try {
-    // هنا يجب إضافة طلب API لتحديث حالة القراءة في الباكند
-    await fetch(`${API_BASE_URL}/chats/${chatId}/read`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('session-token')}`
+    // تحديث حالة المحادثات محلياً
+    const updatedChats = chats.value.map((chat) => {
+      if (chat._id === chatId) {
+        return {
+          ...chat,
+          unreadCount: 0,
+          lastMessageTime: new Date().toISOString()
+        };
       }
+      return chat;
     });
+
+    // إعادة ترتيب المحادثات بناءً على وقت آخر رسالة والرسائل غير المقروءة
+    chats.value = updatedChats.sort((a, b) => {
+      // المحادثات غير المقروءة أولاً
+      if (a.unreadCount && !b.unreadCount) return -1;
+      if (!a.unreadCount && b.unreadCount) return 1;
+      // ثم بناءً على وقت آخر رسالة
+      return new Date(b.lastMessageTime) - new Date(a.lastMessageTime);
+    });
+
   } catch (err) {
-    console.error('Error marking chat as read:', err);
+    console.error('Error updating chat read status:', err);
   }
 };
 
@@ -638,8 +729,16 @@ const fetchChats = async () => {
     if (data) {
       chats.value = data.map(chat => ({
         ...chat,
-        unreadCount: chat.unreadCount || 0
+        unreadCount: chat.unreadCount || 0,
+        lastMessageTime: chat.lastMessageTime || chat.updatedAt
       }));
+
+      // ترتيب المحادثات
+      chats.value.sort((a, b) => {
+        if (a.unreadCount && !b.unreadCount) return -1;
+        if (!a.unreadCount && b.unreadCount) return 1;
+        return new Date(b.lastMessageTime || b.updatedAt) - new Date(a.lastMessageTime || a.updatedAt);
+      });
     }
   } catch (err) {
     console.error('Error fetching chats:', err);
@@ -843,3 +942,4 @@ definePageMeta({
   }
 }
 </style>
+

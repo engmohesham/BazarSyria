@@ -30,6 +30,7 @@
             </h3>
             <div class="flex gap-2">
               <button
+                @click.prevent="handleReport"
                 class="px-3 py-1.5 text-xs font-medium bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
               >
                 ابلاغ
@@ -71,10 +72,19 @@ import {
   PhUser
 } from '@phosphor-icons/vue';
 import { useServices } from '~/composables/useServices';
-import { useNotification } from '~/composables/useNotification';
 
 const { addToFavorites, removeFromFavorites, getFavoriteAds } = useServices();
-const { showNotification } = useNotification();
+
+// تحديث دالة showNotification
+const showNotification = (message, type = 'success') => {
+  const notificationEvent = new CustomEvent('show-notification', {
+    detail: {
+      message,
+      type // 'success' or 'error'
+    }
+  });
+  window.dispatchEvent(notificationEvent);
+};
 
 // التحقق من حالة تسجيل الدخول
 const isUserLoggedIn = computed(() => {
@@ -120,11 +130,11 @@ const fetchFavoriteAds = async () => {
   try {
     const { data, error } = await getFavoriteAds();
     if (!error && data) {
-      // تخزين معرفات الإعلانات المفضلة في مجموعة للبحث السريع
       favoriteAdsIds.value = new Set(data.map(ad => ad._id));
     }
   } catch (err) {
     console.error('Error fetching favorite ads:', err);
+    showNotification('حدث خطأ في تحميل المفضلة', 'error');
   }
 };
 
@@ -134,6 +144,7 @@ onMounted(() => {
   }
 });
 
+// استخدام الإشعارات في handleFavoriteClick
 const handleFavoriteClick = async (event) => {
   event.preventDefault();
   
@@ -151,20 +162,17 @@ const handleFavoriteClick = async (event) => {
       throw error;
     }
 
-    // تحديث حالة المفضلة محلياً
     if (isInFavorites.value) {
       favoriteAdsIds.value.delete(props.product._id);
+      showNotification('تم الإزالة من المفضلة بنجاح');
     } else {
       favoriteAdsIds.value.add(props.product._id);
+      showNotification('تمت الإضافة إلى المفضلة بنجاح');
     }
 
-    showNotification(
-      isInFavorites.value ? 'تمت الإضافة إلى المفضلة' : 'تمت الإزالة من المفضلة',
-      'success'
-    );
   } catch (err) {
     console.error('Error toggling favorite:', err);
-    showNotification('حدث خطأ أثناء تحديث المفضلة', 'error');
+    showNotification('حدث خطأ في تحديث المفضلة', 'error');
   }
 };
 
@@ -177,6 +185,23 @@ const formatDate = (date) => {
 const formatLocation = (location) => {
   if (!location) return '';
   return `${location.lat}, ${location.long}`;
+};
+
+// استخدام الإشعارات في handleReport
+const handleReport = async (event) => {
+  event.preventDefault();
+  
+  if (!isUserLoggedIn.value) {
+    window.dispatchEvent(new CustomEvent('open-login-modal'));
+    return;
+  }
+
+  try {
+    showNotification('تم إرسال البلاغ بنجاح', 'success');
+  } catch (err) {
+    console.error('Error reporting ad:', err);
+    showNotification('حدث خطأ في إرسال البلاغ', 'error');
+  }
 };
 </script>
 

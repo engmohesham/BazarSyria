@@ -7,7 +7,8 @@ import {
   PhEnvelope, 
   PhLock,
   PhXCircle,
-  PhCheckCircle
+  PhCheckCircle,
+  PhGoogleLogo
 } from "@phosphor-icons/vue";
 
 const router = useRouter();
@@ -149,6 +150,10 @@ const handleInput = (event) => {
       password.value = value;
       break;
   }
+};
+
+const handleGoogleLogin = () => {
+  window.location.href = 'https://pzsyria.com/api/auth/google';
 };
 
 defineExpose({ openModal, closeModal });
@@ -329,6 +334,16 @@ import logo from "~/assets/logo.png";
         >
           <span v-if="loading">جاري التحميل...</span>
           <span v-else>إنشاء حساب</span>
+        </button>
+
+        <!-- أضف زر تسجيل الدخول بجوجل -->
+        <button
+          @click="handleGoogleLogin"
+          type="button"
+          class="w-full border border-gray-300 bg-white text-gray-700 rounded-lg py-3 px-4 hover:bg-gray-50 font-medium mb-4 flex items-center justify-center gap-2"
+        >
+          <PhGoogleLogo :size="20" class="text-red-500" weight="fill" />
+          <span>تسجيل الدخول باستخدام جوجل</span>
         </button>
 
         <!-- Login Link -->

@@ -41,14 +41,14 @@
       <!-- Navigation Arrows -->
       <button 
         @click="prevSlide"
-        class="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white p-2 rounded-full shadow-lg transition-colors z-10"
+        class="absolute left-4 top-1/2 bg-white/80 hover:bg-white p-2 rounded-full shadow-lg transition-colors z-10"
       >
         <PhCaretLeft class="w-6 h-6 text-green-600" weight="bold" />
       </button>
       
       <button 
         @click="nextSlide"
-        class="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white p-2 rounded-full shadow-lg transition-colors z-10"
+        class="absolute right-4 top-1/2 bg-white/80 hover:bg-white p-2 rounded-full shadow-lg transition-colors z-10"
       >
         <PhCaretRight class="w-6 h-6 text-green-600" weight="bold" />
       </button>

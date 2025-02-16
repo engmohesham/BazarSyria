@@ -3,7 +3,8 @@ import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useServices } from '~/composables/useServices'
 import { onMounted, onUnmounted } from 'vue'
-import { PhWarning, PhCheckCircle } from '@phosphor-icons/vue'
+import { PhWarning, PhCheckCircle, PhGoogleLogo } from '@phosphor-icons/vue'
+import ForgotPassword from './ForgotPassword.vue'
 
 const router = useRouter()
 const { login } = useServices()
@@ -75,9 +76,9 @@ const handleLogin = async () => {
   }
 }
 
-const handleGoogleLogin = async () => {
-  // Implement Google login logic
-}
+const handleGoogleLogin = () => {
+  window.location.href = 'https://pzsyria.com/api/auth/google';
+};
 
 const handleFacebookLogin = async () => {
   // Implement Facebook login logic
@@ -88,6 +89,16 @@ const handleRegisterClick = () => {
   // Small delay to ensure smooth transition between modals
   setTimeout(() => {
     emit('register-success')
+  }, 100)
+}
+
+const forgotPasswordRef = ref(null)
+
+const handleForgotPassword = () => {
+  closeModal()
+  // Small delay to ensure smooth transition between modals
+  setTimeout(() => {
+    forgotPasswordRef.value?.openModal()
   }, 100)
 }
 
@@ -169,23 +180,33 @@ import logo from '~/assets/logo.png'
         </button>
       </form>
 
+      <!-- Add before the social login buttons -->
+      <div class="text-center mb-4">
+        <button 
+          @click="handleForgotPassword"
+          class="text-green-600 hover:text-green-700 text-sm"
+        >
+          نسيت كلمة المرور؟
+        </button>
+      </div>
+
       <!-- Social login buttons -->
       <div class="space-y-4">
         <button
           @click="handleGoogleLogin"
           class="w-full flex items-center justify-center gap-2 border rounded-lg py-3 px-4 hover:bg-gray-50"
         >
-          <Icon name="logos:google-icon" class="w-6 h-6" />
+          <PhGoogleLogo :size="20" class="text-red-500" weight="fill" />
           <span>تسجيل الدخول باستخدام جوجل</span>
         </button>
 
-        <button
+        <!-- <button
           @click="handleFacebookLogin"
           class="w-full flex items-center justify-center gap-2 border rounded-lg py-3 px-4 hover:bg-gray-50"
         >
           <Icon name="logos:facebook" class="w-6 h-6" />
           <span>تسجيل الدخول باستخدام فيسبوك</span>
-        </button>
+        </button> -->
       </div>
 
       <!-- Sign up text -->
@@ -223,4 +244,7 @@ import logo from '~/assets/logo.png'
       </p>
     </div>
   </div>
+
+  <!-- Add at the end of template -->
+  <ForgotPassword ref="forgotPasswordRef" />
 </template> 

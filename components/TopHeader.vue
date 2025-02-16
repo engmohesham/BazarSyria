@@ -128,7 +128,7 @@
 
                   <button
                     @click="navigateTo('/account/profile/my-ads')"
-                    class="flex items-center justify-end gap-3 px-4 py-2 text-gray-700 hover:bg-gray-50"
+                    class="flex items-center justify-start gap-3 px-4 py-2 text-gray-700 hover:bg-gray-50 w-full"
                   >
                     <PhMegaphone class="w-5 h-5" />
                     <span>اعلاناتي</span>
@@ -136,7 +136,7 @@
 
                   <button
                     @click="navigateTo('/account/profile/following')"
-                    class="flex items-center justify-end gap-3 px-4 py-2 text-gray-700 hover:bg-gray-50"
+                    class="flex items-center justify-start gap-3 px-4 py-2 text-gray-700 hover:bg-gray-50 w-full"
                   >
                     <PhUsers class="w-5 h-5" />
                     <span>المتابعين</span>
@@ -152,15 +152,15 @@
 
                   <button
                     @click="navigateTo('/account/chat')"
-                    class="flex items-center justify-end gap-3 px-4 py-2 text-gray-700 hover:bg-gray-50"
+                    class="flex items-center justify-start gap-3 px-4 py-2 text-gray-700 hover:bg-gray-50 w-full"
                   >
                     <PhChatCircle class="w-5 h-5" />
                     <span>المحادثات</span>
                   </button>
 
                   <button
-                    to="/account/settings"
-                    class="flex items-center justify-end gap-3 px-4 py-2 text-gray-700 hover:bg-gray-50"
+                    @click="navigateTo('/account/settings')"
+                    class="flex items-center justify-start gap-3 px-4 py-2 text-gray-700 hover:bg-gray-50 w-full"
                   >
                     <PhGear class="w-5 h-5" />
                     <span>الاعدادات</span>
@@ -191,9 +191,9 @@
               class="flex p-1.5 rounded-full hover:bg-gray-100 transition-colors relative"
             >
               <PhChatCircle class="w-5 h-5 text-gray-500" />
-              <span
+              <!-- <span
                 class="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"
-              ></span>
+              ></span> -->
             </button>
           </div>
         </div>
@@ -262,7 +262,7 @@
               <span class="text-sm font-medium">+ أضف إعلانك</span>
             </button>
             <button
-              v-else="isLoggedIn"
+              v-else
               @click="emit('open-login')"
               class="w-full flex items-center justify-between px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
             >
@@ -318,9 +318,9 @@
               >
                 <div class="relative">
                   <PhChatCircle class="w-6 h-6 text-gray-600" />
-                  <span
+                  <!-- <span
                     class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"
-                  ></span>
+                  ></span> -->
                 </div>
                 <span class="text-sm text-gray-600">الرسائل</span>
               </button>

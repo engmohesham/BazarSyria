@@ -738,6 +738,104 @@ export const useServices = () => {
     }
   };
 
+  // إرسال البريد الإلكتروني للحصول على رمز التحقق
+  const forgetPassword = async (payload: { email: string }) => {
+    try {
+      const { data, error } = await useFetch(
+        `${API_BASE_URL}/auth/password/forget`,
+        {
+          method: "POST",
+          body: { email: payload.email },
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (error.value) {
+        const errorMessage = error.value?.data?.message || "حدث خطأ";
+        return { error: true, message: errorMessage };
+      }
+
+      return { 
+        error: false, 
+        message: data.value?.message || "تم إرسال رمز التحقق إلى بريدك الإلكتروني" 
+      };
+    } catch (err) {
+      console.error("Forget password error:", err);
+      return { 
+        error: true, 
+        message: "حدث خطأ غير متوقع" 
+      };
+    }
+  };
+
+  // 2. التحقق من الرمز وتغيير كلمة المرور
+  const verifyForgetPasswordCode = async (payload: { 
+    email: string;
+    code: string;
+    password: string;
+    confirmPassword: string;
+  }) => {
+    try {
+      // أولاً نتحقق من صحة الرمز
+      const { data: verifyData, error: verifyError } = await useFetch(
+        `${API_BASE_URL}/auth/password/verify-code`,
+        {
+          method: "POST",
+          body: { 
+            email: payload.email,
+            code: payload.code
+          },
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (verifyError.value) {
+        return { 
+          error: true, 
+          message: verifyError.value?.data?.message || "رمز التحقق غير صحيح" 
+        };
+      }
+
+      // إذا كان الرمز صحيحاً، نقوم بتغيير كلمة المرور
+      const { data: resetData, error: resetError } = await useFetch(
+        `${API_BASE_URL}/auth/password/reset`,
+        {
+          method: "POST",
+          body: {
+            email: payload.email,
+            password: payload.password,
+            confirmPassword: payload.confirmPassword
+          },
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (resetError.value) {
+        return { 
+          error: true, 
+          message: resetError.value?.data?.message || "حدث خطأ أثناء تغيير كلمة المرور" 
+        };
+      }
+
+      return { 
+        error: false, 
+        message: resetData.value?.message || "تم تغيير كلمة المرور بنجاح" 
+      };
+    } catch (err) {
+      console.error("Verify code error:", err);
+      return { 
+        error: true, 
+        message: "حدث خطأ غير متوقع" 
+      };
+    }
+  };
+
   return {
     // State
     isLoggedIn,
@@ -795,5 +893,7 @@ export const useServices = () => {
     addToFavorites,
     removeFromFavorites,
     getFavoriteAds,
+    forgetPassword,
+    verifyForgetPasswordCode,
   };
 };

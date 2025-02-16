@@ -131,7 +131,9 @@
                   >
                     <input
                       type="checkbox"
-                      :checked="selectedElectronicsCategories.includes(category)"
+                      :checked="
+                        selectedElectronicsCategories.includes(category)
+                      "
                       @change="handleElectronicsCategoryChange(category)"
                       class="rounded text-green-600"
                     />
@@ -143,8 +145,8 @@
 
             <!-- إضافة الفلاتر الخاصة -->
             <template v-if="specialProperties.length > 0">
-              <FilterSection 
-                v-for="property in specialProperties" 
+              <FilterSection
+                v-for="property in specialProperties"
                 :key="property.property"
                 :title="property.property"
               >
@@ -153,12 +155,16 @@
                   <select
                     v-model="selectedProperties[property.property]"
                     class="w-full px-3 py-2 border border-gray-200 rounded-lg text-right"
-                    @change="handlePropertyChange(property, $event.target.value)"
+                    @change="
+                      handlePropertyChange(property, $event.target.value)
+                    "
                   >
-                    <option value="">اختر {{ property.property }}</option>
-                    <option 
-                      v-for="value in property.values" 
-                      :key="value" 
+                    <option value="" selected class="text-gray-600">
+                      اختر {{ property.property }}
+                    </option>
+                    <option
+                      v-for="value in property.values"
+                      :key="value"
                       :value="value"
                     >
                       {{ value }}
@@ -199,52 +205,86 @@
             </template>
 
             <!-- قسم الماركات -->
-            <template v-if="activeCategory !== 'all' && categoryData?.category?.tradeMarks?.length > 0">
+            <template
+              v-if="
+                activeCategory !== 'all' &&
+                categoryData?.category?.tradeMarks?.length > 0
+              "
+            >
               <FilterSection title="الماركة">
                 <div class="grid grid-cols-2 gap-3">
                   <div
-                    v-for="(tradeMark, index) in categoryData.category.tradeMarks"
+                    v-for="(tradeMark, index) in categoryData.category
+                      .tradeMarks"
                     :key="index"
                     @click="handleTradeMarkChange(tradeMark)"
                     class="relative cursor-pointer rounded-lg border-2 transition-all duration-200"
                     :class="[
                       selectedTradeMarks.includes(tradeMark)
                         ? 'border-green-500 bg-green-50'
-                        : 'border-gray-200 hover:border-green-200'
+                        : 'border-gray-200 hover:border-green-200',
                     ]"
                   >
                     <div class="p-3 flex flex-col items-center space-y-2">
                       <!-- صورة الماركة -->
-                      <img 
+                      <img
                         :src="getTradeMarkImage(tradeMark)"
                         :alt="tradeMark"
                         class="w-12 h-12 object-contain"
                         @error="handleImageError"
                       />
                       <!-- اسم الماركة -->
-                      <span class="text-sm text-gray-700 text-center">{{ tradeMark }}</span>
+                      <span class="text-sm text-gray-700 text-center">{{
+                        tradeMark
+                      }}</span>
                       <!-- علامة الاختيار -->
-                      <div 
+                      <div
                         v-if="selectedTradeMarks.includes(tradeMark)"
                         class="absolute top-2 right-2 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center"
                       >
-                        <Icon 
-                          name="ph:check-bold" 
-                          class="w-3 h-3 text-white"
-                        />
+                        <Icon name="ph:check-bold" class="w-3 h-3 text-white" />
                       </div>
                     </div>
                   </div>
                 </div>
               </FilterSection>
             </template>
+
+            <!-- إضافة قسم فلتر اللون -->
+            <FilterSection title="اللون">
+              <div class="grid grid-cols-5 gap-2">
+                <button
+                  v-for="color in availableColors"
+                  :key="color.name"
+                  @click="handleColorChange(color.name)"
+                  class="relative p-1 rounded-lg focus:outline-none"
+                >
+                  <div
+                    :class="[
+                      'w-8 h-8 rounded-full',
+                      color.class,
+                      selectedColors.includes(color.name)
+                        ? 'ring-2 ring-green-500 ring-offset-2'
+                        : '',
+                    ]"
+                  >
+                    <PhCheck
+                      v-if="selectedColors.includes(color.name)"
+                      class="w-4 h-4 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white"
+                      :class="{ 'text-black': color.name === 'أبيض' }"
+                    />
+                  </div>
+                  <span class="block text-xs text-center mt-1">{{
+                    color.name
+                  }}</span>
+                </button>
+              </div>
+            </FilterSection>
           </div>
 
           <!-- Listings - Left Side -->
           <div class="lg:w-3/4">
-            <div v-if="isLoading" class="text-center py-4">
-              جاري التحميل...
-            </div>
+            <div v-if="isLoading" class="text-center py-4">جاري التحميل...</div>
             <div v-else-if="error" class="text-red-500 text-center py-4">
               {{ error }}
             </div>
@@ -259,6 +299,31 @@
         </div>
       </div>
     </div>
+
+    <!-- إضافة شريط إحصائيات الفلتر -->
+    <div
+      v-if="filterStats.activeFilters.length > 0"
+      class="bg-gray-50 p-3 rounded-lg mb-4"
+    >
+      <div class="flex items-center justify-between">
+        <div class="text-sm text-gray-600">
+          <span
+            >تم العثور على {{ filterStats.filtered }} من
+            {{ filterStats.total }}</span
+          >
+          <span class="mx-2">|</span>
+          <span
+            >الفلاتر النشطة: {{ filterStats.activeFilters.join("، ") }}</span
+          >
+        </div>
+        <button
+          @click="resetAllFilters"
+          class="text-sm text-red-600 hover:text-red-700"
+        >
+          إعادة تعيين الفلاتر
+        </button>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -267,22 +332,19 @@ import { ref, computed, watch, onMounted } from "vue";
 import CategoryFilters from "./CarFilter/CategoryFilters.vue";
 import FilterSection from "./CarFilter/FilterSection.vue";
 import PriceRangeFilter from "./CarFilter/PriceRangeFilter.vue";
-import {
-  carBrands,
-  filterOptions,
-} from "@/data/mockData";
+import { carBrands, filterOptions } from "@/data/mockData";
 import ProductCard from "./ProductCard.vue";
 // استيراد الصور من مجلد assets
-import toyotaLogo from '~/assets/trademarks/toyota.png';
-import hondaLogo from '~/assets/trademarks/honda.png';
-import bmwLogo from '~/assets/trademarks/bmw.png';
-import mercedesLogo from '~/assets/trademarks/mercedes.png';
-import audiLogo from '~/assets/trademarks/audi.png';
-import volkswagenLogo from '~/assets/trademarks/volkswagen.png';
-import nissanLogo from '~/assets/trademarks/nissan.png';
-import hyundaiLogo from '~/assets/trademarks/hyundai.png';
-import kiaLogo from '~/assets/trademarks/kia.png';
-import mazdaLogo from '~/assets/trademarks/mazda.png';
+import toyotaLogo from "~/assets/trademarks/toyota.png";
+import hondaLogo from "~/assets/trademarks/honda.png";
+import bmwLogo from "~/assets/trademarks/bmw.png";
+import mercedesLogo from "~/assets/trademarks/mercedes.png";
+import audiLogo from "~/assets/trademarks/audi.png";
+import volkswagenLogo from "~/assets/trademarks/volkswagen.png";
+import nissanLogo from "~/assets/trademarks/nissan.png";
+import hyundaiLogo from "~/assets/trademarks/hyundai.png";
+import kiaLogo from "~/assets/trademarks/kia.png";
+import mazdaLogo from "~/assets/trademarks/mazda.png";
 
 const activeCategory = ref("all");
 const activeSubcategory = ref("");
@@ -300,12 +362,12 @@ const selectedJobFields = ref([]);
 const selectedElectronicsCategories = ref([]);
 
 // تعديل المتغيرات للماركات
-const categoryData = ref(null)
-const specialProperties = ref([])
+const categoryData = ref(null);
+const specialProperties = ref([]);
 const tradeMarks = computed(() => {
-  if (activeCategory.value === 'all') return []
-  return categoryData.value?.category?.tradeMarks || []
-})
+  if (activeCategory.value === "all") return [];
+  return categoryData.value?.category?.tradeMarks || [];
+});
 
 // إضافة متغيرات للفلترة حسب الخصائص الخاصة
 const selectedProperties = ref({});
@@ -313,25 +375,42 @@ const selectedProperties = ref({});
 // إضافة متغير للماركات المحددة
 const selectedTradeMarks = ref([]);
 
+// إضافة متغير للألوان المحددة
+const selectedColors = ref([]);
+
 // كائن يحتوي على الصور المحلية للماركات
 const tradeMarkImages = {
-  'Toyota': toyotaLogo,
-  'Honda': hondaLogo,
-  'BMW': bmwLogo,
-  'Mercedes': mercedesLogo,
-  'Audi': audiLogo,
-  'Volkswagen': volkswagenLogo,
-  'Nissan': nissanLogo,
-  'Hyundai': hyundaiLogo,
-  'Kia': kiaLogo,
-  'Mazda': mazdaLogo
+  Toyota: toyotaLogo,
+  Honda: hondaLogo,
+  BMW: bmwLogo,
+  Mercedes: mercedesLogo,
+  Audi: audiLogo,
+  Volkswagen: volkswagenLogo,
+  Nissan: nissanLogo,
+  Hyundai: hyundaiLogo,
+  Kia: kiaLogo,
+  Mazda: mazdaLogo,
 };
+
+// إضافة مصفوفة الألوان المتاحة
+const availableColors = [
+  { name: "أبيض", class: "bg-white border-2 border-gray-200" },
+  { name: "أسود", class: "bg-black" },
+  { name: "رمادي", class: "bg-gray-500" },
+  { name: "فضي", class: "bg-gray-300" },
+  { name: "أحمر", class: "bg-red-500" },
+  { name: "أزرق", class: "bg-blue-500" },
+  { name: "أخضر", class: "bg-green-500" },
+  { name: "بني", class: "bg-amber-800" },
+  { name: "ذهبي", class: "bg-yellow-500" },
+  { name: "برتقالي", class: "bg-orange-500" },
+];
 
 // تعديل دالة جلب المنتجات لتشمل بيانات القسم والماركات
 const fetchProducts = async () => {
   isLoading.value = true;
   error.value = null;
-  
+
   try {
     let response;
     if (activeCategory.value === "all") {
@@ -343,15 +422,18 @@ const fetchProducts = async () => {
       }
       response = await fetch(url);
     }
-    
+
     const data = await response.json();
     products.value = data;
 
     // جلب بيانات القسم والماركات
-    if (activeCategory.value !== 'all') {
-      const categoryResponse = await fetch(`https://pzsyria.com/api/category/${activeCategory.value}`);
+    if (activeCategory.value !== "all") {
+      const categoryResponse = await fetch(
+        `https://pzsyria.com/api/category/${activeCategory.value}`
+      );
       categoryData.value = await categoryResponse.json();
-      specialProperties.value = categoryData.value.category?.specialProperties || [];
+      specialProperties.value =
+        categoryData.value.category?.specialProperties || [];
     } else {
       categoryData.value = null;
       specialProperties.value = [];
@@ -381,80 +463,136 @@ watch(
 // تصفية المنتجات
 const currentData = computed(() => {
   if (!products.value?.advertisements) return [];
-  
+
   let filteredData = products.value.advertisements;
 
-  // تطبيق البحث
-  if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase();
-    filteredData = filteredData.filter(item => 
-      item.advTitle?.toLowerCase().includes(query) ||
-      item.advDescription?.toLowerCase().includes(query)
-    );
-  }
+  // تطبيق جميع الفلاتر بالتتابع
+  const applyFilters = () => {
+    // فلتر البحث
+    if (searchQuery.value) {
+      const query = searchQuery.value.toLowerCase();
+      filteredData = filteredData.filter(
+        (item) =>
+          item.advTitle?.toLowerCase().includes(query) ||
+          item.advDescription?.toLowerCase().includes(query)
+      );
+    }
 
-  // تطبيق فلترة نطاق السعر
-  if (priceRange.value.min || priceRange.value.max) {
-    filteredData = filteredData.filter(item => {
-      const price = Number(item.price);
-      const min = Number(priceRange.value.min) || 0;
-      const max = Number(priceRange.value.max) || Infinity;
-      return price >= min && price <= max;
+    // فلتر نطاق السعر
+    if (priceRange.value.min || priceRange.value.max) {
+      filteredData = filteredData.filter((item) => {
+        const price = Number(item.price);
+        const min = Number(priceRange.value.min) || 0;
+        const max = Number(priceRange.value.max) || Infinity;
+        return price >= min && price <= max;
+      });
+    }
+
+    // فلتر الماركات
+    if (selectedTradeMarks.value.length > 0) {
+      filteredData = filteredData.filter((item) =>
+        selectedTradeMarks.value.includes(item.tradeMark)
+      );
+    }
+
+    // فلتر الألوان
+    if (selectedColors.value.length > 0) {
+      filteredData = filteredData.filter((item) => {
+        const colorProperty = item.specialProperties?.find(
+          (prop) =>
+            prop.property.toLowerCase() === "اللون" ||
+            prop.property.toLowerCase() === "color"
+        );
+        return (
+          colorProperty && selectedColors.value.includes(colorProperty.value)
+        );
+      });
+    }
+
+    // فلتر الخصائص الخاصة
+    Object.entries(selectedProperties.value).forEach(([key, value]) => {
+      if (value) {
+        filteredData = filteredData.filter((item) =>
+          item.specialProperties?.some(
+            (prop) =>
+              prop.property === key &&
+              prop.value?.toString().toLowerCase() ===
+                value.toString().toLowerCase()
+          )
+        );
+      }
     });
-  }
 
-  // تطبيق فلترة الماركات
-  if (selectedBrands.value.length > 0) {
-    filteredData = filteredData.filter(item =>
-      selectedBrands.value.includes(item.brand)
-    );
-  }
+    // فلتر التصنيف
+    if (activeCategory.value !== "all") {
+      filteredData = filteredData.filter(
+        (item) => item.category === activeCategory.value
+      );
 
-  // فلترة حسب التصنيف النشط
-  if (activeCategory.value === 'jobs') {
-    if (selectedJobTypes.value.length > 0) {
-      filteredData = filteredData.filter(item =>
+      if (activeSubcategory.value) {
+        filteredData = filteredData.filter(
+          (item) => item.subCategory === activeSubcategory.value
+        );
+      }
+    }
+
+    // فلتر نوع الوظيفة
+    if (activeCategory.value === "jobs" && selectedJobTypes.value.length > 0) {
+      filteredData = filteredData.filter((item) =>
         selectedJobTypes.value.includes(item.jobType)
       );
     }
-    if (selectedJobFields.value.length > 0) {
-      filteredData = filteredData.filter(item =>
+
+    // فلتر مجال الوظيفة
+    if (activeCategory.value === "jobs" && selectedJobFields.value.length > 0) {
+      filteredData = filteredData.filter((item) =>
         selectedJobFields.value.includes(item.field)
       );
     }
-  } else if (activeCategory.value === 'electronics') {
-    if (selectedElectronicsCategories.value.length > 0) {
-      filteredData = filteredData.filter(item =>
-        selectedElectronicsCategories.value.includes(item.category)
+
+    // فلتر فئة الإلكترونيات
+    if (
+      activeCategory.value === "electronics" &&
+      selectedElectronicsCategories.value.length > 0
+    ) {
+      filteredData = filteredData.filter((item) =>
+        selectedElectronicsCategories.value.includes(item.electronicsCategory)
       );
     }
-  }
 
-  // فلترة حسب الحالة
-  if (selectedConditions.value.length > 0) {
-    filteredData = filteredData.filter(item =>
-      selectedConditions.value.includes(item.condition)
-    );
-  }
+    return filteredData;
+  };
 
-  // تطبيق الفلترة حسب الخصائص الخاصة
-  Object.entries(selectedProperties.value).forEach(([key, value]) => {
-    if (value) {
-      filteredData = filteredData.filter(item => 
-        item[key]?.toString().toLowerCase() === value.toString().toLowerCase()
-      );
-    }
-  });
-
-  // تطبيق فلترة الماركات
-  if (selectedTradeMarks.value.length > 0) {
-    filteredData = filteredData.filter(item =>
-      selectedTradeMarks.value.includes(item.tradeMark)
-    );
-  }
-
-  return filteredData;
+  // تطبيق جميع الفلاتر
+  return applyFilters();
 });
+
+// إضافة computed للإحصائيات
+const filterStats = computed(() => {
+  return {
+    total: products.value?.advertisements?.length || 0,
+    filtered: currentData.value.length,
+    activeFilters: [
+      selectedTradeMarks.value.length > 0 ? "الماركات" : null,
+      selectedColors.value.length > 0 ? "الألوان" : null,
+      Object.keys(selectedProperties.value).length > 0 ? "الخصائص" : null,
+      priceRange.value.min || priceRange.value.max ? "السعر" : null,
+      searchQuery.value ? "البحث" : null,
+    ].filter(Boolean),
+  };
+});
+
+// إضافة دالة لإعادة تعيين جميع الفلاتر
+const resetAllFilters = () => {
+  selectedTradeMarks.value = [];
+  selectedColors.value = [];
+  selectedProperties.value = {};
+  priceRange.value = { min: "", max: "" };
+  searchQuery.value = "";
+  selectedJobTypes.value = [];
+  selectedJobFields.value = [];
+  selectedElectronicsCategories.value = [];
+};
 
 // معالجة تغيير البحث
 const handleSearch = (event) => {
@@ -508,11 +646,9 @@ const handleElectronicsCategoryChange = (category) => {
 
 // دالة معالجة تغيير قيم الخصائص الخاصة
 const handlePropertyChange = (property, value) => {
-  if (property.type === 'dropdown' || property.type === 'radio') {
-    selectedProperties.value[property.property] = value;
-  } else if (property.type === 'text') {
-    selectedProperties.value[property.property] = value;
-  }
+  
+
+  selectedProperties.value[property.property] = value;
 };
 
 // إضافة دالة معالجة تغيير الماركة
@@ -525,18 +661,22 @@ const handleTradeMarkChange = (tradeMark) => {
   }
 };
 
-// إضافة watch للفئة النشطة
-watch(() => activeCategory.value, () => {
-  selectedTradeMarks.value = []; // إعادة تعيين الماركات المحددة عند تغيير الفئة
-  fetchProducts();
-});
+// إضافة دالة معالجة تغيير اللون
+const handleColorChange = (color) => {
+  const index = selectedColors.value.indexOf(color);
+  if (index === -1) {
+    selectedColors.value.push(color);
+  } else {
+    selectedColors.value.splice(index, 1);
+  }
+};
 
 // دالة للحصول على صورة الماركة
 const getTradeMarkImage = (tradeMark) => {
   const normalizedTradeMark = tradeMark.toLowerCase();
   // البحث عن الصورة في الكائن بغض النظر عن حالة الأحرف
   const imageKey = Object.keys(tradeMarkImages).find(
-    key => key.toLowerCase() === normalizedTradeMark
+    (key) => key.toLowerCase() === normalizedTradeMark
   );
   return imageKey ? tradeMarkImages[imageKey] : defaultLogo;
 };
@@ -545,6 +685,23 @@ const getTradeMarkImage = (tradeMark) => {
 const handleImageError = (event) => {
   event.target.src = defaultLogo;
 };
+
+// تحديث watch
+watch(
+  [
+    () => products.value,
+    () => activeCategory.value,
+    () => activeSubcategory.value,
+    () => selectedTradeMarks.value,
+    () => selectedProperties.value,
+    () => selectedColors.value,
+    () => priceRange.value,
+  ],
+  () => {
+    console.log("Filters or data updated");
+  },
+  { deep: true }
+);
 </script>
 
 <style scoped>
@@ -566,5 +723,13 @@ const handleImageError = (event) => {
   max-width: 100%;
   height: auto;
   object-fit: contain;
+}
+
+.color-button {
+  transition: all 0.2s ease-in-out;
+}
+
+.color-button:hover {
+  transform: scale(1.1);
 }
 </style>
