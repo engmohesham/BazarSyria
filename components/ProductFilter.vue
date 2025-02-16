@@ -329,6 +329,7 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from "vue";
+import { useRoute, useRouter } from '#app';
 import CategoryFilters from "./CarFilter/CategoryFilters.vue";
 import FilterSection from "./CarFilter/FilterSection.vue";
 import PriceRangeFilter from "./CarFilter/PriceRangeFilter.vue";
@@ -346,15 +347,23 @@ import hyundaiLogo from "~/assets/trademarks/hyundai.png";
 import kiaLogo from "~/assets/trademarks/kia.png";
 import mazdaLogo from "~/assets/trademarks/mazda.png";
 
-const activeCategory = ref("all");
-const activeSubcategory = ref("");
-const priceRange = ref({ min: "", max: "" });
+// إضافة router و route
+const router = useRouter();
+const route = useRoute();
+
+// تعديل تعريف المتغيرات لتأخذ القيم من URL أو التخزين المحلي
+const activeCategory = ref(route.query.category || "all");
+const activeSubcategory = ref(route.query.subcategory || "");
+const searchQuery = ref(route.query.search || "");
+const priceRange = ref({
+  min: route.query.minPrice || "",
+  max: route.query.maxPrice || ""
+});
 const products = ref(null);
 const error = ref(null);
 const isLoading = ref(false);
 
 // إضافة المتغيرات الجديدة
-const searchQuery = ref("");
 const selectedBrands = ref([]);
 const selectedConditions = ref([]);
 const selectedJobTypes = ref([]);
@@ -373,10 +382,14 @@ const tradeMarks = computed(() => {
 const selectedProperties = ref({});
 
 // إضافة متغير للماركات المحددة
-const selectedTradeMarks = ref([]);
+const selectedTradeMarks = ref(
+  route.query.tradeMarks ? route.query.tradeMarks.split(',') : []
+);
 
 // إضافة متغير للألوان المحددة
-const selectedColors = ref([]);
+const selectedColors = ref(
+  route.query.colors ? route.query.colors.split(',') : []
+);
 
 // كائن يحتوي على الصور المحلية للماركات
 const tradeMarkImages = {
@@ -405,6 +418,38 @@ const availableColors = [
   { name: "ذهبي", class: "bg-yellow-500" },
   { name: "برتقالي", class: "bg-orange-500" },
 ];
+
+// دالة لتحديث URL مع الفلاتر الحالية
+const updateURLWithFilters = () => {
+  const query = {
+    ...route.query,
+    category: activeCategory.value !== 'all' ? activeCategory.value : undefined,
+    subcategory: activeSubcategory.value || undefined,
+    search: searchQuery.value || undefined,
+    minPrice: priceRange.value.min || undefined,
+    maxPrice: priceRange.value.max || undefined,
+    tradeMarks: selectedTradeMarks.value.length ? selectedTradeMarks.value.join(',') : undefined,
+    colors: selectedColors.value.length ? selectedColors.value.join(',') : undefined,
+    properties: Object.keys(selectedProperties.value).length ? 
+      encodeURIComponent(JSON.stringify(selectedProperties.value)) : undefined
+  };
+
+  // تحديث URL بدون إعادة تحميل الصفحة
+  router.push({ query });
+};
+
+// مراقبة التغييرات في الفلاتر وتحديث URL
+watch([
+  activeCategory,
+  activeSubcategory,
+  searchQuery,
+  priceRange,
+  selectedTradeMarks,
+  selectedColors,
+  selectedProperties
+], () => {
+  updateURLWithFilters();
+}, { deep: true });
 
 // تعديل دالة جلب المنتجات لتشمل بيانات القسم والماركات
 const fetchProducts = async () => {
@@ -446,8 +491,40 @@ const fetchProducts = async () => {
   }
 };
 
-// تنفيذ الطلب عند تحميل المكون
+// استعادة حالة الفلاتر عند تحميل الصفحة
 onMounted(() => {
+  // استعادة الفلاتر من URL
+  const {
+    category,
+    subcategory,
+    search,
+    minPrice,
+    maxPrice,
+    tradeMarks,
+    colors,
+    properties
+  } = route.query;
+
+  if (category) activeCategory.value = category;
+  if (subcategory) activeSubcategory.value = subcategory;
+  if (search) searchQuery.value = search;
+  if (minPrice || maxPrice) {
+    priceRange.value = {
+      min: minPrice || "",
+      max: maxPrice || ""
+    };
+  }
+  if (tradeMarks) selectedTradeMarks.value = tradeMarks.split(',');
+  if (colors) selectedColors.value = colors.split(',');
+  if (properties) {
+    try {
+      selectedProperties.value = JSON.parse(decodeURIComponent(properties));
+    } catch (e) {
+      console.error('Error parsing properties from URL:', e);
+    }
+  }
+
+  // تحديث المنتجات بناءً على الفلاتر المستعادة
   fetchProducts();
 });
 
@@ -582,8 +659,10 @@ const filterStats = computed(() => {
   };
 });
 
-// إضافة دالة لإعادة تعيين جميع الفلاتر
+// تعديل دالة لإعادة تعيين جميع الفلاتر
 const resetAllFilters = () => {
+  activeCategory.value = "all";
+  activeSubcategory.value = "";
   selectedTradeMarks.value = [];
   selectedColors.value = [];
   selectedProperties.value = {};
@@ -592,6 +671,9 @@ const resetAllFilters = () => {
   selectedJobTypes.value = [];
   selectedJobFields.value = [];
   selectedElectronicsCategories.value = [];
+  
+  // مسح كل الفلاتر من URL
+  router.push({ query: {} });
 };
 
 // معالجة تغيير البحث
@@ -646,8 +728,6 @@ const handleElectronicsCategoryChange = (category) => {
 
 // دالة معالجة تغيير قيم الخصائص الخاصة
 const handlePropertyChange = (property, value) => {
-  
-
   selectedProperties.value[property.property] = value;
 };
 

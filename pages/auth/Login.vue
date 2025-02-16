@@ -67,7 +67,7 @@ const handleLogin = async () => {
     
     emit('login-success')
     closeModal()
-    await router.push('/')
+    // await router.push('/')
     window.location.reload();
   } catch (e) {
     error.value = 'حدث خطأ أثناء تسجيل الدخول'

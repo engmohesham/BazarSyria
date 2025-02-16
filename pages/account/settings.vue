@@ -129,40 +129,50 @@ const handleVerification = (type) => {
 const handleResetPassword = async () => {
   error.value = "";
   success.value = "";
-  
+
+  if (!newPassword.value || !confirmPassword.value) {
+    error.value = "الرجاء إدخال كلمة المرور وتأكيدها";
+    return;
+  }
+
+  if (newPassword.value !== confirmPassword.value) {
+    error.value = "كلمات المرور غير متطابقة";
+    return;
+  }
+
   try {
     const token = localStorage.getItem('session-token');
-    if (!token) {
+    const userId = localStorage.getItem('userId');
+    
+    if (!token || !userId) {
       throw new Error('لم يتم العثور على جلسة تسجيل الدخول');
     }
 
-    const response = await fetch(`https://pzsyria.com/api/auth/password/reset/${token}`, {
-      method: 'POST',
+    const response = await fetch(`${API_BASE_URL}/user/${userId}`, {
+      method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify({
-        email: email.value,
         password: newPassword.value,
-        confirmPassword: confirmPassword.value
+        // confirmPassword: confirmPassword.value
       })
     });
 
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.message || 'حدث خطأ في إعادة تعيين كلمة المرور');
+      throw new Error(data.message || 'حدث خطأ في تغيير كلمة المرور');
     }
 
-    success.value = "تم تغيير كلمة المرور بنجاح";
-    resetPasswordSuccess.value = true;
+    success.value = data.message || "تم تغيير كلمة المرور بنجاح";
     
     // إعادة تعيين حقول كلمة المرور
     newPassword.value = "";
     confirmPassword.value = "";
   } catch (err) {
-    console.error('Reset password error:', err);
+    console.error('Change password error:', err);
     error.value = err.message || "فشل في تغيير كلمة المرور";
   }
 };

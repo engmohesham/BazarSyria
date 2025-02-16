@@ -429,25 +429,24 @@ export const useServices = () => {
   // Chat Methods
   const createChatRoom = async (payload: { users: string[] }) => {
     try {
-      const { data, error } = await useFetch(
-        `${API_BASE_URL}${API_ENDPOINTS.CHAT}`,
-        {
-          method: 'POST',
-          body: payload,
-          headers: {
-            ...getAuthHeaders(),
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-
-      if (error.value) {
-        console.error('Create chat room error:', error.value);
-        return { data: null, error: error.value };
+      const response = await $fetch(`${API_BASE_URL}${API_ENDPOINTS.CHAT}`, {
+        method: 'POST',
+        body: payload,
+        headers: {
+          ...getAuthHeaders(),
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      return { data: response, error: null };
+    } catch (err: any) {
+      // إذا كانت المحادثة موجودة بالفعل
+      if (err.response?.status === 400) {
+        return { 
+          data: null, 
+          error: { message: "A chat with these users already exists." }
+        };
       }
-
-      return { data: data.value, error: null };
-    } catch (err) {
       console.error('Create chat room error:', err);
       return { data: null, error: err };
     }
@@ -770,39 +769,61 @@ export const useServices = () => {
     }
   };
 
-  // 2. التحقق من الرمز وتغيير كلمة المرور
+  // إرسال الكود مع الإيميل للتحقق
   const verifyForgetPasswordCode = async (payload: { 
     email: string;
     code: string;
-    password: string;
-    confirmPassword: string;
   }) => {
     try {
-      // أولاً نتحقق من صحة الرمز
-      const { data: verifyData, error: verifyError } = await useFetch(
-        `${API_BASE_URL}/auth/password/verify-code`,
+      const { data, error } = await useFetch(
+        `${API_BASE_URL}/auth/password/reset/${payload.code}`,
         {
           method: "POST",
-          body: { 
-            email: payload.email,
-            code: payload.code
-          },
+          body: { email: payload.email },
           headers: {
             "Content-Type": "application/json",
           },
         }
       );
 
-      if (verifyError.value) {
+      if (error.value) {
         return { 
           error: true, 
-          message: verifyError.value?.data?.message || "رمز التحقق غير صحيح" 
+          message: error.value?.data?.message || "رمز التحقق غير صحيح" 
         };
       }
 
-      // إذا كان الرمز صحيحاً، نقوم بتغيير كلمة المرور
-      const { data: resetData, error: resetError } = await useFetch(
-        `${API_BASE_URL}/auth/password/reset`,
+      return { 
+        error: false, 
+        message: "تم التحقق من الرمز بنجاح"
+      };
+    } catch (err) {
+      console.error("Verify code error:", err);
+      return { 
+        error: true, 
+        message: "حدث خطأ غير متوقع" 
+      };
+    }
+  };
+
+  // تغيير كلمة المرور بعد التحقق
+  const resetPassword = async (payload: { 
+    email: string;
+    code: string;
+    password: string;
+    confirmPassword: string;
+  }) => {
+    try {
+      // التحقق من وجود كلمة المرور وتأكيدها
+      if (!payload.password || !payload.confirmPassword) {
+        return { 
+          error: true, 
+          message: "الرجاء إدخال كلمة المرور وتأكيدها" 
+        };
+      }
+
+      const { data, error } = await useFetch(
+        `${API_BASE_URL}/auth/password/reset/${payload.code}`,
         {
           method: "POST",
           body: {
@@ -816,19 +837,19 @@ export const useServices = () => {
         }
       );
 
-      if (resetError.value) {
+      if (error.value) {
         return { 
           error: true, 
-          message: resetError.value?.data?.message || "حدث خطأ أثناء تغيير كلمة المرور" 
+          message: error.value?.data?.message // استخدام الرسالة من الباك
         };
       }
 
       return { 
         error: false, 
-        message: resetData.value?.message || "تم تغيير كلمة المرور بنجاح" 
+        message: data.value?.message || "تم تغيير كلمة المرور بنجاح" // استخدام الرسالة من الباك
       };
     } catch (err) {
-      console.error("Verify code error:", err);
+      console.error("Reset password error:", err);
       return { 
         error: true, 
         message: "حدث خطأ غير متوقع" 
@@ -895,5 +916,6 @@ export const useServices = () => {
     getFavoriteAds,
     forgetPassword,
     verifyForgetPasswordCode,
+    resetPassword,
   };
 };

@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { useServices } from '~/composables/useServices'
 import { PhWarning, PhCheckCircle } from '@phosphor-icons/vue'
 
-const { forgetPassword, verifyForgetPasswordCode } = useServices()
+const { forgetPassword, verifyForgetPasswordCode, resetPassword } = useServices()
 const isOpen = ref(false)
 const email = ref('')
 const verificationCode = ref(['', '', '', ''])
@@ -132,7 +132,7 @@ const handleVerifyCode = async () => {
       return
     }
 
-    success.value = 'تم التحقق من الرمز بنجاح'
+    success.value = message
     step.value = 'password'
   } catch (e) {
     error.value = 'حدث خطأ أثناء التحقق من الرمز'
@@ -142,8 +142,8 @@ const handleVerifyCode = async () => {
 }
 
 const handleResetPassword = async () => {
-  if (!newPassword.value) {
-    error.value = 'الرجاء إدخال كلمة المرور الجديدة'
+  if (!newPassword.value || !confirmPassword.value) {
+    error.value = 'الرجاء إدخال كلمة المرور وتأكيدها'
     return
   }
 
@@ -154,7 +154,7 @@ const handleResetPassword = async () => {
 
   loading.value = true
   try {
-    const { error: apiError, message } = await verifyForgetPasswordCode({
+    const { error: apiError, message } = await resetPassword({
       email: email.value,
       code: verificationCode.value.join(''),
       password: newPassword.value,
@@ -166,10 +166,16 @@ const handleResetPassword = async () => {
       return
     }
 
-    success.value = message || 'تم تغيير كلمة المرور بنجاح'
+    success.value = message
     setTimeout(() => {
       closeModal()
-    }, 1500)
+      // فتح نافذة تسجيل الدخول
+      const loginModal = document.querySelector('#login-modal')
+      if (loginModal) {
+        // @ts-ignore
+        loginModal.__vueParentComponent.exposed.openModal()
+      }
+    }, 2000)
   } catch (e) {
     error.value = 'حدث خطأ أثناء تغيير كلمة المرور'
   } finally {

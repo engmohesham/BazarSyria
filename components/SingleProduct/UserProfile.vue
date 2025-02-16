@@ -229,22 +229,21 @@ const startChat = async () => {
   }
 
   try {
-    // Create chat room with users array containing both IDs
+    // تجهيز البيانات للإرسال
     const payload = {
       users: [currentUser.value._id, props.creatorId]
     };
-    // console.log(currentUser.value._id);
+    
+    // محاولة إنشاء محادثة جديدة
     const { data, error } = await createChatRoom(payload);
     
-    if (error) {
-      console.error('Error creating chat:', error);
-      return;
-    }
-
-    // Navigate to chat room
-    navigateTo(`/account/chat`);
+    // في جميع الحالات، نقوم بالانتقال إلى صفحة المحادثات مع معرف المستخدم
+    await navigateTo(`/account/chat?userId=${props.creatorId}`);
+    
   } catch (error) {
-    console.error('Error creating chat room:', error);
+    console.error('Error in chat creation:', error);
+    // حتى في حالة الخطأ، نحاول الانتقال إلى المحادثة
+    await navigateTo(`/account/chat?userId=${props.creatorId}`);
   }
 };
 

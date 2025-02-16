@@ -1,5 +1,5 @@
 <template>
-  <div class="flex h-screen">
+  <div class="flex h-full min-h-screen mb-40">
     <!-- Right Sidebar - Chat List -->
     <div 
       :class="[
@@ -18,7 +18,7 @@
           </button> -->
         </div>
       </div>
-      <div class="overflow-y-auto">
+      <div class="overflow-y-auto scroll-smooth">
         <div
           v-for="chat in chats"
           :key="chat._id"
@@ -57,7 +57,7 @@
                 </span>
               </div>
               <p 
-                class="text-sm truncate mt-1"
+                class="text-sm w-[180px] truncate overflow-hidden mt-1"
                 :class="{
                   'text-gray-900 font-medium': chat.unreadCount > 0,
                   'text-gray-500': !chat.unreadCount
@@ -251,7 +251,7 @@ import {
 } from "vue";
 import io from "socket.io-client";
 import { useServices } from "@/composables/useServices";
-import { useRouter } from "vue-router";
+import { useRouter, useRoute } from "vue-router";
 import user from "@/assets/user.png";
 import {
   PhArrowRight,
@@ -286,6 +286,7 @@ const showNewChatModal = ref(false);
 const selectedUsers = ref<string[]>([]);
 const availableUsers = ref<any[]>([]);
 const router = useRouter();
+const route = useRoute();
 
 // إضافة computed properties للمستخدم الحالي
 const currentUserId = computed(() => {
@@ -385,6 +386,9 @@ onMounted(async () => {
   if (avatarData && avatarData.user.avatar) {
     userAvatar.value = avatarData.user.avatar;
   }
+
+  // Add this line to handle initial chat selection
+  await handleInitialChatSelection();
 });
 
 // دالة للتحقق من صحة التاريخ
@@ -434,6 +438,57 @@ watch(
 watch(selectedChat, () => {
   scrollToBottom();
 });
+
+// إضافة متغير للتحكم في عملية التحميل
+const isLoadingMessages = ref(false);
+
+const handleInitialChatSelection = async () => {
+  const userId = route.query.userId;
+  
+  // تجنب التحميل المتكرر
+  if (isLoadingMessages.value || !userId || !chats.value.length) return;
+  
+  try {
+    isLoadingMessages.value = true;
+    
+    // البحث عن المحادثة مع المستخدم المحدد
+    const targetChat = chats.value.find(chat => 
+      chat.users.some(user => user._id === userId)
+    );
+    
+    if (targetChat) {
+      // تحميل الرسائل فقط
+      selectedChat.value = targetChat;
+      messages.value = [];
+
+      const { data } = await getChatMessages(targetChat._id);
+      if (data) {
+        messages.value = data.map(msg => ({
+          ...msg,
+          createdAt: isValidDate(msg.createdAt) ? msg.createdAt : new Date().toISOString(),
+        }));
+        
+        await nextTick();
+        scrollToBottom();
+      }
+    }
+  } catch (err) {
+    console.error('Error loading messages:', err);
+  } finally {
+    isLoadingMessages.value = false;
+  }
+};
+
+// تعديل watch لتجنب التكرار
+watch(
+  () => route.query.userId,
+  async (newUserId) => {
+    if (newUserId) {
+      await handleInitialChatSelection();
+    }
+  },
+  { immediate: true }
+);
 
 // تحديث دالة تهيئة Socket.IO
 const initializeSocket = () => {
@@ -739,19 +794,16 @@ const fetchChats = async () => {
         if (!a.unreadCount && b.unreadCount) return 1;
         return new Date(b.lastMessageTime || b.updatedAt) - new Date(a.lastMessageTime || a.updatedAt);
       });
+
+      // بعد تحميل المحادثات، نتحقق من وجود userId في الـ URL
+      if (route.query.userId) {
+        await handleInitialChatSelection();
+      }
     }
   } catch (err) {
     console.error('Error fetching chats:', err);
   }
 };
-
-onMounted(() => {
-  fetchChats();
-  const token = localStorage.getItem("session-token");
-  if (token) {
-    initializeSocket();
-  }
-});
 
 onUnmounted(() => {
   if (socket.value) {
