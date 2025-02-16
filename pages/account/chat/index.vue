@@ -1,9 +1,9 @@
 <template>
-  <div class="flex h-full min-h-screen mb-40">
+  <div class="flex h-screen max-h-screen overflow-y-auto mb-5">
     <!-- Right Sidebar - Chat List -->
     <div 
       :class="[
-        'border-r bg-white transition-all duration-300',
+        'border-r bg-white transition-all duration-300 overflow-y-auto',
         selectedChat && isMobile ? 'hidden' : 'w-full md:w-80'
       ]"
     >
@@ -18,7 +18,7 @@
           </button> -->
         </div>
       </div>
-      <div class="overflow-y-auto scroll-smooth">
+      <div class="max-h-screen">
         <div
           v-for="chat in chats"
           :key="chat._id"
@@ -75,8 +75,8 @@
     <div 
       v-if="selectedChat" 
       :class="[
-        'flex-1 flex flex-col',
-        isMobile ? 'fixed inset-0 z-10 top-36 bg-white' : ''
+        'flex-1 flex flex-col h-screen',
+        isMobile ? 'fixed inset-0 z-10 top-20 bg-white' : ''
       ]"
     >
       <!-- Header -->

@@ -293,6 +293,7 @@
                 v-for="item in currentData"
                 :key="item._id"
                 :product="item"
+                @click="handleProductClick"
               />
             </div>
           </div>
@@ -328,7 +329,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from "vue";
+import { ref, computed, watch, onMounted, nextTick } from "vue";
 import { useRoute, useRouter } from '#app';
 import CategoryFilters from "./CarFilter/CategoryFilters.vue";
 import FilterSection from "./CarFilter/FilterSection.vue";
@@ -419,6 +420,30 @@ const availableColors = [
   { name: "برتقالي", class: "bg-orange-500" },
 ];
 
+// إضافة متغير لحفظ موقع السكرول
+const scrollPosition = ref(0);
+
+// دالة لحفظ موقع السكرول قبل الانتقال
+const saveScrollPosition = () => {
+  scrollPosition.value = window.scrollY;
+  sessionStorage.setItem('lastScrollPosition', scrollPosition.value.toString());
+};
+
+// دالة لاستعادة موقع السكرول
+const restoreScrollPosition = () => {
+  const savedPosition = sessionStorage.getItem('lastScrollPosition');
+  if (savedPosition) {
+    nextTick(() => {
+      window.scrollTo({
+        top: parseInt(savedPosition),
+        behavior: 'smooth'
+      });
+      // مسح الموقع المحفوظ بعد استعادته
+      sessionStorage.removeItem('lastScrollPosition');
+    });
+  }
+};
+
 // دالة لتحديث URL مع الفلاتر الحالية
 const updateURLWithFilters = () => {
   const query = {
@@ -491,7 +516,7 @@ const fetchProducts = async () => {
   }
 };
 
-// استعادة حالة الفلاتر عند تحميل الصفحة
+// تعديل onMounted
 onMounted(() => {
   // استعادة الفلاتر من URL
   const {
@@ -524,8 +549,10 @@ onMounted(() => {
     }
   }
 
-  // تحديث المنتجات بناءً على الفلاتر المستعادة
-  fetchProducts();
+  // تحديث المنتجات واستعادة موقع السكرول
+  fetchProducts().then(() => {
+    restoreScrollPosition();
+  });
 });
 
 // مراقبة التغييرات في التصنيف والتصنيف الفرعي
@@ -782,6 +809,18 @@ watch(
   },
   { deep: true }
 );
+
+// إضافة مراقب للتنقل
+const handleBeforeRouteLeave = () => {
+  if (route.path === '/') {
+    saveScrollPosition();
+  }
+};
+
+// تعديل ProductCard component لإضافة حدث النقر
+const handleProductClick = () => {
+  saveScrollPosition();
+};
 </script>
 
 <style scoped>

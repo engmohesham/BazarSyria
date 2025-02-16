@@ -197,12 +197,17 @@ watch(() => formData.value.category, async (newCategoryId) => {
           tradeMarks.value = selectedCategory.tradeMarks
         }
 
-        // تعيين الخصائص الخاصة
+        // تعيين الخصائص الخاصة بشكل صحيح
         if (selectedCategory.specialProperties) {
-          formData.value.specialProperties = selectedCategory.specialProperties.map(prop => ({
-            property: prop.property,
-            value: ''
-          }))
+          formData.value.specialProperties = []  // إعادة تعيين المصفوفة
+          selectedCategory.specialProperties.forEach(prop => {
+            formData.value.specialProperties.push({
+              property: prop.property,
+              value: '',
+              type: prop.type,
+              values: prop.values
+            })
+          })
         }
       }
     } catch (error) {

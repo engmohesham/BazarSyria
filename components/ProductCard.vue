@@ -1,5 +1,9 @@
 <template>
-  <NuxtLink :to="`/products/${product._id}`" class="block">
+  <NuxtLink 
+    :to="`/products/${product._id}`" 
+    class="block"
+    @click="$emit('click')"
+  >
     <div
       class="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow"
     >
@@ -203,6 +207,9 @@ const handleReport = async (event) => {
     showNotification('حدث خطأ في إرسال البلاغ', 'error');
   }
 };
+
+// إضافة emit للنقر
+defineEmits(['click']);
 </script>
 
 <style scoped>
