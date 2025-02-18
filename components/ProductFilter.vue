@@ -288,13 +288,26 @@
             <div v-else-if="error" class="text-red-500 text-center py-4">
               {{ error }}
             </div>
-            <div v-else class="space-y-4">
-              <ProductCard
-                v-for="item in currentData"
-                :key="item._id"
-                :product="item"
-                @click="handleProductClick"
-              />
+            <div v-else>
+              <!-- Products Grid -->
+              <div class="space-y-4">
+                <ProductCard
+                  v-for="item in paginatedData"
+                  :key="item._id"
+                  :product="item"
+                  @click="handleProductClick"
+                />
+              </div>
+              
+              <!-- Load More Button -->
+              <div v-if="hasMoreItems" class="text-center mt-6">
+                <button
+                  @click="loadMore"
+                  class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors"
+                >
+                  عرض المزيد
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -821,34 +834,42 @@ const handleBeforeRouteLeave = () => {
 const handleProductClick = () => {
   saveScrollPosition();
 };
+
+// Add these refs at the top of your script
+const itemsPerPage = ref(6);
+const currentPage = ref(1);
+
+// Add this computed property
+const paginatedData = computed(() => {
+  const startIndex = 0;
+  const endIndex = currentPage.value * itemsPerPage.value;
+  return currentData.value.slice(startIndex, endIndex);
+});
+
+// Add this computed to check if there are more items to load
+const hasMoreItems = computed(() => {
+  return paginatedData.value.length < currentData.value.length;
+});
+
+// Add this method to load more items
+const loadMore = () => {
+  currentPage.value += 1;
+};
+
+// Add this to your watch effects or where you handle filter changes
+watch([
+  activeCategory,
+  activeSubcategory,
+  searchQuery,
+  priceRange,
+  selectedTradeMarks,
+  selectedColors,
+  selectedProperties
+], () => {
+  currentPage.value = 1; // Reset to first page when filters change
+}, { deep: true });
 </script>
 
 <style scoped>
-.space-x-reverse > :not([hidden]) ~ :not([hidden]) {
-  --tw-space-x-reverse: 1;
-  margin-right: calc(0.5rem * var(--tw-space-x-reverse));
-  margin-left: calc(0.5rem * calc(1 - var(--tw-space-x-reverse)));
-}
-
-.trademark-card {
-  transition: all 0.2s ease-in-out;
-}
-
-.trademark-card:hover {
-  transform: translateY(-2px);
-}
-
-.trademark-card img {
-  max-width: 100%;
-  height: auto;
-  object-fit: contain;
-}
-
-.color-button {
-  transition: all 0.2s ease-in-out;
-}
-
-.color-button:hover {
-  transform: scale(1.1);
-}
+/* Add your component-specific styles here */
 </style>
