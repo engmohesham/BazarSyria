@@ -1,6 +1,6 @@
 <script setup>
 definePageMeta({
-  middleware: ["auth"]
+  middleware: ["auth"],
 });
 
 const selectedMethod = ref("الثاني");
@@ -13,8 +13,12 @@ const isLoading = ref(true);
 const email = ref("");
 const resetPasswordEmail = ref("");
 const resetPasswordSuccess = ref(false);
+const showContactInfo = ref(false);
+const showEmailInfo = ref(false);
+const showPhoneInfo = ref(false);
 
-const { updateSettings, updatePassword, updateVerification, getProfile } = useServices();
+const { updateSettings, updatePassword, updateVerification, getProfile } =
+  useServices();
 const router = useRouter();
 
 // Fetch fresh profile data from API
@@ -22,7 +26,7 @@ const fetchProfileData = async () => {
   isLoading.value = true;
   try {
     const { data, error: apiError } = await getProfile();
-    
+
     if (apiError) throw apiError;
 
     if (data?.user) {
@@ -33,6 +37,8 @@ const fetchProfileData = async () => {
       // تحديث طريقة التواصل المختارة
       selectedMethod.value = data.user.contactMethod || "الثاني";
       email.value = data.user.email || "";
+      showEmailInfo.value = data.user.previewEmail || false;
+      showPhoneInfo.value = data.user.previewPhone || false;
     }
   } catch (err) {
     console.error("Error fetching profile data:", err);
@@ -47,32 +53,32 @@ const verificationStatus = computed(() => {
   if (!currentUser.value) return null;
 
   const status = currentUser.value.idVerificationStatus;
-  
+
   switch (status) {
-    case 'approved':
+    case "approved":
       return {
-        text: 'تم توثيق حسابك بنجاح',
-        icon: 'ph:check-circle',
-        color: 'text-green-600',
+        text: "تم توثيق حسابك بنجاح",
+        icon: "ph:check-circle",
+        color: "text-green-600",
         showButton: false,
-        bgColor: 'bg-green-50'
+        bgColor: "bg-green-50",
       };
-    case 'pending':
+    case "pending":
       return {
-        text: 'طلب التوثيق قيد المراجعة',
-        icon: 'ph:clock',
-        color: 'text-yellow-600',
+        text: "طلب التوثيق قيد المراجعة",
+        icon: "ph:clock",
+        color: "text-yellow-600",
         showButton: false,
-        bgColor: 'bg-yellow-50'
+        bgColor: "bg-yellow-50",
       };
-    case 'deactivated':
+    case "deactivated":
     default:
       return {
-        text: 'للاستمرار في استخدام منصة بازار سوريا يتوجب عليك توثيق هويتك',
-        icon: 'hugeicons:user-id-verification',
-        color: 'text-gray-600',
+        text: "للاستمرار في استخدام منصة بازار سوريا يتوجب عليك توثيق هويتك",
+        icon: "hugeicons:user-id-verification",
+        color: "text-gray-600",
         showButton: true,
-        bgColor: 'bg-gray-50'
+        bgColor: "bg-gray-50",
       };
   }
 });
@@ -141,39 +147,80 @@ const handleResetPassword = async () => {
   }
 
   try {
-    const token = localStorage.getItem('session-token');
-    const userId = localStorage.getItem('userId');
-    
+    const token = localStorage.getItem("session-token");
+    const userId = localStorage.getItem("userId");
+
     if (!token || !userId) {
-      throw new Error('لم يتم العثور على جلسة تسجيل الدخول');
+      throw new Error("لم يتم العثور على جلسة تسجيل الدخول");
     }
 
     const response = await fetch(`${API_BASE_URL}/user/${userId}`, {
-      method: 'PATCH',
+      method: "PATCH",
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
         password: newPassword.value,
         // confirmPassword: confirmPassword.value
-      })
+      }),
     });
 
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.message || 'حدث خطأ في تغيير كلمة المرور');
+      throw new Error(data.message || "حدث خطأ في تغيير كلمة المرور");
     }
 
     success.value = data.message || "تم تغيير كلمة المرور بنجاح";
-    
+
     // إعادة تعيين حقول كلمة المرور
     newPassword.value = "";
     confirmPassword.value = "";
   } catch (err) {
-    console.error('Change password error:', err);
+    console.error("Change password error:", err);
     error.value = err.message || "فشل في تغيير كلمة المرور";
+  }
+};
+
+const handlePrivacyToggle = async (type) => {
+  try {
+    const settings =
+      type === "email"
+        ? { previewEmail: showEmailInfo.value }
+        : { previewPhone: showPhoneInfo.value };
+
+    const { error: apiError } = await updateSettings(settings);
+
+    if (apiError) throw apiError;
+
+    // Update local storage user data
+    const userData = JSON.parse(localStorage.getItem("user"));
+    if (type === "email") {
+      userData.previewEmail = showEmailInfo.value;
+    } else {
+      userData.previewPhone = showPhoneInfo.value;
+    }
+    localStorage.setItem("user", JSON.stringify(userData));
+
+    // Show success message
+    success.value =
+      type === "email"
+        ? "تم تحديث إعدادات ظهور البريد الإلكتروني بنجاح"
+        : "تم تحديث إعدادات ظهور رقم الهاتف بنجاح";
+
+    // Fetch fresh profile data to ensure everything is in sync
+    await fetchProfileData();
+  } catch (err) {
+    console.error("Error updating privacy settings:", err);
+    error.value = "فشل في تحديث إعدادات الخصوصية";
+
+    // Revert the toggle if the API call failed
+    if (type === "email") {
+      showEmailInfo.value = currentUser.value?.previewEmail || false;
+    } else {
+      showPhoneInfo.value = currentUser.value?.previewPhone || false;
+    }
   }
 };
 
@@ -211,10 +258,7 @@ onMounted(() => {
           <!-- رأس الصفحة -->
           <div class="flex items-center justify-between mb-6">
             <h1 class="text-2xl font-bold">الإعدادات العامة</h1>
-            <NuxtLink
-              to="/account"
-              class="text-gray-600 hover:text-gray-800"
-            >
+            <NuxtLink to="/account" class="text-gray-600 hover:text-gray-800">
               <Icon name="ph:arrow-left" class="w-6 h-6" />
             </NuxtLink>
           </div>
@@ -243,6 +287,65 @@ onMounted(() => {
               </button>
             </div>
           </div> -->
+
+          <!-- إضافة قسم البريد الإلكتروني -->
+          <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-lg font-semibold mb-4">إعدادات الخصوصية</h2>
+
+              <div v-if="error" class="text-red-500 text-sm">
+                {{ error }}
+              </div>
+
+              <div v-if="success" class="text-green-500 text-sm">
+                {{ success }}
+              </div>
+            </div>
+            <!-- Email Privacy Toggle -->
+            <div class="flex items-center justify-between mb-4 pb-4 border-b">
+              <div>
+                <h3 class="font-medium text-gray-700">
+                  إظهار البريد الإلكتروني
+                </h3>
+                <p class="text-sm text-gray-600">
+                  السماح للمستخدمين الآخرين برؤية بريدك الإلكتروني في ملفك
+                  الشخصي
+                </p>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  v-model="showEmailInfo"
+                  class="sr-only peer"
+                  @change="handlePrivacyToggle('email')"
+                />
+                <div
+                  class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"
+                ></div>
+              </label>
+            </div>
+
+            <!-- Phone Privacy Toggle -->
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="font-medium text-gray-700">إظهار رقم الهاتف</h3>
+                <p class="text-sm text-gray-600">
+                  السماح للمستخدمين الآخرين برؤية رقم هاتفك في ملفك الشخصي
+                </p>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  v-model="showPhoneInfo"
+                  class="sr-only peer"
+                  @change="handlePrivacyToggle('phone')"
+                />
+                <div
+                  class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"
+                ></div>
+              </label>
+            </div>
+          </div>
 
           <!-- إضافة قسم البريد الإلكتروني -->
           <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
@@ -291,14 +394,6 @@ onMounted(() => {
                 />
               </div>
 
-              <div v-if="error" class="text-red-500 text-sm">
-                {{ error }}
-              </div>
-
-              <div v-if="success" class="text-green-500 text-sm">
-                {{ success }}
-              </div>
-
               <button
                 type="submit"
                 class="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700"
@@ -314,20 +409,17 @@ onMounted(() => {
             <h2 class="text-lg font-semibold mb-6">توثيق الحساب</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <!-- توثيق الحساب للأفراد -->
-              <div 
+              <div
                 v-if="verificationStatus"
                 :class="[
                   'rounded-lg p-6 text-center',
-                  verificationStatus.bgColor
+                  verificationStatus.bgColor,
                 ]"
               >
                 <div class="flex justify-center mb-4">
                   <Icon
                     :name="verificationStatus.icon"
-                    :class="[
-                      'w-12 h-12',
-                      verificationStatus.color
-                    ]"
+                    :class="['w-12 h-12', verificationStatus.color]"
                   />
                 </div>
                 <h3 class="font-semibold mb-2">توثيق الحساب</h3>

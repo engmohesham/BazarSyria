@@ -2,7 +2,7 @@
 import defaultAvatar from "~/assets/user.png";
 import defaultCover from "~/assets/cover.jpeg";
 import { ref, computed, onMounted, watchEffect, onBeforeUnmount, watch } from 'vue';
-import { PhCamera, PhSealCheck } from '@phosphor-icons/vue';
+import { PhCamera, PhSealCheck, PhX } from '@phosphor-icons/vue';
 import { useServices } from '~/composables/useServices';
 
 const router = useRouter();
@@ -15,6 +15,14 @@ const isLoading = ref(true);
 const error = ref(null);
 const activeTab = ref('ads');
 const userAds = ref([]);
+
+// Avatar Preview State
+const showAvatarPreview = ref(false);
+const showEditAvatar = ref(false);
+
+// حالة النموذج
+const showEditForm = ref(false);
+const loading = ref(false);
 
 // Fetch profile data
 const fetchProfileData = async () => {
@@ -101,7 +109,42 @@ onMounted(() => {
   }
 });
 
-// File handlers
+// Preview Methods
+const openAvatarPreview = () => {
+  showAvatarPreview.value = true;
+};
+
+const closeAvatarPreview = () => {
+  showAvatarPreview.value = false;
+};
+
+// Edit Methods
+const openEditAvatar = () => {
+  showEditAvatar.value = true;
+};
+
+const closeEditAvatar = () => {
+  showEditAvatar.value = false;
+  // Reset preview if needed
+  if (userData.value.avatarPreview) {
+    URL.revokeObjectURL(userData.value.avatarPreview);
+    userData.value = {
+      ...userData.value,
+      avatarPreview: null
+    };
+  }
+};
+
+// دوال التحكم بالنموذج
+const openEditForm = () => {
+  showEditForm.value = true;
+};
+
+const closeEditForm = () => {
+  showEditForm.value = false;
+};
+
+// Update handleAvatarChange to work with the new modal
 const handleAvatarChange = (event) => {
   const file = event.target.files[0];
   if (file) {
@@ -130,7 +173,7 @@ const handleAvatarChange = (event) => {
   }
 };
 
-// Separate function for avatar submission
+// Update handleAvatarSubmit to close the modal on success
 const handleAvatarSubmit = async (file) => {
   try {
     const formData = new FormData();
@@ -157,43 +200,38 @@ const handleAvatarSubmit = async (file) => {
     };
 
     showNotification(message || "تم تحديث الصورة الشخصية بنجاح", "success");
+    closeEditAvatar(); // Close the modal after successful update
   } catch (error) {
     console.error("Error updating avatar:", error);
     showNotification("حدث خطأ أثناء تحديث الصورة الشخصية", "error");
   }
 };
 
-// Update handleUpdateProfile to not include avatar
-const handleUpdateProfile = async (e) => {
-  e.preventDefault();
+// تحديث دالة handleUpdateProfile
+const handleUpdateProfile = async () => {
+  loading.value = true;
   try {
     const formData = new FormData();
-    
-    // Only append non-empty values
-    if (userData.value.name) formData.append('name', userData.value.name);
-    if (userData.value.email) formData.append('email', userData.value.email);
-    if (userData.value.phone) formData.append('phone', userData.value.phone);
-    if (userData.value.location) formData.append('location', userData.value.location);
-    if (userData.value.bio) formData.append('bio', userData.value.bio);
-    if (userData.value.gender) formData.append('gender', userData.value.gender);
-    if (userData.value.birthdate) formData.append('birthdate', userData.value.birthdate);
-    
-    // Always send the ID
     formData.append('id', userData.value.id);
+    formData.append('name', userData.value.name);
+    formData.append('birthdate', userData.value.birthdate);
+    formData.append('bio', userData.value.bio);
 
     const { error, message } = await updateProfile(formData);
 
     if (error) {
-      throw new Error(error);
+      showNotification(message || "حدث خطأ أثناء تحديث الملف الشخصي", "error");
+      return;
     }
 
-    // Refresh profile data
-    await fetchProfileData();
-    
     showNotification(message || "تم تحديث الملف الشخصي بنجاح", "success");
+    closeEditForm();
+    await fetchProfileData(); // تحديث البيانات
   } catch (error) {
     console.error("Error updating profile:", error);
     showNotification("حدث خطأ أثناء تحديث الملف الشخصي", "error");
+  } finally {
+    loading.value = false;
   }
 };
 
@@ -259,7 +297,7 @@ watch(activeTab, (newTab) => {
 </script>
 
 <template>
-  <div class="bg-gray-100 min-h-screen" dir="rtl">
+  <div class="bg-gray-100 min-h-screen pb-10" dir="rtl">
     <Transition
       enter-active-class="transform ease-out duration-300 transition"
       enter-from-class="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-2"
@@ -322,7 +360,107 @@ watch(activeTab, (newTab) => {
             <Icon name="ph:arrow-right-bold" class="w-6 h-6" />
           </button>
           <h1 class="text-xl font-bold">حسابي</h1>
-          <div class="w-6"></div>
+          <!-- إضافة زر التعديل -->
+          <button
+            @click="openEditForm"
+            class="text-green-600 hover:text-green-700 flex items-center gap-2"
+          >
+            <Icon name="ph:pencil-simple" class="w-5 h-5" />
+            <span>تعديل</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- نافذة تعديل الملف الشخصي -->
+      <div
+        v-if="showEditForm"
+        class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center overflow-y-auto"
+        @click="closeEditForm"
+      >
+        <div 
+          class="bg-white rounded-lg max-w-2xl w-full m-4 p-6" 
+          @click.stop
+          style="max-height: 90vh; overflow-y: auto;"
+        >
+          <!-- رأس النموذج -->
+          <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-bold">تعديل الملف الشخصي</h2>
+            <button 
+              @click="closeEditForm"
+              class="text-gray-500 hover:text-gray-700"
+            >
+              <Icon name="ph:x" class="w-6 h-6" />
+            </button>
+          </div>
+
+          <!-- نموذج التعديل -->
+          <form @submit.prevent="handleUpdateProfile" class="space-y-6">
+            <!-- الاسم -->
+            <!-- <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">الاسم</label>
+              <input
+                v-model="userData.name"
+                type="text"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md"
+              />
+            </div> -->
+
+            <!-- تاريخ الميلاد -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">تاريخ الميلاد</label>
+              <div class="grid grid-cols-3 gap-4">
+                <select
+                  v-model="selectedDay"
+                  class="block w-full px-3 py-2 border border-gray-300 rounded-md"
+                >
+                  <option value="">يوم</option>
+                  <option v-for="day in days" :key="day" :value="day">{{ day }}</option>
+                </select>
+                <select
+                  v-model="selectedMonth"
+                  class="block w-full px-3 py-2 border border-gray-300 rounded-md"
+                >
+                  <option value="">شهر</option>
+                  <option v-for="month in months" :key="month" :value="month">{{ month }}</option>
+                </select>
+                <select
+                  v-model="selectedYear"
+                  class="block w-full px-3 py-2 border border-gray-300 rounded-md"
+                >
+                  <option value="">سنة</option>
+                  <option v-for="year in years" :key="year" :value="year">{{ year }}</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- نبذة عني -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">نبذة عني</label>
+              <textarea
+                v-model="userData.bio"
+                rows="4"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md"
+              ></textarea>
+            </div>
+
+            <!-- أزرار التحكم -->
+            <div class="flex justify-end gap-4">
+              <button
+                type="button"
+                @click="closeEditForm"
+                class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+              >
+                إلغاء
+              </button>
+              <button
+                type="submit"
+                class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                :disabled="loading"
+              >
+                {{ loading ? 'جاري الحفظ...' : 'حفظ التغييرات' }}
+              </button>
+            </div>
+          </form>
         </div>
       </div>
 
@@ -344,27 +482,22 @@ watch(activeTab, (newTab) => {
               <!-- الصورة الشخصية -->
               <div class="mb-6 flex flex-col items-center">
                 <div class="relative group">
+                  <!-- Avatar Image with Preview -->
                   <img
                     :src="avatarImage"
-                    class="w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg"
+                    class="w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg cursor-pointer"
                     alt="الصورة الشخصية"
+                    @click="openAvatarPreview"
                   />
-                  <!-- Upload Button Overlay -->
-                  <label
-                    class="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity"
-                    title="تغيير الصورة الشخصية"
+                  
+                  <!-- Edit Button -->
+                  <button
+                    @click="openEditAvatar"
+                    class="absolute bottom-0 right-0 bg-green-500 text-white p-2 rounded-full shadow-lg hover:bg-green-600 transition-colors"
+                    title="تعديل الصورة الشخصية"
                   >
-                    <input
-                      type="file"
-                      accept="image/*"
-                      class="hidden"
-                      @change="handleAvatarChange"
-                    />
-                    <div class="text-white flex flex-col items-center">
-                      <PhCamera class="w-6 h-6 mb-1" />
-                      <span class="text-xs">تغيير الصورة</span>
-                    </div>
-                  </label>
+                    <PhCamera class="w-5 h-5" />
+                  </button>
                 </div>
                 <p class="text-sm text-gray-500 mt-2">اضغط على الصورة لتغييرها</p>
               </div>
@@ -402,7 +535,7 @@ watch(activeTab, (newTab) => {
           <!-- معلومات المستخدم الأساسية -->
           <div class="relative px-6 pb-6">
             <!-- اسم المستخدم والتقييم -->
-            <div class="pt-20">
+            <div class="pt-5">
               <div class="flex items-center gap-2">
                 <h1 class="text-xl font-bold">{{ userData.name }}</h1>
                 <span v-if="userData.type" class="text-sm text-gray-500"
@@ -510,159 +643,76 @@ watch(activeTab, (newTab) => {
                 }}</span>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
 
-            <!-- نموذج تحديث المعلومات -->
-            <form @submit="handleUpdateProfile" class="max-w-2xl mx-auto mt-8 bg-white rounded-lg shadow p-6">
-              <!-- Avatar Upload Section -->
-              <div class="mb-6 flex flex-col items-center">
-                <div class="relative group">
-                  <img
-                    :src="avatarImage"
-                    class="w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg"
-                    alt="الصورة الشخصية"
-                  />
-                  <!-- Upload Button Overlay -->
-                  <label
-                    class="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity"
-                    title="تغيير الصورة الشخصية"
-                  >
-                    <input
-                      type="file"
-                      accept="image/*"
-                      class="hidden"
-                      @change="handleAvatarChange"
-                    />
-                    <div class="text-white flex flex-col items-center">
-                      <PhCamera class="w-6 h-6 mb-1" />
-                      <span class="text-xs">تغيير الصورة</span>
-                    </div>
-                  </label>
-                </div>
-                <p class="text-sm text-gray-500 mt-2">اضغط على الصورة لتغييرها</p>
-              </div>
+      <!-- Avatar Preview Modal -->
+      <div
+        v-if="showAvatarPreview"
+        class="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center"
+        @click="closeAvatarPreview"
+      >
+        <div class="relative max-w-2xl mx-auto" @click.stop>
+          <!-- Close Button -->
+          <button
+            @click="closeAvatarPreview"
+            class="absolute -top-10 right-0 text-white text-3xl"
+          >
+            ×
+          </button>
+          
+          <!-- Preview Image -->
+          <img
+            :src="avatarImage"
+            alt="معاينة الصورة الشخصية"
+            class="max-h-[80vh] max-w-full rounded-lg"
+          />
+        </div>
+      </div>
 
-              <!-- الاسم -->
-              <div>
-                <label class="block text-sm font-medium text-gray-700"
-                  >الاسم</label
-                >
-                <input
-                  type="text"
-                  v-model="userData.name"
-                  class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
-                />
-              </div>
+      <!-- Edit Avatar Modal -->
+      <div
+        v-if="showEditAvatar"
+        class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+      >
+        <div class="bg-white rounded-lg max-w-md w-full p-6" @click.stop>
+          <!-- Modal Header -->
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-semibold">تغيير الصورة الشخصية</h3>
+            <button @click="closeEditAvatar" class="text-gray-500 hover:text-gray-700">
+              <PhX :size="24" />
+            </button>
+          </div>
 
-              <!-- تاريخ الميلاد -->
-              <div>
-                <label class="block text-sm font-medium text-gray-700"
-                  >تاريخ الميلاد</label
-                >
-                <div class="grid grid-cols-3 gap-4">
-                  <select
-                    v-model="selectedDay"
-                    class="block w-full px-3 py-2 border border-gray-300 rounded-md"
-                  >
-                    <option value="">يوم</option>
-                    <option v-for="day in days" :key="day" :value="day">
-                      {{ day }}
-                    </option>
-                  </select>
-                  <select
-                    v-model="selectedMonth"
-                    class="block w-full px-3 py-2 border border-gray-300 rounded-md"
-                  >
-                    <option value="">شهر</option>
-                    <option v-for="month in months" :key="month" :value="month">
-                      {{ month }}
-                    </option>
-                  </select>
-                  <select
-                    v-model="selectedYear"
-                    class="block w-full px-3 py-2 border border-gray-300 rounded-md"
-                  >
-                    <option value="">سنة</option>
-                    <option v-for="year in years" :key="year" :value="year">
-                      {{ year }}
-                    </option>
-                  </select>
-                </div>
-              </div>
+          <!-- Upload Form -->
+          <div class="space-y-4">
+            <div class="flex justify-center">
+              <img
+                :src="userData.avatarPreview || avatarImage"
+                class="w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg"
+                alt="معاينة"
+              />
+            </div>
+            
+            <label class="block">
+              <span class="sr-only">اختر صورة</span>
+              <input
+                type="file"
+                accept="image/*"
+                class="block w-full text-sm text-gray-500
+                  file:mr-4 file:py-2 file:px-4
+                  file:rounded-full file:border-0
+                  file:text-sm file:font-semibold
+                  file:bg-green-50 file:text-green-700
+                  hover:file:bg-green-100"
+                @change="handleAvatarChange"
+              />
+            </label>
 
-              <!-- الجنس -->
-              <div class="mt-6">
-                <label class="block text-sm font-medium text-gray-700 mb-2"
-                  >الجنس</label
-                >
-                <select
-                  v-model="userData.gender"
-                  class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
-                >
-                  <option value="">اختر الجنس</option>
-                  <option
-                    v-for="option in genderOptions"
-                    :key="option.value"
-                    :value="option.value"
-                  >
-                    {{ option.label }}
-                  </option>
-                </select>
-              </div>
-
-              <!-- رقم الجوال -->
-              <div>
-                <label class="block text-sm font-medium text-gray-700"
-                  >رقم الجوال</label
-                >
-                <div class="flex gap-2">
-                  <select
-                    class="w-24 px-3 py-2 border border-gray-300 rounded-md"
-                  >
-                    <option>+966</option>
-                  </select>
-                  <input
-                    type="tel"
-                    v-model="userData.phone"
-                    class="flex-1 px-3 py-2 border border-gray-300 rounded-md"
-                  />
-                </div>
-              </div>
-
-              <!-- البريد الإلكتروني -->
-              <div>
-                <label class="block text-sm font-medium text-gray-700"
-                  >البريد الإلكتروني</label
-                >
-                <input
-                  type="email"
-                  v-model="userData.email"
-                  class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
-                  disabled
-                />
-              </div>
-
-              <!-- نبذة عني -->
-              <div>
-                <label class="block text-sm font-medium text-gray-700"
-                  >نبذة عني</label
-                >
-                <textarea
-                  v-model="userData.bio"
-                  rows="4"
-                  class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
-                ></textarea>
-              </div>
-
-              <!-- زر الحفظ -->
-              <div>
-                <button
-                  type="submit"
-                  class="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition-colors"
-                >
-                  حفظ التغييرات
-                </button>
-              </div>
-            </form>
+            <div class="text-sm text-gray-500">
+              * يجب أن لا يتجاوز حجم الصورة 5 ميجابايت
+            </div>
           </div>
         </div>
       </div>
@@ -762,5 +812,28 @@ select:focus {
 
 .group:hover .opacity-0 {
   opacity: 1;
+}
+
+/* Add any additional styles you need */
+.modal-overlay {
+  backdrop-filter: blur(2px);
+}
+
+.overflow-y-auto {
+  scrollbar-width: thin;
+  scrollbar-color: #e5e7eb transparent;
+}
+
+.overflow-y-auto::-webkit-scrollbar {
+  width: 6px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background-color: #e5e7eb;
+  border-radius: 3px;
 }
 </style>

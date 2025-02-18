@@ -2,7 +2,12 @@
 import defaultAvatar from "~/assets/user.png";
 import defaultCover from "~/assets/cover.jpeg";
 import { ref, computed, onMounted, watchEffect } from "vue";
-import { PhSealCheck, PhStar, PhFlag } from "@phosphor-icons/vue";
+import {
+  PhSealCheck,
+  PhStar,
+  PhFlag,
+  PhSealQuestion,
+} from "@phosphor-icons/vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -10,7 +15,7 @@ const { getUserProfile, getUserAds, reportUser } = useServices();
 const { notification, showNotification } = useNotification();
 
 definePageMeta({
-  middleware: ["auth"]
+  middleware: ["auth"],
 });
 
 // State
@@ -25,7 +30,7 @@ const isSubmitting = ref(false);
 
 // Add new refs for success popup
 const showSuccessPopup = ref(false);
-const successMessage = ref('');
+const successMessage = ref("");
 
 // Fetch user profile data
 const fetchProfileData = async () => {
@@ -75,7 +80,7 @@ const coverImage = computed(() => {
 // Handle report submission
 const handleReport = async () => {
   if (!reportReason.value) {
-    showNotification('الرجاء إدخال سبب الإبلاغ', 'error');
+    showNotification("الرجاء إدخال سبب الإبلاغ", "error");
     return;
   }
 
@@ -84,25 +89,26 @@ const handleReport = async () => {
     const { error } = await reportUser({
       reportedUser: route.params.id,
       reason: reportReason.value,
-      attachment: reportAttachment.value
+      attachment: reportAttachment.value,
     });
 
     if (error) throw error;
 
     showReportModal.value = false;
-    successMessage.value = 'تم إرسال البلاغ بنجاح. سيتم مراجعته من قبل فريق الإدارة.';
+    successMessage.value =
+      "تم إرسال البلاغ بنجاح. سيتم مراجعته من قبل فريق الإدارة.";
     showSuccessPopup.value = true;
-    
+
     // Reset form
-    reportReason.value = '';
+    reportReason.value = "";
     reportAttachment.value = null;
-    
+
     // Hide success popup after 3 seconds
     setTimeout(() => {
       showSuccessPopup.value = false;
     }, 3000);
   } catch (err) {
-    showNotification('حدث خطأ أثناء إرسال البلاغ', 'error');
+    showNotification("حدث خطأ أثناء إرسال البلاغ", "error");
   } finally {
     isSubmitting.value = false;
   }
@@ -160,10 +166,22 @@ watchEffect(() => {
                 <!-- Verification Badge -->
                 <div
                   v-if="userData.identificationVerified"
-                  class="bg-white p-1 rounded-full"
+                  class="flex items-center gap-2 bg-white p-2 rounded-lg my-2"
                   title="حساب موثق"
                 >
-                  <PhSealCheck class="w-6 h-6 text-blue-500" weight="fill" />
+                  <PhSealCheck class="w-6 h-6 text-green-500 bg-white rounded-full" weight="fill" />
+                  <span class="text-green-500">موثق</span>
+                </div>
+                <div
+                  v-else
+                  class="flex items-center gap-2 bg-white p-2 rounded-lg my-2"
+                  title="حساب غير موثق"
+                >
+                  <PhSealQuestion
+                    class="w-6 h-6 text-red-500 bg-white rounded-full"
+                    weight="fill"
+                  />
+                  <span class="text-red-500">غير موثق</span>
                 </div>
               </div>
               <p class="text-sm opacity-90">
@@ -235,20 +253,17 @@ watchEffect(() => {
               <h3 class="font-semibold mb-2">نبذة</h3>
               <p>{{ userData.bio }}</p>
             </div>
-            <div>
+            <p v-if="userData.gender">
+              الجنس: {{ userData.gender === "male" ? "ذكر" : "أنثى" }}
+            </p>
+            <div v-if="userData.previewEmail || userData.previewPhone">
               <h3 class="font-semibold mb-2">معلومات التواصل</h3>
               <div class="space-y-2">
-                <p v-if="userData.email">
+                <p v-if="userData.previewEmail && userData.email">
                   البريد الإلكتروني: {{ userData.email }}
                 </p>
-                <p v-if="userData.phone">رقم الهاتف: {{ userData.phone }}</p>
-                <p v-if="userData.location">الموقع: {{ userData.location }}</p>
-                <p v-if="userData.gender">
-                  الجنس: {{ userData.gender === "male" ? "ذكر" : "أنثى" }}
-                </p>
-                <p v-if="userData.birthDate">
-                  تاريخ الميلاد:
-                  {{ new Date(userData.birthDate).toLocaleDateString("ar-SY") }}
+                <p v-if="userData.previewPhone && userData.phone">
+                  رقم الهاتف: {{ userData.phone }}
                 </p>
               </div>
             </div>
@@ -304,7 +319,7 @@ watchEffect(() => {
     >
       <div class="bg-white rounded-lg p-6 max-w-md w-full">
         <h3 class="text-lg font-semibold mb-4">الإبلاغ عن مستخدم</h3>
-        
+
         <textarea
           v-model="reportReason"
           rows="4"
@@ -359,10 +374,17 @@ watchEffect(() => {
         v-if="showSuccessPopup"
         class="fixed inset-0 flex items-center justify-center z-50"
       >
-        <div class="fixed inset-0 bg-black/50" @click="showSuccessPopup = false"></div>
-        <div class="relative bg-white rounded-lg p-6 shadow-xl max-w-md w-full mx-4">
+        <div
+          class="fixed inset-0 bg-black/50"
+          @click="showSuccessPopup = false"
+        ></div>
+        <div
+          class="relative bg-white rounded-lg p-6 shadow-xl max-w-md w-full mx-4"
+        >
           <div class="flex items-center justify-center mb-4">
-            <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
+            <div
+              class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center"
+            >
               <svg
                 class="w-6 h-6 text-green-600"
                 fill="none"
@@ -378,7 +400,9 @@ watchEffect(() => {
               </svg>
             </div>
           </div>
-          <h3 class="text-xl font-semibold text-center mb-2">تم الإبلاغ بنجاح</h3>
+          <h3 class="text-xl font-semibold text-center mb-2">
+            تم الإبلاغ بنجاح
+          </h3>
           <p class="text-gray-600 text-center">{{ successMessage }}</p>
           <div class="mt-6 text-center">
             <button

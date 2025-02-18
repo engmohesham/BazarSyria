@@ -3,7 +3,7 @@
     <div class="container md:w-[90%] mx-auto px-4 pt-16">
       <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
         <!-- Logo and Description - Right Side -->
-        <div class="md:col-span-2 flex flex-col justify-start items-start gap-4">
+        <div class="md:col-span-3 flex flex-col justify-start items-start gap-4">
           <div class="flex flex-col items-start">
             <img :src="logo" alt="يلا سوريا" class="h-24 w-auto" />
             <p class="text-gray-600 text-sm leading-relaxed text-right w-2/3">
@@ -29,7 +29,7 @@
         </div>
 
         <!-- Email - Left Side -->
-        <div class="flex md:flex-wrap lg:flex-nowrap flex-row gap-2 justify-start items-center">
+        <!-- <div class="flex md:flex-wrap lg:flex-nowrap flex-row gap-2 justify-start items-center">
           <a
             v-for="icon in socialIcons"
             :key="icon"
@@ -41,7 +41,7 @@
               class="w-5 h-5 group-hover:scale-125 transition-all ease-linear duration-150"
             />
           </a>
-        </div>
+        </div> -->
       </div>
     </div>
     <div

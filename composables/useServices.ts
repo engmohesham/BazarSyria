@@ -56,13 +56,31 @@ export const useServices = () => {
           body: userData,
         }
       );
-      // console.log(data.value.message);
 
-      if (error.value) throw error.value;
-      return { data: data.value, error: null, message: data.value.message };
+      if (error.value) {
+        // استخراج رسالة الخطأ من الاستجابة
+        const errorMessage = error.value?.data?.message || "فشل التسجيل";
+        return { 
+          success: false, 
+          error: true, 
+          message: errorMessage 
+        };
+      }
+
+      // استخدام رسالة النجاح من الAPI
+      return { 
+        success: true, 
+        error: false, 
+        message: data.value?.message || "تم التسجيل بنجاح", 
+        data: data.value 
+      };
     } catch (err) {
       console.error("Register error:", err);
-      return { data: null, error: err };
+      return { 
+        success: false, 
+        error: true, 
+        message: "حدث خطأ أثناء التسجيل" 
+      };
     }
   };
 
@@ -75,12 +93,9 @@ export const useServices = () => {
   // User Methods
   const getProfile = async () => {
     try {
-      const data = await $fetch(
-        `${API_BASE_URL}${API_ENDPOINTS.PROFILE}`,
-        {
-          headers: getAuthHeaders(),
-        }
-      );
+      const data = await $fetch(`${API_BASE_URL}${API_ENDPOINTS.PROFILE}`, {
+        headers: getAuthHeaders(),
+      });
 
       // console.log(data);
 
@@ -232,7 +247,7 @@ export const useServices = () => {
       if (error.value) throw error.value;
       return { data: data.value, error: null };
     } catch (err) {
-      console.error('Error updating ad:', err);
+      console.error("Error updating ad:", err);
       return { data: null, error: err };
     }
   };
@@ -430,24 +445,24 @@ export const useServices = () => {
   const createChatRoom = async (payload: { users: string[] }) => {
     try {
       const response = await $fetch(`${API_BASE_URL}${API_ENDPOINTS.CHAT}`, {
-        method: 'POST',
+        method: "POST",
         body: payload,
         headers: {
           ...getAuthHeaders(),
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
       });
-      
+
       return { data: response, error: null };
     } catch (err: any) {
       // إذا كانت المحادثة موجودة بالفعل
       if (err.response?.status === 400) {
-        return { 
-          data: null, 
-          error: { message: "A chat with these users already exists." }
+        return {
+          data: null,
+          error: { message: "A chat with these users already exists." },
         };
       }
-      console.error('Create chat room error:', err);
+      console.error("Create chat room error:", err);
       return { data: null, error: err };
     }
   };
@@ -559,11 +574,11 @@ export const useServices = () => {
 
   const updateProfile = async (formData: FormData) => {
     try {
-      const userId = formData.get('id');
+      const userId = formData.get("id");
       // Remove empty fields from FormData
       const cleanFormData = new FormData();
       for (const [key, value] of formData.entries()) {
-        if (value !== null && value !== undefined && value !== '') {
+        if (value !== null && value !== undefined && value !== "") {
           cleanFormData.append(key, value);
         }
       }
@@ -575,90 +590,85 @@ export const useServices = () => {
           body: cleanFormData,
           headers: {
             ...getAuthHeaders(),
-          }
+          },
         }
       );
 
       if (error.value) throw error.value;
-      return { data: data.value, error: null, message: "تم تحديث الملف الشخصي بنجاح" };
+      return {
+        data: data.value,
+        error: null,
+        message: "تم تحديث الملف الشخصي بنجاح",
+      };
     } catch (err) {
       console.error("Error updating profile:", err);
-      return { 
-        data: null, 
-        error: err, 
-        message: "حدث خطأ أثناء تحديث الملف الشخصي" 
+      return {
+        data: null,
+        error: err,
+        message: "حدث خطأ أثناء تحديث الملف الشخصي",
       };
     }
   };
 
   const getUserById = async (userId: string) => {
     try {
-      const { data, error } = await useFetch(
-        `${API_BASE_URL}/user/${userId}`,
-        {
-          headers: getAuthHeaders(),
-        }
-      );
+      const { data, error } = await useFetch(`${API_BASE_URL}/user/${userId}`, {
+        headers: getAuthHeaders(),
+      });
       // console.log(data.value);
 
       if (error.value) throw error.value;
       return { data: data.value, error: null };
     } catch (err) {
-      console.error('Error fetching user:', err);
+      console.error("Error fetching user:", err);
       return { data: null, error: err };
     }
   };
 
   const getUserProfile = async (userId: string) => {
     try {
-      const { data, error } = await useFetch(
-        `${API_BASE_URL}/user/${userId}`,
-        {
-          headers: getAuthHeaders(),
-        }
-      );
+      const { data, error } = await useFetch(`${API_BASE_URL}/user/${userId}`, {
+        headers: getAuthHeaders(),
+      });
 
       if (error.value) throw error.value;
-      return { 
+      return {
         data: {
           ...data.value,
-          advertisements: data.value?.advertisements || [] 
-        }, 
-        error: null 
+          advertisements: data.value?.advertisements || [],
+        },
+        error: null,
       };
     } catch (err) {
-      console.error('Error fetching user profile:', err);
+      console.error("Error fetching user profile:", err);
       return { data: null, error: err };
     }
   };
 
-  const reportUser = async (payload: { 
+  const reportUser = async (payload: {
     reportedUser: string;
     reason: string;
     attachment?: File;
   }) => {
     try {
       const formData = new FormData();
-      formData.append('reportedUser', payload.reportedUser);
-      formData.append('reason', payload.reason);
-      
+      formData.append("reportedUser", payload.reportedUser);
+      formData.append("reason", payload.reason);
+
       if (payload.attachment) {
-        formData.append('attachment', payload.attachment);
+        formData.append("attachment", payload.attachment);
       }
 
-      const { data, error } = await useFetch(
-        `${API_BASE_URL}/reports/create`,
-        {
-          method: 'POST',
-          body: formData,
-          headers: getAuthHeaders(),
-        }
-      );
+      const { data, error } = await useFetch(`${API_BASE_URL}/reports/create`, {
+        method: "POST",
+        body: formData,
+        headers: getAuthHeaders(),
+      });
 
       if (error.value) throw error.value;
       return { data: data.value, error: null };
     } catch (err) {
-      console.error('Error reporting user:', err);
+      console.error("Error reporting user:", err);
       return { data: null, error: err };
     }
   };
@@ -687,7 +697,7 @@ export const useServices = () => {
       const { data, error } = await useFetch(
         `${API_BASE_URL}/advertisement/${productId}/addToFavorites`,
         {
-          method: 'POST',
+          method: "POST",
           headers: getAuthHeaders(),
         }
       );
@@ -695,7 +705,7 @@ export const useServices = () => {
       if (error.value) throw error.value;
       return { data: data.value, error: null };
     } catch (err) {
-      console.error('Error adding to favorites:', err);
+      console.error("Error adding to favorites:", err);
       return { data: null, error: err };
     }
   };
@@ -706,7 +716,7 @@ export const useServices = () => {
       const { data, error } = await useFetch(
         `${API_BASE_URL}/advertisement/${productId}/removeFromFavorites`,
         {
-          method: 'POST',
+          method: "POST",
           headers: getAuthHeaders(),
         }
       );
@@ -714,7 +724,7 @@ export const useServices = () => {
       if (error.value) throw error.value;
       return { data: data.value, error: null };
     } catch (err) {
-      console.error('Error removing from favorites:', err);
+      console.error("Error removing from favorites:", err);
       return { data: null, error: err };
     }
   };
@@ -732,7 +742,7 @@ export const useServices = () => {
       if (error.value) throw error.value;
       return { data: data.value?.advertisements || [], error: null };
     } catch (err) {
-      console.error('Error fetching favorite ads:', err);
+      console.error("Error fetching favorite ads:", err);
       return { data: [], error: err };
     }
   };
@@ -756,21 +766,22 @@ export const useServices = () => {
         return { error: true, message: errorMessage };
       }
 
-      return { 
-        error: false, 
-        message: data.value?.message || "تم إرسال رمز التحقق إلى بريدك الإلكتروني" 
+      return {
+        error: false,
+        message:
+          data.value?.message || "تم إرسال رمز التحقق إلى بريدك الإلكتروني",
       };
     } catch (err) {
       console.error("Forget password error:", err);
-      return { 
-        error: true, 
-        message: "حدث خطأ غير متوقع" 
+      return {
+        error: true,
+        message: "حدث خطأ غير متوقع",
       };
     }
   };
 
   // إرسال الكود مع الإيميل للتحقق
-  const verifyForgetPasswordCode = async (payload: { 
+  const verifyForgetPasswordCode = async (payload: {
     email: string;
     code: string;
   }) => {
@@ -787,27 +798,27 @@ export const useServices = () => {
       );
 
       if (error.value) {
-        return { 
-          error: true, 
-          message: error.value?.data?.message || "رمز التحقق غير صحيح" 
+        return {
+          error: true,
+          message: error.value?.data?.message || "رمز التحقق غير صحيح",
         };
       }
 
-      return { 
-        error: false, 
-        message: "تم التحقق من الرمز بنجاح"
+      return {
+        error: false,
+        message: "تم التحقق من الرمز بنجاح",
       };
     } catch (err) {
       console.error("Verify code error:", err);
-      return { 
-        error: true, 
-        message: "حدث خطأ غير متوقع" 
+      return {
+        error: true,
+        message: "حدث خطأ غير متوقع",
       };
     }
   };
 
   // تغيير كلمة المرور بعد التحقق
-  const resetPassword = async (payload: { 
+  const resetPassword = async (payload: {
     email: string;
     code: string;
     password: string;
@@ -816,9 +827,9 @@ export const useServices = () => {
     try {
       // التحقق من وجود كلمة المرور وتأكيدها
       if (!payload.password || !payload.confirmPassword) {
-        return { 
-          error: true, 
-          message: "الرجاء إدخال كلمة المرور وتأكيدها" 
+        return {
+          error: true,
+          message: "الرجاء إدخال كلمة المرور وتأكيدها",
         };
       }
 
@@ -829,7 +840,7 @@ export const useServices = () => {
           body: {
             email: payload.email,
             password: payload.password,
-            confirmPassword: payload.confirmPassword
+            confirmPassword: payload.confirmPassword,
           },
           headers: {
             "Content-Type": "application/json",
@@ -838,22 +849,48 @@ export const useServices = () => {
       );
 
       if (error.value) {
-        return { 
-          error: true, 
-          message: error.value?.data?.message // استخدام الرسالة من الباك
+        return {
+          error: true,
+          message: error.value?.data?.message, // استخدام الرسالة من الباك
         };
       }
 
-      return { 
-        error: false, 
-        message: data.value?.message || "تم تغيير كلمة المرور بنجاح" // استخدام الرسالة من الباك
+      return {
+        error: false,
+        message: data.value?.message || "تم تغيير كلمة المرور بنجاح", // استخدام الرسالة من الباك
       };
     } catch (err) {
       console.error("Reset password error:", err);
-      return { 
-        error: true, 
-        message: "حدث خطأ غير متوقع" 
+      return {
+        error: true,
+        message: "حدث خطأ غير متوقع",
       };
+    }
+  };
+
+  const updateSettings = async (settings: {
+    previewEmail?: boolean;
+    previewPhone?: boolean;
+  }) => {
+    try {
+      const userId = localStorage.getItem('userId');
+      const { data, error } = await useFetch(
+        `${API_BASE_URL}/user/${userId}/update`,
+        {
+          method: 'PATCH',
+          body: settings,
+          headers: {
+            ...getAuthHeaders(),
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (error.value) throw error.value;
+      return { data: data.value, error: null };
+    } catch (err) {
+      console.error('Error updating settings:', err);
+      return { data: null, error: err };
     }
   };
 
@@ -917,5 +954,7 @@ export const useServices = () => {
     forgetPassword,
     verifyForgetPasswordCode,
     resetPassword,
+
+    updateSettings,
   };
 };

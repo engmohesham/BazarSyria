@@ -251,7 +251,7 @@
             </template>
 
             <!-- إضافة قسم فلتر اللون -->
-            <FilterSection title="اللون">
+            <!-- <FilterSection title="اللون">
               <div class="grid grid-cols-5 gap-2">
                 <button
                   v-for="color in availableColors"
@@ -279,7 +279,7 @@
                   }}</span>
                 </button>
               </div>
-            </FilterSection>
+            </FilterSection> -->
           </div>
 
           <!-- Listings - Left Side -->
